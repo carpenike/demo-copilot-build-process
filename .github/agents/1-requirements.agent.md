@@ -42,6 +42,12 @@ If the user's prompt specifies both (e.g., "process projects/expense-portal/inpu
 proceed immediately. If either is missing or ambiguous, ask the user to confirm before continuing.
 List the available projects under `projects/` to help them choose.
 
+Once the project is confirmed, present your plan before starting:
+- State which input file you will read
+- List the output files you will produce and where they will be saved
+- Summarize the key sections you expect to produce (e.g., "I see ~20 functional requirements, 6 NFRs, and at least 2 governance flags")
+- Ask the user to confirm before proceeding
+
 ### Step 1 — Clarify and Decompose
 Read the input carefully. Identify:
 - The core problem being solved

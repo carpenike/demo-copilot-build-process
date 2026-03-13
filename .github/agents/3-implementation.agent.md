@@ -29,6 +29,13 @@ Confirm which project you are working on. You need:
 If the user's prompt specifies the project, proceed immediately.
 If it is missing or ambiguous, ask the user to confirm before continuing.
 
+Once the project is confirmed, present your plan before starting:
+- List which ADRs and design docs you will implement against
+- Describe the project structure you will create (Python or Go, based on the ADR)
+- List the files you will produce (source files, Dockerfile, Makefile, openapi.yaml)
+- Note the required endpoints (/health, /ready, /metrics)
+- Ask the user to confirm before proceeding
+
 ## Inputs (read before writing any code)
 - `docs/adr/*.md` — ALL ADRs for this project
 - `projects/<project>/design/wireframe-spec.md`

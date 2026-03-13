@@ -27,6 +27,13 @@ Confirm which project you are working on. You need:
 If the user's prompt specifies the project, proceed immediately.
 If it is missing or ambiguous, ask the user to confirm before continuing.
 
+Once the project is confirmed, present your plan before starting:
+- List the infrastructure components you will produce (Terraform modules, K8s manifests)
+- List the CI/CD workflows you will generate
+- Note the deployment environments (dev, staging, production)
+- Identify which ADRs drive the infrastructure decisions
+- Ask the user to confirm before proceeding
+
 ## Inputs
 - `docs/adr/*.md` — for service architecture decisions (stateless? stateful? what dependencies?)
 - `projects/<project>/src/Dockerfile`

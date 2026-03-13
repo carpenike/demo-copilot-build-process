@@ -29,6 +29,12 @@ Confirm which project you are working on. You need:
 If the user's prompt specifies the project, proceed immediately.
 If it is missing or ambiguous, ask the user to confirm before continuing.
 
+Once the project is confirmed, present your plan before starting:
+- List the SLOs you will define (derived from which NFRs)
+- List the alerts you will create
+- List the output files (runbook.md, alert-rules.yaml, slo-definitions.md, dashboard-spec.md)
+- Ask the user to confirm before proceeding
+
 ## Inputs
 - `projects/<project>/requirements/requirements.md` — SLA targets and business outcomes
 - `projects/<project>/infrastructure/` — deployed resource config

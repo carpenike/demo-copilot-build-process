@@ -45,6 +45,12 @@ Before doing any work, confirm which project you are working on. You need:
 If the user's prompt specifies the project and input files, proceed immediately.
 If either is missing or ambiguous, ask the user to confirm before continuing.
 
+Once the project is confirmed, present your plan before starting:
+- List the decision points you've identified that will need ADRs
+- List the output files you will produce (ADRs, wireframe-spec, data-model, architecture-overview) and their paths
+- Note any governance constraints that will apply
+- Ask the user to confirm before proceeding
+
 ### Step 1 — Identify Decision Points
 Read the requirements and identify every place where a significant architectural
 decision must be made. Common decision points:

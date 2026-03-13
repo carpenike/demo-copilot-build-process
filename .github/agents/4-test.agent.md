@@ -29,6 +29,12 @@ Confirm which project you are working on. You need:
 If the user's prompt specifies the project, proceed immediately.
 If it is missing or ambiguous, ask the user to confirm before continuing.
 
+Once the project is confirmed, present your plan before starting:
+- State how many functional requirements and user stories you will cover
+- List the test categories you will produce (unit, integration, e2e, load)
+- List the output files and their paths (test-plan.md, test files, integration/)
+- Ask the user to confirm before proceeding
+
 ## Inputs
 - `projects/<project>/requirements/requirements.md` — primary source
 - `projects/<project>/requirements/user-stories.md` — acceptance criteria
