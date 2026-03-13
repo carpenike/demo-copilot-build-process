@@ -18,7 +18,16 @@ catches nothing.
 - DO NOT derive tests from implementation code — always work from requirements
 - DO NOT skip auth/authz edge cases (401, 403 scenarios)
 - DO NOT write tests that depend on other tests' state
+- DO NOT begin producing output until the target project is confirmed
 - ONLY produce test artifacts — no production code changes
+
+## Before You Start
+Confirm which project you are working on. You need:
+1. **Project name** — which `projects/<project>/` directory?
+2. **Requirements** — confirm `projects/<project>/requirements/` exists with requirements.md and user-stories.md.
+
+If the user's prompt specifies the project, proceed immediately.
+If it is missing or ambiguous, ask the user to confirm before continuing.
 
 ## Inputs
 - `projects/<project>/requirements/requirements.md` — primary source

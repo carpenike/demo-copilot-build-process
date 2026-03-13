@@ -19,6 +19,7 @@ select the best approved alternative.
 - DO NOT write implementation code
 - DO NOT skip reading `governance/enterprise-standards.md` before producing output
 - DO NOT recommend technologies outside the approved list without documenting an exception
+- DO NOT begin producing output until the target project is confirmed (see Step 0)
 - ONLY produce design documents, ADRs, and specifications
 
 ## Inputs
@@ -35,6 +36,14 @@ select the best approved alternative.
 Use the templates at `templates/design/` as the starting structure.
 
 ## Process
+
+### Step 0 — Confirm Project Context
+Before doing any work, confirm which project you are working on. You need:
+1. **Project name** — which `projects/<project>/` directory?
+2. **Requirements location** — confirm `projects/<project>/requirements/requirements.md` and `user-stories.md` exist.
+
+If the user's prompt specifies the project and input files, proceed immediately.
+If either is missing or ambiguous, ask the user to confirm before continuing.
 
 ### Step 1 — Identify Decision Points
 Read the requirements and identify every place where a significant architectural

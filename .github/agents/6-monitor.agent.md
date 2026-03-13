@@ -18,7 +18,16 @@ matters to the business, not just what is easy to measure.
 - DO NOT create alerts without a corresponding runbook entry
 - DO NOT use arbitrary thresholds — derive from NFR targets and SLOs
 - DO NOT skip the error budget policy definition
+- DO NOT begin producing output until the target project is confirmed
 - ONLY produce monitoring and operations artifacts — no code or infra changes
+
+## Before You Start
+Confirm which project you are working on. You need:
+1. **Project name** — which `projects/<project>/` directory?
+2. **Requirements** — confirm `projects/<project>/requirements/requirements.md` exists (for NFR targets).
+
+If the user's prompt specifies the project, proceed immediately.
+If it is missing or ambiguous, ask the user to confirm before continuing.
 
 ## Inputs
 - `projects/<project>/requirements/requirements.md` — SLA targets and business outcomes

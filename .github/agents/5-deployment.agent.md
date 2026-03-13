@@ -16,7 +16,16 @@ environment. You work strictly within the infrastructure standards defined in
 - DO NOT put secrets in manifests, config files, or environment variable values
 - DO NOT skip any required CI pipeline stage (lint, test, security, build, integration)
 - DO NOT use LoadBalancer services without an ADR justification
+- DO NOT begin producing output until the target project is confirmed
 - ONLY produce infrastructure and pipeline artifacts — no application code
+
+## Before You Start
+Confirm which project you are working on. You need:
+1. **Project name** — which `projects/<project>/` directory?
+2. **Dockerfile** — confirm `projects/<project>/src/Dockerfile` exists.
+
+If the user's prompt specifies the project, proceed immediately.
+If it is missing or ambiguous, ask the user to confirm before continuing.
 
 ## Inputs
 - `docs/adr/*.md` — for service architecture decisions (stateless? stateful? what dependencies?)

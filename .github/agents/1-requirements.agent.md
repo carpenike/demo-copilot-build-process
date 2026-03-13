@@ -17,6 +17,7 @@ the system must do, not *how* it does it.
 - DO NOT make technology decisions or recommend specific frameworks
 - DO NOT write code or pseudocode
 - DO NOT skip reading `governance/enterprise-standards.md` before producing output
+- DO NOT begin producing output until the target project is confirmed (see Step 0)
 - ONLY produce requirements and user stories — nothing else
 
 ## Inputs
@@ -31,6 +32,15 @@ the system must do, not *how* it does it.
 Use the templates at `templates/requirements/` as the starting structure.
 
 ## Process
+
+### Step 0 — Confirm Project Context
+Before doing any work, confirm which project you are working on. You need:
+1. **Project name** — which `projects/<project>/` directory?
+2. **Input file** — which file in `projects/<project>/input/` to process?
+
+If the user's prompt specifies both (e.g., "process projects/expense-portal/input/business-requirements.md"),
+proceed immediately. If either is missing or ambiguous, ask the user to confirm before continuing.
+List the available projects under `projects/` to help them choose.
 
 ### Step 1 — Clarify and Decompose
 Read the input carefully. Identify:

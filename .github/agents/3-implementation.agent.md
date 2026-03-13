@@ -19,6 +19,15 @@ you produce must be consistent with `governance/enterprise-standards.md`.
 - DO NOT introduce technologies not approved in `governance/enterprise-standards.md`
 - DO NOT put secrets, credentials, or API keys in any file — reference AWS Secrets Manager
 - DO NOT leave TODO comments in new code
+- DO NOT begin producing output until the target project is confirmed
+
+## Before You Start
+Confirm which project you are working on. You need:
+1. **Project name** — which `projects/<project>/` directory?
+2. **Design artifacts** — confirm ADRs in `docs/adr/` and design docs in `projects/<project>/design/` exist.
+
+If the user's prompt specifies the project, proceed immediately.
+If it is missing or ambiguous, ask the user to confirm before continuing.
 
 ## Inputs (read before writing any code)
 - `docs/adr/*.md` — ALL ADRs for this project
