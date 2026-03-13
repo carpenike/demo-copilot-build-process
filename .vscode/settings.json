@@ -1,0 +1,56 @@
+{
+  // ─── Copilot Configuration ─────────────────────────────────────────────
+  // Point Copilot to enterprise standards for code generation context
+  "github.copilot.chat.codeGeneration.instructions": [
+    { "file": "governance/enterprise-standards.md" }
+  ],
+
+  // ─── Editor Formatting (matches copilot-instructions.md code style table) ─
+  "editor.rulers": [100],
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": null,
+
+  // ─── Python ────────────────────────────────────────────────────────────
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.fixAll": "explicit",
+      "source.organizeImports": "explicit"
+    }
+  },
+  "python.analysis.typeCheckingMode": "standard",
+
+  // ─── Go ────────────────────────────────────────────────────────────────
+  "[go]": {
+    "editor.defaultFormatter": "golang.go",
+    "editor.formatOnSave": true
+  },
+
+  // ─── Markdown ──────────────────────────────────────────────────────────
+  "[markdown]": {
+    "editor.wordWrap": "on",
+    "editor.rulers": [100]
+  },
+
+  // ─── File Associations ────────────────────────────────────────────────
+  "files.associations": {
+    "*.yaml": "yaml",
+    "*.yml": "yaml",
+    "Dockerfile*": "dockerfile"
+  },
+
+  // ─── Hide generated / irrelevant files in Explorer ────────────────────
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/.pytest_cache": true,
+    "**/.mypy_cache": true,
+    "**/.ruff_cache": true
+  },
+
+  // ─── Search: skip build artifacts ─────────────────────────────────────
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/.terraform": true
+  }
+}

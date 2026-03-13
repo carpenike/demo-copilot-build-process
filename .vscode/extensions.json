@@ -1,0 +1,12 @@
+{
+  "recommendations": [
+    "github.copilot",
+    "github.copilot-chat",
+    "charliermarsh.ruff",
+    "golang.go",
+    "ms-python.python",
+    "hashicorp.terraform",
+    "ms-azuretools.vscode-docker",
+    "redhat.vscode-yaml"
+  ]
+}

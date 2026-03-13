@@ -1,0 +1,189 @@
+# CI Pipeline Template
+# Copy this file to .github/workflows/<project>-ci.yml and replace placeholders.
+# All stages are REQUIRED. Do not remove stages without Platform Engineering approval.
+
+name: CI — [Project Name]
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'projects/[project-name]/src/**'
+      - 'projects/[project-name]/tests/**'
+  push:
+    branches: [main]
+    paths:
+      - 'projects/[project-name]/src/**'
+
+env:
+  PROJECT: "[project-name]"
+  ECR_REGISTRY: "${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com"
+  IMAGE_NAME: "[project-name]"
+
+jobs:
+  # ─── Stage 1: Lint ────────────────────────────────────────────────────────────
+  lint:
+    name: Lint & Format Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Python projects
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install uv
+        run: pip install uv
+
+      - name: Install dependencies
+        run: uv sync --dev
+        working-directory: projects/${{ env.PROJECT }}/src
+
+      - name: Run ruff (lint + format)
+        run: uv run ruff check . && uv run ruff format --check .
+        working-directory: projects/${{ env.PROJECT }}/src
+
+      - name: Run mypy (type check)
+        run: uv run mypy .
+        working-directory: projects/${{ env.PROJECT }}/src
+
+  # ─── Stage 2: Test ────────────────────────────────────────────────────────────
+  test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install uv
+        run: pip install uv
+
+      - name: Install dependencies
+        run: uv sync --dev
+        working-directory: projects/${{ env.PROJECT }}/src
+
+      - name: Run tests with coverage
+        run: uv run pytest tests/ --cov=app --cov-report=xml --cov-fail-under=80
+        working-directory: projects/${{ env.PROJECT }}/src
+
+      - name: Upload coverage report
+        uses: codecov/codecov-action@v4
+        with:
+          file: projects/${{ env.PROJECT }}/src/coverage.xml
+
+  # ─── Stage 3: Security ────────────────────────────────────────────────────────
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Snyk dependency scan
+        uses: snyk/actions/python@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high
+          command: test
+
+      - name: Build image for scanning
+        run: |
+          docker build -t ${{ env.IMAGE_NAME }}:scan \
+            projects/${{ env.PROJECT }}/src/
+
+      - name: Run Trivy container scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: '${{ env.IMAGE_NAME }}:scan'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '1'
+
+  # ─── Stage 4: Build & Push ────────────────────────────────────────────────────
+  build:
+    name: Build & Push Image
+    runs-on: ubuntu-latest
+    needs: [test, security]
+    outputs:
+      image-tag: ${{ steps.meta.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.ECR_REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha,prefix=
+            type=ref,event=branch
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: projects/${{ env.PROJECT }}/src
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ─── Stage 5: Integration Tests ───────────────────────────────────────────────
+  integration:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: build
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: testdb
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Run integration tests
+        env:
+          IMAGE_TAG: ${{ needs.build.outputs.image-tag }}
+          DATABASE_URL: "postgresql://test:test@localhost:5432/testdb"
+        run: |
+          docker run --rm \
+            --network host \
+            -e DATABASE_URL=$DATABASE_URL \
+            ${{ env.ECR_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }} \
+            make test-integration
