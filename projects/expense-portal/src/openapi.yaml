@@ -1,0 +1,933 @@
+openapi: "3.1.0"
+info:
+  title: Expense Management Portal
+  description: Employee Expense Management Portal API — Acme Corporation
+  version: "0.1.0"
+  contact:
+    name: Platform Engineering
+servers:
+  - url: https://expenses.acme.com
+    description: Production (via Azure API Management)
+
+paths:
+  /health:
+    get:
+      operationId: health
+      tags: [operations]
+      summary: Kubernetes liveness probe
+      responses:
+        "200":
+          description: Service is alive
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+
+  /ready:
+    get:
+      operationId: ready
+      tags: [operations]
+      summary: Kubernetes readiness probe
+      responses:
+        "200":
+          description: Service is ready
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadyResponse"
+        "503":
+          description: Service is not ready
+
+  /v1/auth/login:
+    get:
+      operationId: login
+      tags: [auth]
+      summary: Initiate OIDC login
+      responses:
+        "302":
+          description: Redirect to Entra ID
+
+  /v1/auth/callback:
+    get:
+      operationId: callback
+      tags: [auth]
+      summary: OIDC callback
+      responses:
+        "302":
+          description: Redirect to dashboard with session cookie
+
+  /v1/auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Destroy session
+      responses:
+        "302":
+          description: Redirect to Entra ID logout
+
+  /v1/expenses/reports:
+    get:
+      operationId: listReports
+      tags: [expenses]
+      summary: List expense reports
+      parameters:
+        - name: cursor
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: date_from
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: date_to
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Paginated list of reports
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportListOut"
+    post:
+      operationId: createReport
+      tags: [expenses]
+      summary: Create a new expense report
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReportCreate"
+      responses:
+        "201":
+          description: Report created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportSummaryOut"
+
+  /v1/expenses/reports/{report_id}:
+    get:
+      operationId: getReport
+      tags: [expenses]
+      summary: Get report details
+      parameters:
+        - name: report_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Report detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportDetailOut"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateReport
+      tags: [expenses]
+      summary: Update a draft/rejected report
+      parameters:
+        - name: report_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReportUpdate"
+      responses:
+        "200":
+          description: Updated report
+        "409":
+          description: Report not editable
+
+  /v1/expenses/reports/{report_id}/submit:
+    post:
+      operationId: submitReport
+      tags: [expenses]
+      summary: Submit report for approval
+      parameters:
+        - name: report_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubmitRequest"
+      responses:
+        "200":
+          description: Report submitted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SubmitResponse"
+        "422":
+          description: Policy violations
+
+  /v1/expenses/reports/{report_id}/line-items:
+    post:
+      operationId: addLineItem
+      tags: [expenses]
+      summary: Add a line item
+      parameters:
+        - name: report_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LineItemCreate"
+      responses:
+        "201":
+          description: Line item created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LineItemOut"
+
+  /v1/expenses/reports/{report_id}/line-items/{item_id}:
+    patch:
+      operationId: updateLineItem
+      tags: [expenses]
+      parameters:
+        - name: report_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: item_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LineItemUpdate"
+      responses:
+        "200":
+          description: Updated line item
+    delete:
+      operationId: deleteLineItem
+      tags: [expenses]
+      parameters:
+        - name: report_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: item_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Line item deleted
+
+  /v1/expenses/reports/{report_id}/line-items/{item_id}/receipt:
+    post:
+      operationId: uploadReceipt
+      tags: [receipts]
+      summary: Upload a receipt image
+      parameters:
+        - name: report_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: item_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        "202":
+          description: Receipt uploaded, OCR processing
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReceiptUploadOut"
+
+  /v1/receipts/{receipt_id}:
+    get:
+      operationId: getReceipt
+      tags: [receipts]
+      summary: Download receipt (SAS URL redirect)
+      parameters:
+        - name: receipt_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "302":
+          description: Redirect to blob SAS URL
+
+  /v1/expenses/ocr-status/{task_id}:
+    get:
+      operationId: getOcrStatus
+      tags: [receipts]
+      summary: Poll OCR processing status
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OCR status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OcrStatusOut"
+
+  /v1/approvals/pending:
+    get:
+      operationId: listPendingApprovals
+      tags: [approvals]
+      summary: List pending approvals
+      parameters:
+        - name: cursor
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Pending approvals
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PendingApprovalListOut"
+
+  /v1/approvals/{report_id}/approve:
+    post:
+      operationId: approveReport
+      tags: [approvals]
+      summary: Approve an expense report
+      parameters:
+        - name: report_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApproveRequest"
+      responses:
+        "200":
+          description: Report approved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApprovalResponse"
+
+  /v1/approvals/{report_id}/reject:
+    post:
+      operationId: rejectReport
+      tags: [approvals]
+      summary: Reject an expense report
+      parameters:
+        - name: report_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RejectRequest"
+      responses:
+        "200":
+          description: Report rejected
+
+  /v1/approvals/{report_id}/request-info:
+    post:
+      operationId: requestInfo
+      tags: [approvals]
+      summary: Request more information
+      parameters:
+        - name: report_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RequestInfoRequest"
+      responses:
+        "200":
+          description: Information requested
+
+  /v1/reports/finance:
+    get:
+      operationId: financeReport
+      tags: [reports]
+      summary: Finance reporting dashboard
+      parameters:
+        - name: period
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [monthly, quarterly, yearly]
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum: [json, csv]
+            default: json
+      responses:
+        "200":
+          description: Finance report data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FinanceReportOut"
+
+  /v1/reports/manager:
+    get:
+      operationId: managerReport
+      tags: [reports]
+      summary: Manager team spend dashboard
+      parameters:
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum: [json, csv]
+            default: json
+      responses:
+        "200":
+          description: Manager report data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ManagerReportOut"
+
+  /v1/admin/categories:
+    get:
+      operationId: listCategories
+      tags: [admin]
+      summary: List expense categories
+      responses:
+        "200":
+          description: Categories list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CategoryOut"
+    post:
+      operationId: createCategory
+      tags: [admin]
+      summary: Create expense category
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CategoryCreate"
+      responses:
+        "201":
+          description: Category created
+
+  /v1/admin/categories/{category_id}:
+    patch:
+      operationId: updateCategory
+      tags: [admin]
+      parameters:
+        - name: category_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CategoryUpdate"
+      responses:
+        "200":
+          description: Category updated
+
+  /v1/admin/approval-thresholds:
+    get:
+      operationId: getThresholds
+      tags: [admin]
+      summary: Get approval thresholds
+      responses:
+        "200":
+          description: Current thresholds
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ThresholdOut"
+    patch:
+      operationId: updateThresholds
+      tags: [admin]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ThresholdUpdate"
+      responses:
+        "200":
+          description: Thresholds updated
+
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+      required: [status]
+
+    ReadyResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        checks:
+          type: object
+          additionalProperties:
+            type: string
+      required: [status, checks]
+
+    ReportCreate:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 255
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+        business_purpose:
+          type: string
+          maxLength: 1000
+        submit:
+          type: boolean
+          default: false
+      required: [title, start_date, end_date, business_purpose]
+
+    ReportUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+        business_purpose:
+          type: string
+
+    ReportSummaryOut:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        status:
+          type: string
+        total_amount:
+          type: number
+        currency:
+          type: string
+        line_item_count:
+          type: integer
+        submitted_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    ReportListOut:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/ReportSummaryOut"
+        next_cursor:
+          type: string
+          nullable: true
+        total:
+          type: integer
+
+    ReportDetailOut:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        status:
+          type: string
+        line_items:
+          type: array
+          items:
+            $ref: "#/components/schemas/LineItemOut"
+        approval_history:
+          type: array
+          items:
+            $ref: "#/components/schemas/ApprovalHistoryEntry"
+
+    LineItemCreate:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        category:
+          type: string
+        vendor_name:
+          type: string
+          maxLength: 255
+        amount:
+          type: number
+          exclusiveMinimum: 0
+        currency:
+          type: string
+          pattern: "^(USD|CAD)$"
+        description:
+          type: string
+          maxLength: 500
+      required: [date, category, vendor_name, amount, currency, description]
+
+    LineItemUpdate:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        category:
+          type: string
+        vendor_name:
+          type: string
+        amount:
+          type: number
+        currency:
+          type: string
+        description:
+          type: string
+
+    LineItemOut:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        date:
+          type: string
+          format: date
+        category:
+          type: string
+        vendor_name:
+          type: string
+        amount:
+          type: number
+        currency:
+          type: string
+        description:
+          type: string
+        receipt_url:
+          type: string
+          nullable: true
+        ocr_status:
+          type: string
+          nullable: true
+
+    ReceiptUploadOut:
+      type: object
+      properties:
+        receipt_url:
+          type: string
+        ocr_status:
+          type: string
+        ocr_task_id:
+          type: string
+
+    OcrStatusOut:
+      type: object
+      properties:
+        task_id:
+          type: string
+        status:
+          type: string
+          enum: [processing, completed, failed]
+        extracted_fields:
+          type: object
+          nullable: true
+
+    SubmitRequest:
+      type: object
+      properties:
+        acknowledge_warnings:
+          type: boolean
+          default: false
+
+    SubmitResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          type: string
+        submitted_at:
+          type: string
+          format: date-time
+
+    PendingApprovalOut:
+      type: object
+      properties:
+        report_id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        total_amount:
+          type: number
+        approval_type:
+          type: string
+
+    PendingApprovalListOut:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/PendingApprovalOut"
+        next_cursor:
+          type: string
+          nullable: true
+        total:
+          type: integer
+
+    ApproveRequest:
+      type: object
+      properties:
+        comment:
+          type: string
+          maxLength: 500
+
+    RejectRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+          maxLength: 1000
+      required: [reason]
+
+    RequestInfoRequest:
+      type: object
+      properties:
+        question:
+          type: string
+          maxLength: 1000
+      required: [question]
+
+    ApprovalResponse:
+      type: object
+      properties:
+        report_id:
+          type: string
+          format: uuid
+        new_status:
+          type: string
+
+    ApprovalHistoryEntry:
+      type: object
+      properties:
+        action:
+          type: string
+        actor:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        comment:
+          type: string
+          nullable: true
+
+    FinanceReportOut:
+      type: object
+      properties:
+        summary:
+          $ref: "#/components/schemas/FinanceSummary"
+        by_cost_center:
+          type: array
+          items:
+            type: object
+        by_category:
+          type: array
+          items:
+            type: object
+        by_status:
+          type: array
+          items:
+            type: object
+
+    FinanceSummary:
+      type: object
+      properties:
+        total_amount:
+          type: number
+        report_count:
+          type: integer
+        average_amount:
+          type: number
+        period:
+          type: string
+
+    ManagerReportOut:
+      type: object
+      properties:
+        cost_center:
+          type: string
+        budget:
+          type: number
+        total_submitted:
+          type: number
+        total_approved:
+          type: number
+        remaining_budget:
+          type: number
+
+    CategoryOut:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        daily_limit:
+          type: number
+          nullable: true
+        reimbursable:
+          type: boolean
+
+    CategoryCreate:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        daily_limit:
+          type: number
+          nullable: true
+        reimbursable:
+          type: boolean
+          default: true
+      required: [name]
+
+    CategoryUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        daily_limit:
+          type: number
+        reimbursable:
+          type: boolean
+
+    ThresholdOut:
+      type: object
+      properties:
+        finance_review_threshold:
+          type: number
+        auto_escalation_days:
+          type: integer
+        reminder_days:
+          type: integer
+
+    ThresholdUpdate:
+      type: object
+      properties:
+        finance_review_threshold:
+          type: number
+        auto_escalation_days:
+          type: integer
+        reminder_days:
+          type: integer
