@@ -125,6 +125,13 @@ GET /ready    → 200 {"status": "ready"} or 503 if dependencies not healthy
 GET /metrics  → Prometheus-format metrics
 ```
 
+## After Completion — Commit and Hand Off
+Follow the **Agent Git Workflow** defined in `.github/copilot-instructions.md`:
+1. Stage only the files you produced under `projects/<project>/src/`
+2. Propose a commit message: `feat(<project>): implementation — <summary>`
+3. Ask the user to confirm before committing
+4. Print the handoff summary — next agent is **@4-test**
+
 ## PR Readiness Checklist
 Before considering a feature branch ready for PR:
 - [ ] All tests pass (`make test`)

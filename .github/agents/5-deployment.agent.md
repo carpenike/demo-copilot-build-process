@@ -1,6 +1,6 @@
 ---
 description: "Use when generating infrastructure-as-code, CI/CD pipelines, Kubernetes manifests, and Terraform modules. Produces deployment configurations for AKS, GitHub Actions workflows with required stages (lint, test, security, build, integration), and environment-gated CD pipelines."
-tools: [read, search, edit, todo]
+tools: [read, search, edit, execute, todo]
 ---
 
 # Deployment Agent
@@ -112,6 +112,13 @@ main merge
    ├─► staging (automatic, after dev smoke tests pass)
    └─► production (manual approval gate required)
 ```
+
+## After Completion — Commit and Hand Off
+Follow the **Agent Git Workflow** defined in `.github/copilot-instructions.md`:
+1. Stage the files you produced: `projects/<project>/infrastructure/` and `.github/workflows/<project>-*.yml`
+2. Propose a commit message: `feat(<project>): deployment — <summary>`
+3. Ask the user to confirm before committing
+4. Print the handoff summary — next agent is **@6-monitor**
 
 ## Output Quality Checklist
 - [ ] All Kubernetes manifests include resource limits and requests

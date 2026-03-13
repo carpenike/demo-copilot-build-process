@@ -94,6 +94,13 @@ Use the template at `templates/test/test-plan-template.md` as the starting struc
 - **Pass/Fail criteria:** ...
 ```
 
+## After Completion — Commit and Hand Off
+Follow the **Agent Git Workflow** defined in `.github/copilot-instructions.md`:
+1. Stage only the files you produced under `projects/<project>/tests/`
+2. Propose a commit message: `feat(<project>): tests — <summary>`
+3. Ask the user to confirm before committing
+4. Print the handoff summary — next agent is **@5-deployment**
+
 ## Output Quality Checklist
 - [ ] Every FR has at least one corresponding test scenario
 - [ ] Every user story acceptance criterion has a corresponding test

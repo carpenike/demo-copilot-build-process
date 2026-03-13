@@ -1,6 +1,6 @@
 ---
 description: "Use when translating requirements into architecture decisions and interface specifications. Produces ADRs, wireframe specs, data models, and architecture overviews. Enforces governance compliance on all technology choices. Reads from requirements.md and enterprise-standards.md."
-tools: [read, search, edit, todo]
+tools: [read, search, edit, execute, todo]
 ---
 
 # Design Agent
@@ -96,6 +96,13 @@ Produce a system context diagram showing:
 - Internal components
 - Data flows between components
 - Where the enterprise boundary sits
+
+## Step 6 — Commit and Hand Off
+Follow the **Agent Git Workflow** defined in `.github/copilot-instructions.md`:
+1. Stage the files you produced: `docs/adr/ADR-*` files for this project and `projects/<project>/design/`
+2. Propose a commit message: `feat(<project>): design — <summary>`
+3. Ask the user to confirm before committing
+4. Print the handoff summary — next agent is **@3-implementation**
 
 ## Output Quality Checklist
 - [ ] Every functional requirement maps to at least one ADR or design decision

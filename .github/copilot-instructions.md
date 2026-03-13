@@ -118,6 +118,54 @@ ownership matrix.
 
 ---
 
+## Agent Git Workflow
+
+All agents MUST follow these git practices. This section is inherited by every
+agent in the pipeline.
+
+### Before Writing Any Files
+1. **Check the current branch.** Run `git branch --show-current`.
+2. If you are on `main`, **stop and ask the user** whether to create a feature branch.
+   Suggest: `feat/<project>-<agent-stage>` (e.g., `feat/expense-portal-requirements`).
+3. If a suitable feature branch already exists, confirm with the user before switching.
+
+### After Completing All Outputs
+1. **Stage only the files you produced.** Use explicit paths — never `git add .` or `git add -A`.
+2. **Show the user a commit preview** — list the staged files and proposed commit message.
+3. **Ask the user to confirm before committing.** Do not commit automatically.
+4. **Commit with a conventional commit message** following this format:
+   ```
+   feat(<project>): <agent-role> — <short summary>
+
+   - Bullet list of artifacts produced
+   - Reference to ADR if applicable
+   ```
+   Use the agent's role as scope context (e.g., `requirements`, `design`, `implementation`,
+   `tests`, `deployment`, `monitoring`).
+5. **Do NOT push.** The human decides when to push and open a PR.
+6. **Print a handoff summary** so the user knows what to do next:
+   ```
+   --- Handoff Summary ---
+   Agent:    @<current-agent>
+   Project:  <project-name>
+   Branch:   <branch-name>
+   Commit:   <short SHA>
+   Files:    <list of files produced>
+   Next:     Invoke @<next-agent> to continue the pipeline
+   ```
+
+### Commit Message Scopes by Agent
+| Agent | Scope example |
+|-------|---------------|
+| @1-requirements | `feat(expense-portal): requirements — ...` |
+| @2-design | `feat(expense-portal): design — ...` |
+| @3-implementation | `feat(expense-portal): implementation — ...` |
+| @4-test | `feat(expense-portal): tests — ...` |
+| @5-deployment | `feat(expense-portal): deployment — ...` |
+| @6-monitor | `feat(expense-portal): monitoring — ...` |
+
+---
+
 ## Code Style Quick Reference
 
 These override Copilot's defaults for this repo:

@@ -1,6 +1,6 @@
 ---
 description: "Use when processing raw stakeholder input into structured engineering requirements. Handles feature requests, problem statements, meeting notes. Produces requirements.md and user-stories.md with Gherkin acceptance criteria. Flags governance conflicts against enterprise standards."
-tools: [read, search, edit, todo]
+tools: [read, search, edit, execute, todo]
 ---
 
 # Requirements Agent
@@ -93,6 +93,13 @@ Flag any conflicts in a `## Governance Flags` section at the bottom of `requirem
 Example flags:
 - Stakeholder requested a Node.js service → BLOCKED by language policy
 - Stakeholder wants email/password auth → Flag for security review
+
+## Step 6 — Commit and Hand Off
+Follow the **Agent Git Workflow** defined in `.github/copilot-instructions.md`:
+1. Stage only the files you produced under `projects/<project>/requirements/`
+2. Propose a commit message: `feat(<project>): requirements — <summary>`
+3. Ask the user to confirm before committing
+4. Print the handoff summary — next agent is **@2-design**
 
 ## Output Quality Checklist
 - [ ] Every functional requirement is testable (a QA engineer could write a test for it)
