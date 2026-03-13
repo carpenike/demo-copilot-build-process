@@ -11,15 +11,15 @@
 
 The system must send email notifications on ticket status changes (FR-012) and
 when customers comment on assigned tickets (FR-013). The stakeholder specified
-SendGrid as the email provider. Emails should not block the API response — they
+Azure Communication Services as the email provider. Emails should not block the API response — they
 should be dispatched asynchronously.
 
 ---
 
 ## Decision
 
-> We will use **Celery + Redis** for async task processing and the **SendGrid
-> API** (via `sendgrid` Python SDK) for email delivery.
+> We will use **Celery + Redis** for async task processing and the **Azure
+> Communication Services Email API** (via `azure-communication-email` Python SDK) for email delivery.
 
 ---
 
@@ -28,20 +28,20 @@ should be dispatched asynchronously.
 | Constraint | Standard | This Decision | Compliant? |
 |------------|----------|---------------|------------|
 | Background tasks | Celery + Redis | Celery + Redis | ✅ |
-| Secrets | AWS Secrets Manager | SendGrid API key via Secrets Manager | ✅ |
-| Infrastructure | Terraform + internal modules | ElastiCache Redis via Terraform | ✅ |
+| Secrets | Azure Key Vault | Email API key via Key Vault | ✅ |
+| Infrastructure | Terraform + internal modules | Azure Cache for Redis via Terraform | ✅ |
 
 ---
 
 ## Options Considered
 
-### Option 1: Celery + Redis + SendGrid ← Chosen
+### Option 1: Celery + Redis + Azure Communication Services ← Chosen
 
 **Pros:**
 - Approved stack for background tasks per enterprise standards
 - Async dispatch keeps API response times low
 - Celery provides retry, dead-letter, and monitoring out of the box
-- SendGrid SDK is well-maintained and simple to integrate
+- Azure Communication Services SDK is well-maintained and simple to integrate
 
 **Cons:**
 - Redis is an additional infrastructure component
@@ -56,7 +56,7 @@ should be dispatched asynchronously.
 
 **Cons:**
 - Blocks API response on email delivery (100–500ms per email)
-- If SendGrid is down, API requests fail
+- If email provider is down, API requests fail
 - Violates NFR-001 (200ms response time)
 
 ---
@@ -81,8 +81,8 @@ should be dispatched asynchronously.
 
 - Celery task: `send_status_notification(ticket_id, old_status, new_status)`
 - Celery task: `send_comment_notification(ticket_id, comment_id)`
-- Redis connection via ElastiCache, credentials in Secrets Manager
-- SendGrid API key stored in AWS Secrets Manager, loaded via config
+- Redis connection via Azure Cache for Redis, credentials in Key Vault
+- Azure Communication Services connection string stored in Azure Key Vault, loaded via config
 - Use Celery `autoretry_for` with exponential backoff for transient failures
 
 ---

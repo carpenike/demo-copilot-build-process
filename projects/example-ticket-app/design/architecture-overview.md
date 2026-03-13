@@ -15,20 +15,20 @@ graph TB
         Customer[Customer<br/>Web Browser]
         Agent[Support Agent<br/>Web Browser]
         Admin[Admin / Manager<br/>Web Browser]
-        OAuth[OAuth2 Provider<br/>Okta / Auth0]
-        SendGrid[SendGrid<br/>Email Service]
+        OAuth[OAuth2 Provider<br/>Microsoft Entra ID]
+        ACS[Azure Communication Services<br/>Email Service]
     end
 
     subgraph Enterprise Boundary
-        subgraph EKS Cluster
+        subgraph AKS Cluster
             API[Ticket API<br/>FastAPI / Python]
             Worker[Celery Worker<br/>Email Tasks]
         end
 
         subgraph Data Layer
-            PG[(PostgreSQL<br/>RDS)]
-            Redis[(Redis<br/>ElastiCache)]
-            S3[(S3<br/>Attachments)]
+            PG[(PostgreSQL<br/>Azure DB)]
+            Redis[(Redis<br/>Azure Cache for Redis)]
+            Blob[(Azure Blob<br/>Attachments)]
         end
     end
 
@@ -38,10 +38,10 @@ graph TB
     API -->|Verify JWT| OAuth
     API -->|Read/Write| PG
     API -->|Enqueue tasks| Redis
-    API -->|Upload files| S3
+    API -->|Upload files| Blob
     Worker -->|Consume tasks| Redis
     Worker -->|Read ticket data| PG
-    Worker -->|Send email| SendGrid
+    Worker -->|Send email| ACS
 ```
 
 ---
@@ -52,11 +52,11 @@ graph TB
 |-----------|-----------|----------------|
 | **Ticket API** | Python 3.11+ / FastAPI | REST API, auth, business logic, search |
 | **Celery Worker** | Python / Celery | Async email dispatch, background processing |
-| **PostgreSQL** | RDS PostgreSQL 16 | Tickets, comments, users, full-text search |
-| **Redis** | ElastiCache | Celery broker + result backend |
-| **S3** | AWS S3 | Receipt/attachment file storage |
-| **OAuth2 Provider** | External (Okta) | Authentication, JWT issuance |
-| **SendGrid** | External SaaS | Transactional email delivery |
+| **PostgreSQL** | Azure Database for PostgreSQL | Tickets, comments, users, full-text search |
+| **Redis** | Azure Cache for Redis | Celery broker + result backend |
+| **Blob Storage** | Azure Blob Storage | Receipt/attachment file storage |
+| **OAuth2 Provider** | Microsoft Entra ID | Authentication, JWT issuance |
+| **Email Service** | Azure Communication Services | Transactional email delivery |
 
 ---
 
@@ -78,7 +78,7 @@ graph TB
 4. API → Agent:        200 OK with updated ticket
 5. Worker ← Redis:     Dequeue notification task
 6. Worker → PG:        Read ticket + customer email
-7. Worker → SendGrid:  Send status change email
+7. Worker → ACS:        Send status change email
 ```
 
 ---
@@ -86,7 +86,7 @@ graph TB
 ## Deployment Architecture
 
 ```
-EKS Namespace: ticket-portal
+AKS Namespace: ticket-portal
 ├── Deployment: ticket-api       (2–10 replicas, HPA on CPU 70%)
 ├── Deployment: celery-worker    (2–5 replicas, HPA on queue depth)
 ├── Service: ticket-api-svc      (ClusterIP, port 8000)
@@ -94,12 +94,12 @@ EKS Namespace: ticket-portal
 ├── HPA: celery-worker-hpa
 ├── PDB: ticket-api-pdb          (minAvailable: 1)
 ├── PDB: celery-worker-pdb       (minAvailable: 1)
-├── NetworkPolicy: default-deny + allow ingress from API Gateway
+├── NetworkPolicy: default-deny + allow ingress from Azure API Management
 ├── ServiceAccount: ticket-api-sa
 ├── ExternalSecret: db-credentials
 ├── ExternalSecret: redis-credentials
-├── ExternalSecret: sendgrid-api-key
-└── Ingress: via API Gateway (Kong / AWS API Gateway)
+├── ExternalSecret: email-connection-string
+└── Ingress: via Azure API Management
 ```
 
 ---
@@ -108,9 +108,9 @@ EKS Namespace: ticket-portal
 
 | Boundary | Control |
 |----------|---------|
-| Internet → API | API Gateway (WAF, rate limiting, TLS termination) |
-| API → Database | VPC security group, IAM auth |
-| API → Redis | VPC security group, AUTH token |
-| API → S3 | IAM role (IRSA), pre-signed URLs for client uploads |
+| Internet → API | Azure API Management (WAF, rate limiting, TLS termination) |
+| API → Database | VNet security group, managed identity auth |
+| API → Redis | VNet security group, AUTH token |
+| API → Blob Storage | Managed identity (Workload Identity), SAS URLs for client uploads |
 | API → OAuth | HTTPS, JWT signature verification |
-| Worker → SendGrid | HTTPS, API key from Secrets Manager |
+| Worker → Email | HTTPS, connection string from Azure Key Vault |

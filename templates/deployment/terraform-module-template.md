@@ -12,12 +12,12 @@ infrastructure/terraform/
   main.tf           # Module calls only — no raw resources here
   variables.tf      # Input variables with descriptions and validation
   outputs.tf        # Outputs consumed by other modules or CI
-  backend.tf        # Remote state configuration (S3 + DynamoDB)
+  backend.tf        # Remote state configuration (Azure Storage Account)
   modules/
-    ecr/            # Container registry for service images
-    eks-service/    # EKS deployment configuration
+    acr/            # Container registry for service images
+    aks-service/    # AKS deployment configuration
     rds/            # Database (if applicable)
-    elasticache/    # Cache (if applicable)
+    azure-cache/    # Cache (if applicable)
 ```
 
 ---
@@ -34,7 +34,7 @@ Every service deployment MUST include these manifests:
 | `pdb.yaml` | Pod Disruption Budget | minAvailable: 1 |
 | `network-policy.yaml` | Default-deny + explicit allows | ingress/egress rules |
 | `service-account.yaml` | Dedicated SA per service | no default SA usage |
-| `external-secret.yaml` | Secrets via AWS Secrets Manager | secretStoreRef, target |
+| `external-secret.yaml` | Secrets via Azure Key Vault | secretStoreRef, target |
 
 ---
 
@@ -44,8 +44,8 @@ Every service deployment MUST include these manifests:
 jobs:
   lint:        # Static analysis + formatting check
   test:        # Unit tests with coverage report (≥ 80%)
-  security:    # Trivy container scan + Snyk dependency check
-  build:       # Docker image build + push to ECR
+  security:    # Microsoft Defender for Containers scan + GitHub Advanced Security dependency check
+  build:       # Docker image build + push to ACR
   integration: # Integration tests against built image
 ```
 

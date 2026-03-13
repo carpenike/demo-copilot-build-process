@@ -17,7 +17,7 @@ on:
 
 env:
   PROJECT: "[project-name]"
-  ECR_REGISTRY: "${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com"
+  ACR_REGISTRY: "${{ secrets.ACR_LOGIN_SERVER }}"
   IMAGE_NAME: "[project-name]"
 
 jobs:
@@ -86,27 +86,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Run Snyk dependency scan
-        uses: snyk/actions/python@master
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      - name: Run GitHub Advanced Security dependency scan
+        uses: github/codeql-action/analyze@v3
         with:
-          args: --severity-threshold=high
-          command: test
+          category: "/language:python"
 
       - name: Build image for scanning
         run: |
           docker build -t ${{ env.IMAGE_NAME }}:scan \
             projects/${{ env.PROJECT }}/src/
 
-      - name: Run Trivy container scan
-        uses: aquasecurity/trivy-action@master
+      - name: Run Microsoft Defender for Containers scan
+        uses: Azure/container-scan@v0
         with:
-          image-ref: '${{ env.IMAGE_NAME }}:scan'
-          format: 'sarif'
-          output: 'trivy-results.sarif'
-          severity: 'CRITICAL,HIGH'
-          exit-code: '1'
+          image-name: '${{ env.IMAGE_NAME }}:scan'
+          severity-threshold: 'HIGH'
 
   # ─── Stage 4: Build & Push ────────────────────────────────────────────────────
   build:
@@ -118,32 +112,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+      - name: Login to Azure
+        uses: azure/login@v2
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Login to ECR
-        uses: aws-actions/amazon-ecr-login@v2
-
-      - name: Extract metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.ECR_REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=sha,prefix=
-            type=ref,event=branch
+      - name: Login to ACR
+        run: az acr login --name ${{ secrets.ACR_NAME }}
 
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
           context: projects/${{ env.PROJECT }}/src
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ env.ACR_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -167,15 +151,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+      - name: Login to Azure
+        uses: azure/login@v2
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Login to ECR
-        uses: aws-actions/amazon-ecr-login@v2
+      - name: Login to ACR
+        run: az acr login --name ${{ secrets.ACR_NAME }}
 
       - name: Run integration tests
         env:
@@ -185,5 +169,5 @@ jobs:
           docker run --rm \
             --network host \
             -e DATABASE_URL=$DATABASE_URL \
-            ${{ env.ECR_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }} \
+            ${{ env.ACR_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }} \
             make test-integration

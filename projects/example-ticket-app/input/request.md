@@ -21,6 +21,6 @@ time, and agent performance. Maybe built in React? And we were thinking Node.js
 for the backend since our frontend team knows it.
 
 It needs to connect to our existing customer database (Postgres) and we use
-SendGrid for emails.
+Azure Communication Services for emails.
 
 We want this done in 6 weeks.

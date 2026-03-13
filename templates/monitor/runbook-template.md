@@ -4,7 +4,7 @@
 > **Date:** YYYY-MM-DD
 > **Produced by:** Monitor Agent
 > **Service owner:** [Team name]
-> **On-call rotation:** [PagerDuty schedule link]
+> **On-call rotation:** [Azure Monitor Action Groups schedule link]
 
 ---
 
@@ -116,6 +116,6 @@
 
 | Role | Name | Contact |
 |------|------|---------|
-| Service Owner | [name] | [email/slack] |
-| On-Call Primary | [rotation] | [pagerduty] |
-| Escalation | [name] | [email/slack] |
+| Service Owner | [name] | [email/teams] |
+| On-Call Primary | [rotation] | [Azure Monitor Action Groups] |
+| Escalation | [name] | [email/teams] |

@@ -36,7 +36,7 @@ Related requirements: FR-001 through FR-016, NFR-001 (200ms p95 latency).
 |------------|----------|---------------|------------|
 | Language | Python or Go only | Python 3.11+ | ✅ |
 | Framework | FastAPI (REST APIs) | FastAPI | ✅ |
-| Infrastructure | Docker + EKS | Docker + EKS | ✅ |
+| Infrastructure | Docker + AKS | Docker + AKS | ✅ |
 
 ---
 
@@ -51,7 +51,7 @@ Pydantic for request/response validation.
 - Approved language and framework — zero governance friction
 - Excellent async support for I/O-bound workload (DB, email, search)
 - Pydantic provides automatic OpenAPI spec generation
-- Rich ecosystem for all required integrations (SQLAlchemy, SendGrid SDK, etc.)
+- Rich ecosystem for all required integrations (SQLAlchemy, Azure Communication Services SDK, etc.)
 - Team velocity: fastest path to a working API
 
 **Cons:**

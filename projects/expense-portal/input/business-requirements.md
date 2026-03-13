@@ -131,7 +131,7 @@ This project is being initiated to address the following measurable business out
 
 ### 6.3 Security
 
-- **NFR-007:** All access SHALL require SSO authentication via the corporate Okta identity provider.
+- **NFR-007:** All access SHALL require SSO authentication via the corporate Microsoft Entra ID identity provider.
 - **NFR-008:** Role-based access control SHALL enforce that employees can only view their own reports; managers can only view direct reports' submissions.
 - **NFR-009:** Receipt images and financial data SHALL be encrypted at rest using AES-256.
 - **NFR-010:** All data transmission SHALL use TLS 1.2 or higher.
@@ -152,7 +152,7 @@ This project is being initiated to address the following measurable business out
 
 ### 7.1 Assumptions
 
-1. All employees have corporate Okta SSO credentials and can authenticate via existing identity infrastructure.
+1. All employees have corporate Microsoft Entra ID SSO credentials and can authenticate via existing identity infrastructure.
 2. Workday contains accurate, current manager hierarchy data. The portal will not maintain its own org chart.
 3. The SAP S/4HANA integration team will provide IDoc schema documentation and a sandbox environment by Week 3 of the project.
 4. Finance will provide finalized expense policy rules (per diem limits, category definitions) at least 4 weeks before UAT.
@@ -161,8 +161,8 @@ This project is being initiated to address the following measurable business out
 ### 7.2 Constraints
 
 - Technology choices for this project are governed by the Platform Engineering enterprise standards. **Only Python and Go are approved for new backend services**; any deviation requires an approved Architecture Decision Record (ADR).
-- The system must be deployable to the existing Kubernetes (EKS) infrastructure.
-- All secrets and credentials must be stored in AWS Secrets Manager. No credentials may appear in configuration files or source code.
+- The system must be deployable to the existing Kubernetes (AKS) infrastructure.
+- All secrets and credentials must be stored in Azure Key Vault. No credentials may appear in configuration files or source code.
 - The project must go live before the Q3 2026 fiscal quarter close (target: **July 1, 2026**).
 
 ---

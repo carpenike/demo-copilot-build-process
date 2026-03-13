@@ -18,7 +18,7 @@ on:
 env:
   PROJECT: "[project-name]"
   GO_VERSION: "1.22"
-  ECR_REGISTRY: "${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com"
+  ACR_REGISTRY: "${{ secrets.ACR_LOGIN_SERVER }}"
   IMAGE_NAME: "[project-name]"
 
 jobs:
@@ -111,13 +111,11 @@ jobs:
           docker build -t ${{ env.IMAGE_NAME }}:scan \
             projects/${{ env.PROJECT }}/src/
 
-      - name: Run Trivy container scan
-        uses: aquasecurity/trivy-action@master
+      - name: Run Microsoft Defender for Containers scan
+        uses: Azure/container-scan@v0
         with:
-          image-ref: '${{ env.IMAGE_NAME }}:scan'
-          format: 'table'
-          exit-code: '1'
-          severity: 'CRITICAL,HIGH'
+          image-name: '${{ env.IMAGE_NAME }}:scan'
+          severity-threshold: 'HIGH'
 
   # ─── Stage 4: Build ───────────────────────────────────────────────────────────
   build:
@@ -130,18 +128,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+      - name: Login to Azure
+        uses: azure/login@v2
         with:
-          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
-          aws-region: ${{ secrets.AWS_REGION }}
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Login to ECR
-        uses: aws-actions/amazon-ecr-login@v2
+      - name: Login to ACR
+        run: az acr login --name ${{ secrets.ACR_NAME }}
 
       - name: Build and push
         run: |
-          IMAGE_TAG="${{ env.ECR_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}"
+          IMAGE_TAG="${{ env.ACR_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}"
           docker build -t "$IMAGE_TAG" projects/${{ env.PROJECT }}/src/
           docker push "$IMAGE_TAG"
           echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV

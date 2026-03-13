@@ -130,7 +130,7 @@ architectural changes.
 
 - Customers authenticate via an existing OAuth2 identity provider
 - The existing PostgreSQL database is available and will be used for persistence
-- SendGrid is the approved email provider and an API key is available via Secrets Manager
+- Azure Communication Services is the approved email provider and a connection string is available via Azure Key Vault
 - Support agents are managed as a user role and provisioned by admin
 
 ---

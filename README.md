@@ -59,7 +59,7 @@ picker and give it the project to process
 
 - **Languages:** Python 3.11+ and Go 1.22+ only
 - **Containers:** Docker (multi-stage builds, non-root, distroless base)
-- **Orchestration:** Kubernetes on EKS
+- **Orchestration:** Kubernetes on AKS
 - **CI/CD:** GitHub Actions with mandatory lint → test → security → build → integration stages
-- **Secrets:** AWS Secrets Manager only; never in code or config files
-- **Observability:** Structured JSON logs + Prometheus metrics + OpenTelemetry traces (all required)
+- **Secrets:** Azure Key Vault only; never in code or config files
+- **Observability:** Structured JSON logs + Prometheus metrics + OpenTelemetry traces (all via Azure Monitor)

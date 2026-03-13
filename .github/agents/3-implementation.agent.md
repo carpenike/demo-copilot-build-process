@@ -17,7 +17,7 @@ you produce must be consistent with `governance/enterprise-standards.md`.
 ## Constraints
 - DO NOT invent architecture — implement what the ADRs and design docs specify
 - DO NOT introduce technologies not approved in `governance/enterprise-standards.md`
-- DO NOT put secrets, credentials, or API keys in any file — reference AWS Secrets Manager
+- DO NOT put secrets, credentials, or API keys in any file — reference Azure Key Vault
 - DO NOT leave TODO comments in new code
 - DO NOT begin producing output until the target project is confirmed
 

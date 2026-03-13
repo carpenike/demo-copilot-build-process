@@ -40,7 +40,7 @@ conflict and propose the closest compliant alternative.
 `governance/enterprise-standards.md` for the approved list.
 
 **No secrets in code or config files.** If you are about to write a secret,
-credential, or API key — stop, and instead write a reference to AWS Secrets Manager.
+credential, or API key — stop, and instead write a reference to Azure Key Vault.
 
 ---
 

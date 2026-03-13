@@ -31,8 +31,8 @@ dedicated search engine (e.g., Elasticsearch/OpenSearch)?
 
 | Constraint | Standard | This Decision | Compliant? |
 |------------|----------|---------------|------------|
-| Infrastructure | Terraform + internal modules | RDS PostgreSQL via Terraform | ✅ |
-| Secrets | AWS Secrets Manager | DB credentials via Secrets Manager | ✅ |
+| Infrastructure | Terraform + internal modules | Azure Database for PostgreSQL via Terraform | ✅ |
+| Secrets | Azure Key Vault | DB credentials via Key Vault | ✅ |
 
 ---
 

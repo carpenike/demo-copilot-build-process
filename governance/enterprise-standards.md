@@ -50,11 +50,11 @@ Any language not listed above is **prohibited** for new projects. This includes
 ## Infrastructure & Deployment Policy
 
 - **Container runtime:** Docker (OCI-compliant images only)
-- **Orchestration:** Kubernetes (EKS preferred; GKE approved for GCP-native workloads)
+- **Orchestration:** Kubernetes (AKS)
 - **CI/CD platform:** GitHub Actions
-- **Artifact registry:** AWS ECR (primary), GitHub Packages (secondary)
+- **Artifact registry:** Azure Container Registry (ACR)
 - **IaC tooling:** Terraform (modules from the internal registry only)
-- **Secrets management:** AWS Secrets Manager; no secrets in environment variables, code, or config files
+- **Secrets management:** Azure Key Vault; no secrets in environment variables, code, or config files
 
 ---
 
@@ -62,19 +62,19 @@ Any language not listed above is **prohibited** for new projects. This includes
 
 - All services must expose a `/health` and `/ready` endpoint
 - TLS 1.2+ required for all service-to-service communication
-- No public-facing endpoints without API gateway (AWS API Gateway or Kong)
+- No public-facing endpoints without API gateway (Azure API Management)
 - SAST scanning must pass before merge (see `.github/workflows/security-scan.yml`)
 - All Docker base images must be sourced from the approved internal registry
-- Dependency scanning (Trivy or Snyk) required in every CI pipeline
+- Dependency scanning (Microsoft Defender for Containers + GitHub Advanced Security) required in every CI pipeline
 
 ---
 
 ## Observability Requirements
 
 Every deployed service must emit:
-- **Structured logs** to stdout in JSON format (ingested by Datadog)
-- **Metrics** via Prometheus-compatible `/metrics` endpoint
-- **Distributed traces** via OpenTelemetry SDK (Datadog backend)
+- **Structured logs** to stdout in JSON format (ingested by Azure Monitor)
+- **Metrics** via Prometheus-compatible `/metrics` endpoint (scraped by Azure Monitor managed Prometheus)
+- **Distributed traces** via OpenTelemetry SDK (Azure Monitor / Application Insights backend)
 
 ---
 

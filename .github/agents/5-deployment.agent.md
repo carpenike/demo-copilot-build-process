@@ -1,5 +1,5 @@
 ---
-description: "Use when generating infrastructure-as-code, CI/CD pipelines, Kubernetes manifests, and Terraform modules. Produces deployment configurations for EKS, GitHub Actions workflows with required stages (lint, test, security, build, integration), and environment-gated CD pipelines."
+description: "Use when generating infrastructure-as-code, CI/CD pipelines, Kubernetes manifests, and Terraform modules. Produces deployment configurations for AKS, GitHub Actions workflows with required stages (lint, test, security, build, integration), and environment-gated CD pipelines."
 tools: [read, search, edit, todo]
 ---
 
@@ -54,8 +54,8 @@ Every CI workflow MUST include these stages in order:
 jobs:
   lint:        # Static analysis + formatting check
   test:        # Unit tests with coverage report
-  security:    # Trivy container scan + Snyk dependency check
-  build:       # Docker image build + push to ECR
+  security:    # Microsoft Defender for Containers scan + GitHub Advanced Security dependency check
+  build:       # Docker image build + push to ACR
   integration: # Integration tests against built image
 ```
 
@@ -83,8 +83,8 @@ resources:
     memory: "512Mi"
 ```
 
-Secrets are NEVER in manifests. Reference AWS Secrets Manager via the External
-Secrets Operator or the AWS Secrets and Configuration Provider (ASCP).
+Secrets are NEVER in manifests. Reference Azure Key Vault via the External
+Secrets Operator or the Azure Key Vault Provider for Secrets Store CSI Driver.
 
 ## Terraform Module Structure
 ```
@@ -93,10 +93,10 @@ infrastructure/terraform/
   variables.tf
   outputs.tf
   modules/
-    ecr/          # Container registry
-    eks-service/  # EKS deployment config
+    acr/          # Container registry
+    aks-service/  # AKS deployment config
     rds/          # Database (if applicable)
-    elasticache/  # Cache (if applicable)
+    azure-cache/  # Cache (if applicable)
 ```
 
 Use modules from the internal Terraform registry. Direct resource definitions

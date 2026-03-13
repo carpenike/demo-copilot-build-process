@@ -44,7 +44,7 @@ Once the project is confirmed, present your plan before starting:
 - `runbook.md` — operational runbook for on-call engineers
 - `alert-rules.yaml` — Prometheus alerting rules
 - `slo-definitions.md` — formal SLO/SLA documentation
-- `dashboard-spec.md` — Datadog dashboard specification
+- `dashboard-spec.md` — Azure Monitor dashboard specification
 
 Use the templates at `templates/monitor/` as the starting structure.
 
