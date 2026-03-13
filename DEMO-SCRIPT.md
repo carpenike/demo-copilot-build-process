@@ -14,8 +14,8 @@
    - `governance/enterprise-standards.md`
    - `.github/agents/requirements.agent.md`
 4. **Show the agent picker** — agents appear automatically because they’re
-   in `.github/agents/` with proper YAML frontmatter
-
+   in `.github/agents/` with proper YAML frontmatter5. Have `projects/example-ticket-app/` ready to show as the golden path reference
+6. **Read the Glass Break section** at the bottom of this doc in case of issues
 ---
 
 ## The Story
@@ -40,9 +40,15 @@
 - **Key demo moment:** Open the agent picker in Copilot Chat and show all six agents listed
 
 **Key point:** *"These agents appear automatically because they’re defined as native
-Copilot custom agents. Each has restricted tools — the Requirements Agent can read
-and write files but can’t run terminal commands. The Code Agent can. This is
-role-based access control for AI."*
+Copilot custom agents. Each has restricted tools — @requirements, @design,
+@deployment, and @monitor can read, search, and write files but can't run terminal
+commands. Only @implementation and @test have terminal access, because they need
+to run builds and tests. This is role-based access control for AI."*
+
+**Show the end state first:** Open `projects/example-ticket-app/` and briefly walk
+through the completed pipeline output — requirements, ADRs, wireframe spec, data
+model, architecture overview. *"This is what the pipeline produces. Now let's
+watch it happen live with a different project."*
 
 ---
 
@@ -50,8 +56,15 @@ role-based access control for AI."*
 
 **Show the raw input:**
 Open `projects/expense-portal/input/business-requirements.md`. Point out that
-this is a real-world BRD — unstructured, from a business team, with constraints
-and open questions baked in.
+this is a formal Business Requirements Document from Finance — structured prose
+with stakeholder tables, numbered requirements, and open questions — but written
+for business stakeholders, not engineers. The agent will transform it into
+engineering-ready artifacts with testable acceptance criteria.
+
+> *"This BRD is well-structured from a business perspective, but it's not what
+> an engineering team can build against. The Requirements Agent will distill it
+> into FR/NFR format with Gherkin acceptance criteria — and flag anything that
+> conflicts with our enterprise standards."*
 
 **Prompt to paste in Copilot Chat:**
 ```
@@ -74,6 +87,13 @@ Produce:
 **Pause point:** *"Notice it didn't just summarize the doc — it decomposed it
 into testable requirements with acceptance criteria. And it flagged anything
 that conflicts with our enterprise standards."*
+
+**Review gate:** Before moving to Design, quickly scan the output:
+- Are all FRs testable?
+- Are NFR targets measurable (not vague)?
+- Are governance flags accurate?
+
+*"This is the human-in-the-loop step. We review before feeding to the next agent."*
 
 ---
 
@@ -101,12 +121,16 @@ stakeholder asked for MongoDB, the agent would either reject it or document
 the exception process. The design is a contract — detailed enough that a
 developer (human or AI) can implement without ambiguity."*
 
-**Show the golden path:** Open `projects/example-ticket-app/design/` to show
-what completed Design Agent output looks like.
+**Review gate:** Before moving to Implementation, verify:
+- Every ADR has a Governance Compliance table with all ✅
+- The wireframe spec covers all endpoints from the requirements
+- The data model accounts for all entities
+
+*"Again — review, then proceed. The agent produced it; you approve it."*
 
 ---
 
-## Stage 4: Code Agent (8 min)
+## Stage 4: Implementation Agent (8 min)
 
 **Prompt to paste in Copilot Chat:**
 ```
@@ -118,13 +142,13 @@ data models.
 ```
 
 **What to highlight:**
-- Code follows the exact structure from AGENT.md (app/api/, app/core/, app/models/, etc.)
+- Code follows the exact structure from the agent's instructions (app/api/, app/core/, app/models/, etc.)
 - `/health`, `/ready`, `/metrics` endpoints appear automatically
 - No secrets in code — config references Secrets Manager
 - Type hints on every signature, async throughout
 - Dockerfile uses multi-stage build with non-root user
 
-**Key point:** *"The Code Agent doesn't invent architecture — it executes
+**Key point:** *"The @implementation agent doesn't invent architecture — it executes
 the decisions from the ADRs. If the design says FastAPI, it builds FastAPI.
 If it spots a design flaw, it surfaces it instead of silently working around it."*
 
@@ -209,3 +233,37 @@ even set a `model:` field in the frontmatter to pin a specific model.
 **Q: How do you handle exceptions to the standards?**
 A: Show `governance/exceptions/README.md` — there's a documented process
 with VP sign-off and an ADR requirement.
+
+---
+
+## Glass Break — If Things Go Wrong
+
+> Recovery plans for common demo failures. Read this section before the demo.
+
+### Agent picker doesn't show agents
+**Cause:** YAML frontmatter syntax error or file not in `.github/agents/`.
+**Fix:** You can still invoke by typing `@requirements` directly in the chat
+input — Copilot will find it. If that fails, fall back to: *"Let me show you
+the output instead"* and open the golden path in `projects/example-ticket-app/`.
+
+### Agent produces unexpected or low-quality output
+**Fix:** Don't panic. Say: *"This is exactly why we have the human review step —
+let me refine the prompt."* Re-prompt with more specificity. If it's still poor,
+switch to showing the golden path output and say *"Here's what a tuned run
+produces — the value is in the structure and governance, not any single generation."*
+
+### Copilot is slow or times out
+**Fix:** While waiting, walk through the golden path output in
+`projects/example-ticket-app/` as if narrating the result. *"While that's
+processing, let me show you what the output looks like..."* This turns dead air
+into content.
+
+### Agent writes files to the wrong location
+**Fix:** This is actually a good demo moment: *"Notice it put the file in the
+wrong place — the agent's constraints told it where to write, but it got
+confused. This is why human review matters."* Correct it and move on.
+
+### Someone asks about a language/tool not in the approved list
+**Fix:** This is your best demo moment. Say *"Let's try it"* and ask the agent
+to use Node.js or MongoDB. Show that the governance flags catch it. Then show
+`governance/exceptions/README.md` for the exception process.

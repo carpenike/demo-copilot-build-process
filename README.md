@@ -43,7 +43,6 @@ picker and give it the project to process
 | `DEMO-SCRIPT.md` | Step-by-step demo script with prompts and talking points |
 | `governance/enterprise-standards.md` | Non-negotiable constraints for all agents |
 | `.github/agents/*.agent.md` | Copilot custom agent definitions (appear in agent picker) |
-| `.github/copilot-instructions.md` | Workspace instructions (auto-loaded by Copilot) |
 | `templates/` | Reusable output templates (all 6 stages) |
 | `.github/PULL_REQUEST_TEMPLATE.md` | PR checklist enforcing standards |
 | `.github/workflows/ci-template.yml` | Python CI pipeline template |

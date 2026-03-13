@@ -29,7 +29,7 @@ Stakeholder Input (raw feature request / problem statement)
                            │
                            ▼
 ┌─────────────────────────────────────────────────────┐
-│  CODE AGENT  (GitHub Copilot / Claude in VSCode)     │
+│  IMPLEMENTATION AGENT  (@implementation)              │
 │  Input:  ADRs + wireframe-spec + enterprise-standards│
 │  Output: Source code + openapi.yaml + Dockerfile     │
 └──────────────────────────┬──────────────────────────┘
@@ -84,9 +84,9 @@ Copilot Chat agent picker. Select an agent by name to invoke it.
 | `user-stories.md` | Requirements | Design, Test |
 | `docs/adr/ADR-XXXX-*.md` | Design | Code, Deployment |
 | `wireframe-spec.md` | Design | Code |
-| Source code | Code | Test, Deployment |
-| `openapi.yaml` | Code | Test, Monitor |
-| `Dockerfile` | Code | Deployment |
+| Source code | Implementation | Test, Deployment |
+| `openapi.yaml` | Implementation | Test, Monitor |
+| `Dockerfile` | Implementation | Deployment |
 | `test-plan.md` | Test | — (human review) |
 | `terraform/` | Deployment | Monitor |
 | `runbook.md` | Monitor | — (ops team) |
