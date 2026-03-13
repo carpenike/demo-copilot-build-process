@@ -19,7 +19,7 @@ stage of the software development lifecycle. The power comes from:
 ## Pipeline at a Glance
 
 ```
-Raw Request → @requirements → @design → @implementation → @test → @deployment → @monitor
+Raw Request → @1-requirements → @2-design → @3-implementation → @4-test → @5-deployment → @6-monitor
 ```
 
 See `governance/agent-pipeline-overview.md` for the full diagram.
@@ -28,12 +28,12 @@ See `governance/agent-pipeline-overview.md` for the full diagram.
 
 **Step 1:** Drop a feature request into `projects/<project>/input/request.md`
 
-**Step 2:** In Copilot Chat, select the **@requirements** agent from the agent
+**Step 2:** In Copilot Chat, select the **@1-requirements** agent from the agent
 picker and give it the project to process
 
 **Step 3:** Review and save the output to `projects/<project>/requirements/`
 
-**Step 4:** Continue through each agent role in sequence (@design → @implementation → @test → @deployment → @monitor)
+**Step 4:** Continue through each agent role in sequence (@2-design → @3-implementation → @4-test → @5-deployment → @6-monitor)
 
 ## Key Files
 

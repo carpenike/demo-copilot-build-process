@@ -12,7 +12,7 @@
 3. Have these files open in tabs for quick reference:
    - `.github/copilot-instructions.md`
    - `governance/enterprise-standards.md`
-   - `.github/agents/requirements.agent.md`
+   - `.github/agents/1-requirements.agent.md`
 4. **Show the agent picker** — agents appear automatically because they’re
    in `.github/agents/` with proper YAML frontmatter5. Have `projects/example-ticket-app/` ready to show as the golden path reference
 6. **Read the Glass Break section** at the bottom of this doc in case of issues
@@ -40,9 +40,9 @@
 - **Key demo moment:** Open the agent picker in Copilot Chat and show all six agents listed
 
 **Key point:** *"These agents appear automatically because they’re defined as native
-Copilot custom agents. Each has restricted tools — @requirements, @design,
-@deployment, and @monitor can read, search, and write files but can't run terminal
-commands. Only @implementation and @test have terminal access, because they need
+Copilot custom agents. Each has restricted tools — @1-requirements, @2-design,
+@5-deployment, and @6-monitor can read, search, and write files but can't run terminal
+commands. Only @3-implementation and @4-test have terminal access, because they need
 to run builds and tests. This is role-based access control for AI."*
 
 **Show the end state first:** Open `projects/example-ticket-app/` and briefly walk
@@ -68,14 +68,14 @@ engineering-ready artifacts with testable acceptance criteria.
 
 **Prompt to paste in Copilot Chat:**
 ```
-@requirements Process the input at projects/expense-portal/input/business-requirements.md.
+@1-requirements Process the input at projects/expense-portal/input/business-requirements.md.
 
 Produce:
 1. projects/expense-portal/requirements/requirements.md
 2. projects/expense-portal/requirements/user-stories.md
 ```
 
-> **Note:** No need to manually load instructions — the @requirements
+> **Note:** No need to manually load instructions — the @1-requirements
 > agent loads its role instructions and the workspace context automatically.
 
 **What to highlight as it runs:**
@@ -101,7 +101,7 @@ that conflicts with our enterprise standards."*
 
 **Prompt to paste in Copilot Chat:**
 ```
-@design The requirements are at:
+@2-design The requirements are at:
 - projects/expense-portal/requirements/requirements.md
 - projects/expense-portal/requirements/user-stories.md
 
@@ -134,7 +134,7 @@ developer (human or AI) can implement without ambiguity."*
 
 **Prompt to paste in Copilot Chat:**
 ```
-@implementation Begin implementing the expense-portal service in
+@3-implementation Begin implementing the expense-portal service in
 projects/expense-portal/src/ following the Python project structure.
 
 Start with: project scaffolding, config, health endpoints, and the core
@@ -158,7 +158,7 @@ If it spots a design flaw, it surfaces it instead of silently working around it.
 
 **Prompt to paste in Copilot Chat:**
 ```
-@test Generate a test plan and test scaffolding for the expense-portal project.
+@4-test Generate a test plan and test scaffolding for the expense-portal project.
 Work from the requirements and user stories, not the implementation.
 ```
 
@@ -174,7 +174,7 @@ Work from the requirements and user stories, not the implementation.
 
 **Prompt:**
 ```
-@deployment Generate Terraform modules and Kubernetes manifests for the
+@5-deployment Generate Terraform modules and Kubernetes manifests for the
 expense-portal. Generate CI and CD GitHub Actions workflows.
 ```
 
@@ -189,7 +189,7 @@ expense-portal. Generate CI and CD GitHub Actions workflows.
 
 **Prompt:**
 ```
-@monitor Generate operational artifacts for the expense-portal service.
+@6-monitor Generate operational artifacts for the expense-portal service.
 ```
 
 **What to highlight:**
@@ -242,7 +242,7 @@ with VP sign-off and an ADR requirement.
 
 ### Agent picker doesn't show agents
 **Cause:** YAML frontmatter syntax error or file not in `.github/agents/`.
-**Fix:** You can still invoke by typing `@requirements` directly in the chat
+**Fix:** You can still invoke by typing `@1-requirements` directly in the chat
 input — Copilot will find it. If that fails, fall back to: *"Let me show you
 the output instead"* and open the golden path in `projects/example-ticket-app/`.
 

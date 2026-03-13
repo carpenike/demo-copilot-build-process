@@ -17,12 +17,12 @@ agent picker:
 
 | Agent | File | Purpose |
 |-------|------|---------|
-| @requirements | `requirements.agent.md` | Raw input → structured requirements + user stories |
-| @design | `design.agent.md` | Requirements → ADRs + wireframe spec + data model |
-| @implementation | `implementation.agent.md` | ADRs + spec → source code + Dockerfile + OpenAPI |
-| @test | `test.agent.md` | Requirements → test plan + test scaffolding |
-| @deployment | `deployment.agent.md` | ADRs + Dockerfile → Terraform + K8s + CI/CD |
-| @monitor | `monitor.agent.md` | NFRs → SLOs + alerts + runbook + dashboard |
+| @1-requirements | `1-requirements.agent.md` | Raw input → structured requirements + user stories |
+| @2-design | `2-design.agent.md` | Requirements → ADRs + wireframe spec + data model |
+| @3-implementation | `3-implementation.agent.md` | ADRs + spec → source code + Dockerfile + OpenAPI |
+| @4-test | `4-test.agent.md` | Requirements → test plan + test scaffolding |
+| @5-deployment | `5-deployment.agent.md` | ADRs + Dockerfile → Terraform + K8s + CI/CD |
+| @6-monitor | `6-monitor.agent.md` | NFRs → SLOs + alerts + runbook + dashboard |
 
 ---
 
@@ -47,7 +47,7 @@ credential, or API key — stop, and instead write a reference to AWS Secrets Ma
 ## Pipeline Flow
 
 ```
-Raw Request → @requirements → @design → @implementation → @test → @deployment → @monitor
+Raw Request → @1-requirements → @2-design → @3-implementation → @4-test → @5-deployment → @6-monitor
 ```
 
 Each agent produces artifacts that feed the next. See
@@ -62,12 +62,12 @@ ownership matrix.
 .
 ├── .github/
 │   ├── agents/                        ← Copilot agent definitions
-│   │   ├── requirements.agent.md
-│   │   ├── design.agent.md
-│   │   ├── implementation.agent.md
-│   │   ├── test.agent.md
-│   │   ├── deployment.agent.md
-│   │   └── monitor.agent.md
+│   │   ├── 1-requirements.agent.md
+│   │   ├── 2-design.agent.md
+│   │   ├── 3-implementation.agent.md
+│   │   ├── 4-test.agent.md
+│   │   ├── 5-deployment.agent.md
+│   │   └── 6-monitor.agent.md
 │   ├── PULL_REQUEST_TEMPLATE.md
 │   ├── branch-protection.md
 │   ├── copilot-instructions.md        ← You are here (workspace instructions)
@@ -112,8 +112,8 @@ ownership matrix.
 ## Starting a New Project
 
 1. Create `projects/<project-name>/input/request.md` with the raw request
-2. Select the **@requirements** agent in Copilot Chat and process the project
-3. Follow the pipeline in order: @requirements → @design → @implementation → @test → @deployment → @monitor
+2. Select the **@1-requirements** agent in Copilot Chat and process the project
+3. Follow the pipeline in order: @1-requirements → @2-design → @3-implementation → @4-test → @5-deployment → @6-monitor
 4. Each stage produces artifacts that feed the next stage
 
 ---

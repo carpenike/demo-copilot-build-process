@@ -66,13 +66,13 @@ Copilot Chat agent picker. Select an agent by name to invoke it.
 **Recommended demo flow:**
 
 1. Drop a raw feature request into `projects/<project-name>/input/request.md`
-2. Select **@requirements** in the agent picker and process the request
+2. Select **@1-requirements** in the agent picker and process the request
 3. Save output to `projects/<project-name>/requirements/`
-4. Select **@design** → feed requirements → save ADRs to `docs/adr/`
-5. Select **@implementation** → begin coding against the ADR
-6. Select **@test** → generate test plan
-7. Select **@deployment** → generate IaC + workflows
-8. Select **@monitor** → generate runbook + alert config
+4. Select **@2-design** → feed requirements → save ADRs to `docs/adr/`
+5. Select **@3-implementation** → begin coding against the ADR
+6. Select **@4-test** → generate test plan
+7. Select **@5-deployment** → generate IaC + workflows
+8. Select **@6-monitor** → generate runbook + alert config
 
 ---
 
