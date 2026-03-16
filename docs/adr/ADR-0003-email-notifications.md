@@ -1,25 +1,29 @@
-# ADR-0003: Email Notification Service
+# ADR-0003: Platform Async Processing and Email Delivery
 
 > **Status:** Accepted
 > **Date:** 2026-03-13
 > **Deciders:** Platform Engineering
-> **Project:** example-ticket-app
+> **Scope:** All projects
 
 ---
 
 ## Context
 
-The system must send email notifications on ticket status changes (FR-012) and
-when customers comment on assigned tickets (FR-013). The stakeholder specified
-Azure Communication Services as the email provider. Emails should not block the API response — they
-should be dispatched asynchronously.
+Multiple services require asynchronous background processing — email notifications,
+report generation, data sync jobs, and other tasks that should not block API
+responses. This ADR establishes the standard async processing stack and email
+delivery mechanism for all Python services on the platform.
+
+The enterprise standards (`governance/enterprise-standards.md`) specify
+**Celery + Redis** as the approved background task framework.
 
 ---
 
 ## Decision
 
-> We will use **Celery + Redis** for async task processing and the **Azure
-> Communication Services Email API** (via `azure-communication-email` Python SDK) for email delivery.
+> Python services requiring async processing MUST use **Celery + Redis** for
+> task queues. Email delivery MUST use the **Azure Communication Services
+> Email API** via the `azure-communication-email` Python SDK.
 
 ---
 
@@ -35,16 +39,17 @@ should be dispatched asynchronously.
 
 ## Options Considered
 
-### Option 1: Celery + Redis + Azure Communication Services ← Chosen
+### Option 1: Celery + Redis + Azure Communication Services ← Standard
 
 **Pros:**
 - Approved stack for background tasks per enterprise standards
-- Async dispatch keeps API response times low
+- Async dispatch keeps API response times low across all services
 - Celery provides retry, dead-letter, and monitoring out of the box
 - Azure Communication Services SDK is well-maintained and simple to integrate
+- Consistent operational model — same monitoring and alerting patterns everywhere
 
 **Cons:**
-- Redis is an additional infrastructure component
+- Redis is an additional infrastructure component per service
 - Celery adds operational surface area
 
 ---
@@ -57,36 +62,38 @@ should be dispatched asynchronously.
 **Cons:**
 - Blocks API response on email delivery (100–500ms per email)
 - If email provider is down, API requests fail
-- Violates NFR-001 (200ms response time)
+- Violates typical latency NFRs
+- Not scalable across multiple services
 
 ---
 
 ## Consequences
 
 ### Positive
-- Email dispatch does not impact API latency
-- Failed emails are retried automatically
+- Email and background task dispatch does not impact API latency for any service
+- Failed tasks are retried automatically with exponential backoff
 - Clear separation of concerns (API ↔ workers)
+- Consistent infrastructure pattern across all projects
 
 ### Negative / Trade-offs
-- Redis + Celery workers are additional components to deploy and monitor
+- Redis + Celery workers are additional components to deploy and monitor per service
 
 ### Risks
-- **Risk:** Email delivery delay if Celery queue backs up
+- **Risk:** Task queue backs up under load
   - **Mitigation:** HPA on Celery workers, monitor queue depth via Prometheus
 
 ---
 
 ## Implementation Notes
 
-- Celery task: `send_status_notification(ticket_id, old_status, new_status)`
-- Celery task: `send_comment_notification(ticket_id, comment_id)`
 - Redis connection via Azure Cache for Redis, credentials in Key Vault
-- Azure Communication Services connection string stored in Azure Key Vault, loaded via config
+- Azure Communication Services connection string stored in Azure Key Vault
 - Use Celery `autoretry_for` with exponential backoff for transient failures
+- Standard Celery worker deployment: separate Kubernetes Deployment with its own HPA
 
 ---
 
 ## References
-- FR-012, FR-013 (notification requirements)
-- Related: ADR-0001 (language), ADR-0002 (data storage)
+- `governance/enterprise-standards.md` — Framework Policy (Celery + Redis)
+- Project-level ADRs that inherit this decision: ADR-0008 (expense-portal)
+- Related: ADR-0001 (language selection), ADR-0002 (data storage)

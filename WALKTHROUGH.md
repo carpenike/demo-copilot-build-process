@@ -14,8 +14,8 @@
    - `governance/enterprise-standards.md`
    - `.github/agents/1-requirements.agent.md`
 4. **Show the agent picker** — agents appear automatically because they’re
-   in `.github/agents/` with proper YAML frontmatter5. Have `projects/example-ticket-app/` ready to show as the golden path reference
-6. **Read the Glass Break section** at the bottom of this doc in case of issues
+   in `.github/agents/` with proper YAML frontmatter
+5. **Read the Glass Break section** at the bottom of this doc in case of issues
 ---
 
 ## The Story
@@ -45,10 +45,10 @@ Copilot custom agents. Each has restricted tools — @1-requirements, @2-design,
 commands. Only @3-implementation and @4-test have terminal access, because they need
 to run builds and tests. This is role-based access control for AI."*
 
-**Show the end state first:** Open `projects/example-ticket-app/` and briefly walk
+**Show the end state first:** Open `projects/expense-portal/` and briefly walk
 through the completed pipeline output — requirements, ADRs, wireframe spec, data
-model, architecture overview. *"This is what the pipeline produces. Now let's
-watch it happen live with a different project."*
+model, architecture overview, source code, and tests. *"This is what the pipeline
+produces. Now let's see how it gets here."*
 
 ---
 
@@ -244,7 +244,7 @@ with VP sign-off and an ADR requirement.
 **Cause:** YAML frontmatter syntax error or file not in `.github/agents/`.
 **Fix:** You can still invoke by typing `@1-requirements` directly in the chat
 input — Copilot will find it. If that fails, fall back to: *"Let me show you
-the output instead"* and open the golden path in `projects/example-ticket-app/`.
+the output instead"* and open the golden path in `projects/expense-portal/`.
 
 ### Agent produces unexpected or low-quality output
 **Fix:** Don't panic. Say: *"This is exactly why we have the human review step —
@@ -254,7 +254,7 @@ produces — the value is in the structure and governance, not any single genera
 
 ### Copilot is slow or times out
 **Fix:** While waiting, walk through the golden path output in
-`projects/example-ticket-app/` as if narrating the result. *"While that's
+`projects/expense-portal/` as if narrating the result. *"While that's
 processing, let me show you what the output looks like..."* This turns dead air
 into content.
 

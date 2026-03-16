@@ -44,7 +44,7 @@ See `governance/agent-pipeline-overview.md` for the full diagram with inputs and
 This can be anything — a casual stream-of-consciousness paragraph, a Slack thread
 copy-paste, or a formal Business Requirements Document. The @1-requirements agent
 normalizes any input format into structured engineering requirements. See
-`projects/example-ticket-app/input/request.md` for an informal example and
+`projects/expense-portal/input/request.md` for an informal example and
 `projects/expense-portal/input/business-requirements.md` for a formal one.
 
 **Step 2:** In Copilot Chat, select the **@1-requirements** agent from the agent
@@ -75,7 +75,7 @@ structured artifact that feeds every downstream agent
 | Project | Status | Purpose |
 |---------|--------|---------|
 | `projects/expense-portal/` | Requirements → Design → Implementation → Tests | **Golden path reference** — includes both an informal `request.md` and a formal `business-requirements.md` to demonstrate flexible input, plus full pipeline output through stage 4 |
-| `projects/example-ticket-app/` | Requirements → Design | **Early-stage reference** — shows how the pipeline handles informal input and catches governance violations (stakeholder requested Node.js → blocked) |
+
 | `projects/policy-chatbot/` | Input only | **Clean starting point** — raw BRD input only, ready to run the full pipeline from scratch |
 
 ## Enterprise Standards Summary

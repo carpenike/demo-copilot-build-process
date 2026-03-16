@@ -1,29 +1,32 @@
-# ADR-0002: Data Storage
+# ADR-0002: Platform Data Storage Strategy
 
 > **Status:** Accepted
 > **Date:** 2026-03-13
 > **Deciders:** Platform Engineering
-> **Project:** example-ticket-app
+> **Scope:** All projects
 
 ---
 
 ## Context
 
-The system requires persistent storage for tickets, comments, internal notes,
-user data, and attachments. The stakeholder specified an existing PostgreSQL
-database. Full-text search across ticket content is a key requirement (FR-010)
-with a 500ms target on indices up to 1M tickets (NFR-002).
+Services in the platform require relational data storage. Rather than evaluating
+database engines per-project, this ADR establishes **Azure Database for PostgreSQL
+Flexible Server** as the standard relational data store. Projects that need
+full-text search must decide between PostgreSQL’s built-in capabilities and a
+dedicated search engine.
 
-We need to decide: use PostgreSQL's built-in full-text search, or introduce a
-dedicated search engine (e.g., Elasticsearch/OpenSearch)?
+This ADR also establishes the principle: prefer PostgreSQL built-in features
+(FTS, JSONB, partitioning) over introducing additional infrastructure components
+unless scale or requirements demand it.
 
 ---
 
 ## Decision
 
-> We will use **PostgreSQL** for primary data storage and **PostgreSQL full-text
-> search** (tsvector + GIN index) for ticket search, avoiding a separate search
-> engine for v1.
+> All services requiring relational storage MUST use **Azure Database for
+> PostgreSQL Flexible Server**, provisioned via Terraform internal modules.
+> Full-text search SHOULD use PostgreSQL built-in FTS (tsvector + GIN index)
+> unless the project ADR justifies a dedicated search engine.
 
 ---
 
@@ -38,13 +41,13 @@ dedicated search engine (e.g., Elasticsearch/OpenSearch)?
 
 ## Options Considered
 
-### Option 1: PostgreSQL + built-in FTS ← Chosen
+### Option 1: PostgreSQL + built-in FTS ← Default
 
 **Pros:**
 - No additional infrastructure component — lower operational cost
-- PostgreSQL FTS handles 1M documents comfortably with GIN indices
-- Existing PostgreSQL expertise on the team
+- PostgreSQL FTS handles millions of documents comfortably with GIN indices
 - Single source of truth — no sync lag between DB and search index
+- Consistent across all projects
 
 **Cons:**
 - Less sophisticated ranking than Elasticsearch
@@ -77,20 +80,21 @@ dedicated search engine (e.g., Elasticsearch/OpenSearch)?
 - If the search UX demands grow, this ADR may need to be superseded
 
 ### Risks
-- **Risk:** Search performance degrades beyond 1M tickets
-  - **Mitigation:** Monitor query latency; plan migration to OpenSearch as ADR-0002-v2 if needed
+- **Risk:** Search performance degrades at very high document counts
+  - **Mitigation:** Monitor query latency per project; plan migration to OpenSearch as a superseding ADR if needed
 
 ---
 
 ## Implementation Notes
 
-- Add a `search_vector` tsvector column to the tickets table
-- Create a GIN index on the search vector
+- Each service gets its own database on the shared Flexible Server instance
+- For FTS: add a `search_vector` tsvector column with a GIN index
 - Use a PostgreSQL trigger to update the search vector on INSERT/UPDATE
-- Fields included in search: subject, description, comment text
+- DB credentials stored in Azure Key Vault, loaded via External Secrets Operator
 
 ---
 
 ## References
-- FR-010 (full-text search), NFR-002 (search latency target)
+- `governance/enterprise-standards.md` — Infrastructure & Deployment Policy
+- Project-level ADRs that inherit this decision: ADR-0005 (expense-portal)
 - Related: ADR-0001 (language selection)

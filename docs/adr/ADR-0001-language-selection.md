@@ -1,32 +1,40 @@
-# ADR-0001: Backend Language Selection
+# ADR-0001: Platform Language and Framework Policy
 
 > **Status:** Accepted
 > **Date:** 2026-03-13
-> **Deciders:** Platform Engineering, Support Operations
-> **Project:** example-ticket-app
+> **Deciders:** Platform Engineering, VP Engineering
+> **Scope:** All projects
 
 ---
 
 ## Context
 
-The stakeholder request specified Node.js for the backend because "our frontend
-team knows it." However, Node.js is a **prohibited language** under the enterprise
-language policy (see `governance/enterprise-standards.md`). Only Python and Go are
-approved for new backend services.
+New projects frequently arrive with stakeholder preferences for languages outside
+the enterprise standard (e.g., Node.js, Java, Rust). Without a clear foundational
+ADR, each project re-litigates the language decision. This ADR establishes the
+platform-wide language and framework policy that all project-level ADRs inherit.
 
-The system requires a REST API with moderate throughput (~100 req/s), database
-integration (PostgreSQL), background email dispatch, and full-text search. Both
-Python and Go are capable of meeting these requirements.
-
-Related requirements: FR-001 through FR-016, NFR-001 (200ms p95 latency).
+The enterprise language policy (`governance/enterprise-standards.md`) permits only
+**Python** and **Go** for new backend services. This ADR documents the rationale
+and provides guidance on when to choose each.
 
 ---
 
 ## Decision
 
-> We will use **Python 3.11+ with FastAPI** for the backend API because it provides
-> the fastest development velocity for a CRUD-heavy REST API with standard
-> integrations, and it is the approved framework for REST APIs.
+> All new backend services MUST use either **Python 3.11+ with FastAPI** or
+> **Go 1.22+ with chi router**, selected based on workload characteristics.
+> Project-level ADRs reference this decision and justify their specific choice.
+
+### Selection Guidance
+
+| Workload Characteristic | Recommended Language |
+|-------------------------|---------------------|
+| CRUD-heavy REST APIs | Python + FastAPI |
+| Data pipelines, ML/AI | Python |
+| High-throughput services (>1000 req/s) | Go + chi |
+| CLI tools, infrastructure tooling | Go + cobra |
+| Background task processing | Python + Celery (or Go depending on service language) |
 
 ---
 
@@ -42,17 +50,17 @@ Related requirements: FR-001 through FR-016, NFR-001 (200ms p95 latency).
 
 ## Options Considered
 
-### Option 1: Python + FastAPI ← Chosen
+### Option 1: Python + FastAPI ← Approved for CRUD/API workloads
 
-**Description:** Python 3.11+ with FastAPI for the REST API, async throughout,
+**Description:** Python 3.11+ with FastAPI for REST APIs, async throughout,
 Pydantic for request/response validation.
 
 **Pros:**
 - Approved language and framework — zero governance friction
-- Excellent async support for I/O-bound workload (DB, email, search)
+- Excellent async support for I/O-bound workloads (DB, email, search)
 - Pydantic provides automatic OpenAPI spec generation
-- Rich ecosystem for all required integrations (SQLAlchemy, Azure Communication Services SDK, etc.)
-- Team velocity: fastest path to a working API
+- Rich ecosystem for integrations (SQLAlchemy, Azure SDKs, etc.)
+- Fastest development velocity for CRUD-heavy APIs
 
 **Cons:**
 - Single-threaded per worker (mitigated by async + multiple workers)
@@ -60,59 +68,68 @@ Pydantic for request/response validation.
 
 ---
 
-### Option 2: Go + chi router
+### Option 2: Go + chi router ← Approved for high-throughput workloads
 
 **Description:** Go 1.22+ with chi router for HTTP, standard library for the rest.
 
 **Pros:**
 - Approved language and framework
 - Lower memory/CPU per request
-- Excellent for high-throughput scenarios
+- Excellent for high-throughput and latency-sensitive scenarios
+- Strong concurrency model
 
 **Cons:**
-- Higher development time for a CRUD-heavy API (more boilerplate)
+- Higher development time for CRUD-heavy APIs (more boilerplate)
 - Weaker ORM ecosystem compared to Python/SQLAlchemy
-- Throughput ceiling not relevant for this workload (~100 req/s vs Go's capacity)
 
 ---
 
-### Option 3: Node.js + Express ← Rejected (governance)
+### Option 3: Node.js, Java, Rust, etc. ← Rejected (governance)
 
-**Description:** The stakeholder's original suggestion.
-
-**Pros:**
-- Frontend team familiarity
+**Description:** Any language outside the approved list.
 
 **Cons:**
 - **PROHIBITED** by enterprise language policy — disqualified
+- Requires VP Engineering exception approval and a dedicated ADR
+
+When a stakeholder requests a prohibited language, the @1-requirements agent
+flags it as a governance conflict. The @2-design agent then selects the best
+approved alternative and documents the trade-off in the project-level ADR.
 
 ---
 
 ## Consequences
 
 ### Positive
-- Full governance compliance from day one
-- Automatic OpenAPI spec generation via FastAPI
-- Strong typing via Pydantic reduces runtime errors
+- Full governance compliance from day one for all projects
+- Automatic OpenAPI spec generation via FastAPI (Python path)
+- Strong typing via Pydantic reduces runtime errors (Python path)
+- Consistent tooling and CI/CD templates across all services
 
 ### Negative / Trade-offs
-- Frontend team may need onboarding on Python (mitigated by code style standards)
-- Slightly higher memory per container vs Go
+- Teams with non-Python/Go backgrounds may need onboarding
+- Two languages means maintaining two CI templates and two sets of conventions
 
 ### Risks
-- None significant — Python + FastAPI is the most well-trodden path for this use case
+- None significant — Python + FastAPI and Go + chi are well-proven stacks
 
 ---
 
 ## Implementation Notes
 
+### Python projects
 - Use `uvicorn` as the ASGI server with multiple workers
 - Use `pydantic-settings` for configuration management
 - Use `sqlalchemy[asyncio]` with `asyncpg` driver for async database access
 - Package management via `uv` (preferred per enterprise standards)
 
+### Go projects
+- Use `chi` router for HTTP
+- Use `context.Context` propagation for all I/O
+- Use `gofmt` and `golint` with zero warnings
+
 ---
 
 ## References
-- [Governance conflict: LANG-001 in requirements.md](../../projects/example-ticket-app/requirements/requirements.md)
-- Related: ADR-0002 (data storage), ADR-0003 (email integration)
+- `governance/enterprise-standards.md` — Language Policy section
+- Project-level ADRs that inherit this decision: ADR-0004 (expense-portal)
