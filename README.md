@@ -25,13 +25,13 @@ lifecycle. The power comes from:
 
 ```mermaid
 flowchart TD
-    INPUT(Raw Request) -->|any format| REQ("@1-requirements")
-    REQ -->|requirements.md\nuser-stories.md| DES("@2-design")
-    DES -->|ADRs\nwireframe-spec\ndata-model| IMP("@3-implementation")
-    IMP -->|source code\nopenapi.yaml\nDockerfile| TST("@4-test")
-    TST -->|test-plan\ntest suites| DEP("@5-deployment")
-    DEP -->|terraform\nk8s manifests\nCI/CD workflows| MON("@6-monitor")
-    MON -->|runbook\nalert-rules\nSLO definitions| DONE(Production Ready)
+    INPUT(Raw Request) --> REQ("@1-requirements")
+    REQ -- requirements.md, user-stories.md --> DES("@2-design")
+    DES -- ADRs, wireframe-spec, data-model --> IMP("@3-implementation")
+    IMP -- source code, openapi.yaml, Dockerfile --> TST("@4-test")
+    TST -- test-plan, test suites --> DEP("@5-deployment")
+    DEP -- terraform, k8s manifests, CI/CD --> MON("@6-monitor")
+    MON -- runbook, alerts, SLOs --> DONE(Production Ready)
 
     style INPUT fill:#f4a261,color:#000
     style DONE fill:#2d6a4f,color:#fff
