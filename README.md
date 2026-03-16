@@ -1,5 +1,9 @@
 # Agentic Build Pipeline for Enterprise Software Development
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![GitHub Copilot](https://img.shields.io/badge/GitHub%20Copilot-Agent%20Mode-8957e5?logo=github)](https://github.com/features/copilot)
+[![Mermaid Diagrams](https://img.shields.io/badge/Diagrams-Mermaid-ff3670?logo=mermaid)](https://mermaid.js.org)
+
 A reusable framework that orchestrates six specialized GitHub Copilot agent roles
 to take a raw feature request through requirements, design, implementation,
 testing, deployment, and monitoring — all governed by enterprise standards.
@@ -21,12 +25,18 @@ lifecycle. The power comes from:
 
 ```mermaid
 flowchart LR
-    A[Raw Request] --> B["@1-requirements"]
-    B --> C["@2-design"]
-    C --> D["@3-implementation"]
-    D --> E["@4-test"]
-    E --> F["@5-deployment"]
-    F --> G["@6-monitor"]
+    INPUT["Raw Request\n📝"]
+
+    INPUT --> REQ["@1-requirements"]
+    REQ -->|"requirements.md\nuser-stories.md"| DES["@2-design"]
+    DES -->|"ADRs\nwireframe-spec.md\ndata-model.md"| IMP["@3-implementation"]
+    IMP -->|"source code\nopenapi.yaml\nDockerfile"| TST["@4-test"]
+    TST -->|"test-plan.md\ntest suites"| DEP["@5-deployment"]
+    DEP -->|"terraform/\nk8s manifests\nCI/CD workflows"| MON["@6-monitor"]
+    MON -->|"runbook.md\nalert-rules.yaml\nSLO definitions"| DONE["Production\nReady ✅"]
+
+    style INPUT fill:#f4a261,color:#000
+    style DONE fill:#2d6a4f,color:#fff
 ```
 
 See [`governance/agent-pipeline-overview.md`](governance/agent-pipeline-overview.md) for the full diagram with inputs and outputs.
