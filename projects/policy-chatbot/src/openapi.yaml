@@ -1,0 +1,609 @@
+openapi: "3.1.0"
+info:
+  title: Corporate Policy Assistant Chatbot
+  description: >
+    Conversational AI that answers employee policy questions with citations
+    and actionable checklists. Powered by Azure OpenAI and Azure AI Search.
+  version: "0.1.0"
+  contact:
+    name: Platform Engineering
+    email: platform-engineering@acme.com
+
+servers:
+  - url: https://policy-chatbot.acme.com
+    description: Production (Azure Container Apps)
+
+security:
+  - bearerAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Microsoft Entra ID access token
+
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy]
+
+    ReadyResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [ready, not_ready]
+        checks:
+          type: object
+          properties:
+            postgresql:
+              type: string
+            redis:
+              type: string
+            ai_search:
+              type: string
+            azure_openai:
+              type: string
+
+    CreateConversationRequest:
+      type: object
+      required: [channel]
+      properties:
+        channel:
+          type: string
+          enum: [web, teams]
+
+    CreateConversationResponse:
+      type: object
+      properties:
+        conversation_id:
+          type: string
+          format: uuid
+        greeting:
+          type: string
+        user_context:
+          type: object
+          properties:
+            display_name:
+              type: string
+            department:
+              type: string
+            location:
+              type: string
+        created_at:
+          type: string
+          format: date-time
+
+    SendMessageRequest:
+      type: object
+      required: [content]
+      properties:
+        content:
+          type: string
+          minLength: 1
+          maxLength: 5000
+
+    MessageResponse:
+      type: object
+      properties:
+        message_id:
+          type: string
+          format: uuid
+        role:
+          type: string
+          enum: [assistant]
+        content:
+          type: string
+        response_type:
+          type: string
+          enum: [answer, checklist, no_match, confidential_escalation, fallback_search, escalation_prompt]
+        citations:
+          type: array
+          items:
+            $ref: "#/components/schemas/Citation"
+        checklist:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChecklistStep"
+        disclaimer:
+          type: string
+        feedback_enabled:
+          type: boolean
+        escalation_offered:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+
+    Citation:
+      type: object
+      properties:
+        document_title:
+          type: string
+        section:
+          type: string
+        effective_date:
+          type: string
+        source_url:
+          type: string
+
+    ChecklistStep:
+      type: object
+      properties:
+        step:
+          type: integer
+        description:
+          type: string
+        type:
+          type: string
+          enum: [assisted, manual]
+        detail:
+          type: string
+        action:
+          type: object
+          properties:
+            kind:
+              type: string
+              enum: [form_link, contact, scheduling, wayfinding]
+            label:
+              type: string
+            url:
+              type: string
+            name:
+              type: string
+            email:
+              type: string
+            phone:
+              type: string
+            office:
+              type: string
+
+    EscalateRequest:
+      type: object
+      required: [target_team]
+      properties:
+        target_team:
+          type: string
+          enum: [hr, it, facilities]
+
+    EscalateResponse:
+      type: object
+      properties:
+        escalation_id:
+          type: string
+          format: uuid
+        servicenow_ticket_id:
+          type: string
+        message:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    FeedbackRequest:
+      type: object
+      required: [rating]
+      properties:
+        rating:
+          type: string
+          enum: [positive, negative]
+        comment:
+          type: string
+          maxLength: 2000
+
+    FeedbackResponse:
+      type: object
+      properties:
+        feedback_id:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+
+    ProblemDetail:
+      type: object
+      description: RFC 7807 Problem Details
+      properties:
+        type:
+          type: string
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        instance:
+          type: string
+
+paths:
+  /health:
+    get:
+      operationId: getHealth
+      summary: Liveness probe
+      security: []
+      tags: [health]
+      responses:
+        "200":
+          description: Service is alive
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+
+  /ready:
+    get:
+      operationId: getReady
+      summary: Readiness probe
+      security: []
+      tags: [health]
+      responses:
+        "200":
+          description: All dependencies healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadyResponse"
+        "503":
+          description: One or more dependencies unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadyResponse"
+
+  /v1/chat/conversations:
+    post:
+      operationId: createConversation
+      summary: Start a new conversation
+      tags: [chat]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateConversationRequest"
+      responses:
+        "201":
+          description: Conversation created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateConversationResponse"
+        "401":
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+
+  /v1/chat/conversations/{conversation_id}/messages:
+    post:
+      operationId: sendMessage
+      summary: Send a message and receive the chatbot response
+      tags: [chat]
+      parameters:
+        - name: conversation_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendMessageRequest"
+      responses:
+        "200":
+          description: Chatbot response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        "401":
+          description: Unauthenticated
+        "404":
+          description: Conversation not found
+        "429":
+          description: Rate limited
+
+  /v1/chat/conversations/{conversation_id}/escalate:
+    post:
+      operationId: escalateConversation
+      summary: Escalate to a live service desk agent
+      tags: [chat]
+      parameters:
+        - name: conversation_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EscalateRequest"
+      responses:
+        "201":
+          description: Escalation created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EscalateResponse"
+        "401":
+          description: Unauthenticated
+        "404":
+          description: Conversation not found
+
+  /v1/chat/conversations/{conversation_id}/messages/{message_id}/feedback:
+    post:
+      operationId: submitFeedback
+      summary: Submit feedback on a chatbot response
+      tags: [chat]
+      parameters:
+        - name: conversation_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: message_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FeedbackRequest"
+      responses:
+        "201":
+          description: Feedback recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FeedbackResponse"
+        "401":
+          description: Unauthenticated
+        "404":
+          description: Message not found
+
+  /v1/admin/documents:
+    get:
+      operationId: listDocuments
+      summary: List policy documents
+      tags: [admin]
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, retired]
+        - name: cursor
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        "200":
+          description: Document list
+        "403":
+          description: Administrator role required
+
+    post:
+      operationId: uploadDocument
+      summary: Upload a new policy document
+      tags: [admin]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file, title, document_external_id, category, effective_date, owner]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                title:
+                  type: string
+                  maxLength: 255
+                document_external_id:
+                  type: string
+                  maxLength: 100
+                category:
+                  type: string
+                  enum: [HR, IT, Finance, Facilities, Legal, Compliance, Safety]
+                effective_date:
+                  type: string
+                  format: date
+                review_date:
+                  type: string
+                  format: date
+                owner:
+                  type: string
+                  maxLength: 255
+      responses:
+        "201":
+          description: Document uploaded
+        "400":
+          description: Validation error
+        "403":
+          description: Administrator role required
+
+  /v1/admin/documents/{document_id}/reindex:
+    post:
+      operationId: reindexDocument
+      summary: Trigger re-indexing of a document
+      tags: [admin]
+      parameters:
+        - name: document_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "202":
+          description: Re-indexing started
+        "403":
+          description: Administrator role required
+        "404":
+          description: Document not found
+
+  /v1/admin/documents/reindex-all:
+    post:
+      operationId: reindexAll
+      summary: Trigger full corpus re-indexing
+      tags: [admin]
+      responses:
+        "202":
+          description: Re-indexing started
+        "403":
+          description: Administrator role required
+
+  /v1/admin/documents/{document_id}:
+    patch:
+      operationId: updateDocument
+      summary: Update document metadata or retire
+      tags: [admin]
+      parameters:
+        - name: document_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum: [active, retired]
+                title:
+                  type: string
+                owner:
+                  type: string
+      responses:
+        "200":
+          description: Document updated
+        "403":
+          description: Administrator role required
+        "404":
+          description: Document not found
+
+  /v1/admin/documents/{document_id}/versions:
+    get:
+      operationId: listVersions
+      summary: View document version history
+      tags: [admin]
+      parameters:
+        - name: document_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Version list
+        "403":
+          description: Administrator role required
+
+  /v1/admin/test-query:
+    post:
+      operationId: testQuery
+      summary: Preview chatbot answer
+      tags: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [query]
+              properties:
+                query:
+                  type: string
+                include_pending_documents:
+                  type: boolean
+                  default: false
+      responses:
+        "200":
+          description: Test query response
+        "403":
+          description: Administrator role required
+
+  /v1/admin/analytics:
+    get:
+      operationId: getAnalytics
+      summary: Admin analytics dashboard data
+      tags: [admin]
+      parameters:
+        - name: period
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [day, week, month]
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Analytics data
+        "403":
+          description: Administrator role required
+
+  /v1/admin/analytics/flagged-topics:
+    get:
+      operationId: getFlaggedTopics
+      summary: Topics flagged for admin review
+      tags: [admin]
+      responses:
+        "200":
+          description: Flagged topics list
+        "403":
+          description: Administrator role required
+
+  /v1/admin/coverage:
+    get:
+      operationId: getCoverage
+      summary: Policy domain coverage report
+      tags: [admin]
+      responses:
+        "200":
+          description: Coverage report
+        "403":
+          description: Administrator role required
