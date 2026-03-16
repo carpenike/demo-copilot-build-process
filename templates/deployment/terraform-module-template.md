@@ -53,12 +53,15 @@ jobs:
 
 ## CD Pipeline Environments
 
-```
-main merge
-   │
-   ├─► dev        (automatic deploy)
-   ├─► staging    (automatic, after dev smoke tests pass)
-   └─► production (manual approval gate required)
+```mermaid
+flowchart LR
+    A[main merge] --> B[dev]
+    B -->|smoke tests pass| C[staging]
+    C -->|manual approval| D[production]
+
+    style B fill:#2d6a4f,color:#fff
+    style C fill:#e9c46a,color:#000
+    style D fill:#e76f51,color:#fff
 ```
 
 ---

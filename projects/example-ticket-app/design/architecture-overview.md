@@ -85,21 +85,23 @@ graph TB
 
 ## Deployment Architecture
 
-```
-AKS Namespace: ticket-portal
-├── Deployment: ticket-api       (2–10 replicas, HPA on CPU 70%)
-├── Deployment: celery-worker    (2–5 replicas, HPA on queue depth)
-├── Service: ticket-api-svc      (ClusterIP, port 8000)
-├── HPA: ticket-api-hpa
-├── HPA: celery-worker-hpa
-├── PDB: ticket-api-pdb          (minAvailable: 1)
-├── PDB: celery-worker-pdb       (minAvailable: 1)
-├── NetworkPolicy: default-deny + allow ingress from Azure API Management
-├── ServiceAccount: ticket-api-sa
-├── ExternalSecret: db-credentials
-├── ExternalSecret: redis-credentials
-├── ExternalSecret: email-connection-string
-└── Ingress: via Azure API Management
+```mermaid
+flowchart TD
+    NS["AKS Namespace: ticket-portal"]
+
+    NS --> D1["Deployment: ticket-api\n(2–10 replicas, HPA on CPU 70%)"]
+    NS --> D2["Deployment: celery-worker\n(2–5 replicas, HPA on queue depth)"]
+    NS --> S1["Service: ticket-api-svc\n(ClusterIP, port 8000)"]
+    NS --> HPA1["HPA: ticket-api-hpa"]
+    NS --> HPA2["HPA: celery-worker-hpa"]
+    NS --> PDB1["PDB: ticket-api-pdb\n(minAvailable: 1)"]
+    NS --> PDB2["PDB: celery-worker-pdb\n(minAvailable: 1)"]
+    NS --> NP["NetworkPolicy: default-deny\n+ allow ingress from APIM"]
+    NS --> SA["ServiceAccount: ticket-api-sa"]
+    NS --> ES1["ExternalSecret: db-credentials"]
+    NS --> ES2["ExternalSecret: redis-credentials"]
+    NS --> ES3["ExternalSecret: email-connection-string"]
+    NS --> ING["Ingress: via Azure API Management"]
 ```
 
 ---

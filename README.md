@@ -19,11 +19,17 @@ lifecycle. The power comes from:
 
 ## Pipeline at a Glance
 
-```
-Raw Request → @1-requirements → @2-design → @3-implementation → @4-test → @5-deployment → @6-monitor
+```mermaid
+flowchart LR
+    A[Raw Request] --> B["@1-requirements"]
+    B --> C["@2-design"]
+    C --> D["@3-implementation"]
+    D --> E["@4-test"]
+    E --> F["@5-deployment"]
+    F --> G["@6-monitor"]
 ```
 
-See `governance/agent-pipeline-overview.md` for the full diagram.
+See `governance/agent-pipeline-overview.md` for the full diagram with inputs and outputs.
 
 ## Prerequisites
 

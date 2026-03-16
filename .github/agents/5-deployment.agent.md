@@ -115,12 +115,11 @@ for approved modules are prohibited.
 ## Deployment Pipeline (CD)
 The deploy workflow uses an environment-gated strategy:
 
-```
-main merge
-   │
-   ├─► dev (automatic)
-   ├─► staging (automatic, after dev smoke tests pass)
-   └─► production (manual approval gate required)
+```mermaid
+flowchart LR
+    A[main merge] --> B[dev]
+    B -->|smoke tests pass| C[staging]
+    C -->|manual approval| D[production]
 ```
 
 ## After Completion — Verify Outputs Before Handoff

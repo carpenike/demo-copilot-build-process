@@ -10,50 +10,57 @@ defined in `.github/agents/*.agent.md`, with workspace-wide context from
 
 ## Pipeline Diagram
 
-```
-Stakeholder Input (raw feature request / problem statement)
-        │
-        ▼
-┌─────────────────────────────────────────────────────┐
-│  REQUIREMENTS AGENT                                  │
-│  Input:  Raw request                                 │
-│  Output: requirements.md + user-stories.md           │
-└──────────────────────────┬──────────────────────────┘
-                           │
-                           ▼
-┌─────────────────────────────────────────────────────┐
-│  DESIGN AGENT                                        │
-│  Input:  requirements.md + enterprise-standards.md   │
-│  Output: ADR(s) + wireframe-spec.md                  │
-└──────────────────────────┬──────────────────────────┘
-                           │
-                           ▼
-┌─────────────────────────────────────────────────────┐
-│  IMPLEMENTATION AGENT  (@implementation)              │
-│  Input:  ADRs + wireframe-spec + enterprise-standards│
-│  Output: Source code + openapi.yaml + Dockerfile     │
-└──────────────────────────┬──────────────────────────┘
-                           │
-                           ▼
-┌─────────────────────────────────────────────────────┐
-│  TEST AGENT                                          │
-│  Input:  requirements.md + source code               │
-│  Output: test-plan.md + test scaffolding             │
-└──────────────────────────┬──────────────────────────┘
-                           │
-                           ▼
-┌─────────────────────────────────────────────────────┐
-│  DEPLOYMENT AGENT                                    │
-│  Input:  ADRs + Dockerfile + enterprise-standards    │
-│  Output: terraform/ + github actions workflows       │
-└──────────────────────────┬──────────────────────────┘
-                           │
-                           ▼
-┌─────────────────────────────────────────────────────┐
-│  MONITOR AGENT                                       │
-│  Input:  requirements.md + deployed service config   │
-│  Output: runbook.md + alert-rules.yaml + dashboards  │
-└─────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    Input["Stakeholder Input\n(raw feature request / problem statement)"]
+
+    Input --> REQ
+
+    subgraph REQ ["@1-requirements"]
+        direction LR
+        REQ_IN["Input: Raw request"]
+        REQ_OUT["Output: requirements.md\n+ user-stories.md"]
+    end
+
+    REQ --> DES
+
+    subgraph DES ["@2-design"]
+        direction LR
+        DES_IN["Input: requirements.md\n+ enterprise-standards.md"]
+        DES_OUT["Output: ADRs\n+ wireframe-spec.md"]
+    end
+
+    DES --> IMP
+
+    subgraph IMP ["@3-implementation"]
+        direction LR
+        IMP_IN["Input: ADRs + wireframe-spec\n+ enterprise-standards"]
+        IMP_OUT["Output: Source code\n+ openapi.yaml + Dockerfile"]
+    end
+
+    IMP --> TST
+
+    subgraph TST ["@4-test"]
+        direction LR
+        TST_IN["Input: requirements.md\n+ source code"]
+        TST_OUT["Output: test-plan.md\n+ test scaffolding"]
+    end
+
+    TST --> DEP
+
+    subgraph DEP ["@5-deployment"]
+        direction LR
+        DEP_IN["Input: ADRs + Dockerfile\n+ enterprise-standards"]
+        DEP_OUT["Output: terraform/\n+ GitHub Actions workflows"]
+    end
+
+    DEP --> MON
+
+    subgraph MON ["@6-monitor"]
+        direction LR
+        MON_IN["Input: requirements.md\n+ deployed service config"]
+        MON_OUT["Output: runbook.md\n+ alert-rules.yaml + dashboards"]
+    end
 ```
 
 ---
