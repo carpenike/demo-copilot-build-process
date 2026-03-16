@@ -10,11 +10,11 @@ Rather than six independent AI agents, this pipeline is six **specialized roles*
 that GitHub Copilot steps into at each stage of the software development
 lifecycle. The power comes from:
 
-1. **Role specialization** — each `.github/agents/<role>.agent.md` gives the model
+1. **Role specialization** — each [`.github/agents/`](.github/agents/) file gives the model
    focused instructions, inputs, and output formats for one stage
 2. **Artifact chaining** — each stage's output is the next stage's input,
    creating a traceable, reviewable audit trail
-3. **Enterprise governance** — `governance/enterprise-standards.md` constrains
+3. **Enterprise governance** — [`governance/enterprise-standards.md`](governance/enterprise-standards.md) constrains
    every agent, so technology decisions stay within approved boundaries automatically
 
 ## Pipeline at a Glance
@@ -29,7 +29,7 @@ flowchart LR
     F --> G["@6-monitor"]
 ```
 
-See `governance/agent-pipeline-overview.md` for the full diagram with inputs and outputs.
+See [`governance/agent-pipeline-overview.md`](governance/agent-pipeline-overview.md) for the full diagram with inputs and outputs.
 
 ## Prerequisites
 
@@ -45,8 +45,8 @@ See `governance/agent-pipeline-overview.md` for the full diagram with inputs and
 > The input can be anything — a casual stream-of-consciousness paragraph, a Slack thread
 > copy-paste, or a formal Business Requirements Document. The @1-requirements agent
 > normalizes any input format into structured engineering requirements. See
-> `projects/expense-portal/input/request.md` for an informal example and
-> `projects/expense-portal/input/business-requirements.md` for a formal one.
+> [`projects/expense-portal/input/request.md`](projects/expense-portal/input/request.md) for an informal example and
+> [`projects/expense-portal/input/business-requirements.md`](projects/expense-portal/input/business-requirements.md) for a formal one.
 
 1. Drop a feature request into `projects/<project>/input/`
 2. Select **@1-requirements** in the Copilot Chat agent picker
@@ -57,23 +57,23 @@ See `governance/agent-pipeline-overview.md` for the full diagram with inputs and
 
 | File | Purpose |
 |------|---------|
-| `.github/copilot-instructions.md` | Workspace instructions (auto-loaded by Copilot) |
-| `governance/enterprise-standards.md` | Non-negotiable constraints for all agents |
-| `.github/agents/*.agent.md` | Copilot custom agent definitions (appear in agent picker) |
-| `templates/` | Reusable output templates (all 6 stages) |
-| `.github/PULL_REQUEST_TEMPLATE.md` | PR checklist enforcing standards |
-| `.github/workflows/ci-template.yml` | Python CI pipeline template |
-| `.github/workflows/ci-template-go.yml` | Go CI pipeline template |
-| `WALKTHROUGH.md` | Step-by-step demo walkthrough with prompts and talking points |
-| `docs/architecture/platform-architecture.md` | Cross-project platform architecture with Mermaid diagrams |
-| `docs/runbooks/platform-incident-response.md` | Cross-cutting incident response runbook (AKS, PostgreSQL, Redis, CI/CD) |
+| [`.github/copilot-instructions.md`](.github/copilot-instructions.md) | Workspace instructions (auto-loaded by Copilot) |
+| [`governance/enterprise-standards.md`](governance/enterprise-standards.md) | Non-negotiable constraints for all agents |
+| [`.github/agents/*.agent.md`](.github/agents/) | Copilot custom agent definitions (appear in agent picker) |
+| [`templates/`](templates/) | Reusable output templates (all 6 stages) |
+| [`.github/PULL_REQUEST_TEMPLATE.md`](.github/PULL_REQUEST_TEMPLATE.md) | PR checklist enforcing standards |
+| [`.github/workflows/ci-template.yml`](.github/workflows/ci-template.yml) | Python CI pipeline template |
+| [`.github/workflows/ci-template-go.yml`](.github/workflows/ci-template-go.yml) | Go CI pipeline template |
+| [`WALKTHROUGH.md`](WALKTHROUGH.md) | Step-by-step demo walkthrough with prompts and talking points |
+| [`docs/architecture/platform-architecture.md`](docs/architecture/platform-architecture.md) | Cross-project platform architecture with Mermaid diagrams |
+| [`docs/runbooks/platform-incident-response.md`](docs/runbooks/platform-incident-response.md) | Cross-cutting incident response runbook (AKS, PostgreSQL, Redis, CI/CD) |
 
 ## Included Projects
 
 | Project | Status | Purpose |
 |---------|--------|---------|
-| `projects/expense-portal/` | Requirements → Design → Implementation → Tests | **Golden path reference** — includes both an informal `request.md` and a formal `business-requirements.md` to demonstrate flexible input, plus full pipeline output through stage 4 |
-| `projects/policy-chatbot/` | Input only | **Clean starting point** — raw BRD input only, ready to run the full pipeline from scratch |
+| [`projects/expense-portal/`](projects/expense-portal/) | Requirements → Design → Implementation → Tests | **Golden path reference** — includes both an informal [`request.md`](projects/expense-portal/input/request.md) and a formal [`business-requirements.md`](projects/expense-portal/input/business-requirements.md) to demonstrate flexible input, plus full pipeline output through stage 4 |
+| [`projects/policy-chatbot/`](projects/policy-chatbot/) | Input only | **Clean starting point** — raw BRD input only, ready to run the full pipeline from scratch |
 
 ## Enterprise Standards Summary
 
