@@ -1,14 +1,14 @@
 # Demo Script — Agentic Build Pipeline
 
 > **Prep time:** 5 minutes | **Demo time:** 30–45 minutes
-> **Pre-requisite:** VS Code with GitHub Copilot (Claude Opus) enabled
+> **Pre-requisite:** VS Code with GitHub Copilot (agent mode enabled)
 
 ---
 
 ## Before You Start
 
 1. Open VS Code in this repo's root directory
-2. Confirm Copilot is active and using Claude Opus (check status bar)
+2. Confirm Copilot is active with agent mode enabled (check status bar)
 3. Have these files open in tabs for quick reference:
    - `.github/copilot-instructions.md`
    - `governance/enterprise-standards.md`

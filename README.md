@@ -1,13 +1,14 @@
-# Agentic Build Pipeline — Demo Environment
+# Agentic Build Pipeline for Enterprise Software Development
 
-A structured environment for demonstrating enterprise-grade agentic software
-development using GitHub Copilot (Claude Opus) in VSCode.
+A reusable framework that orchestrates six specialized GitHub Copilot agent roles
+to take a raw feature request through requirements, design, implementation,
+testing, deployment, and monitoring — all governed by enterprise standards.
 
 ## The Concept
 
 Rather than six independent AI agents, this pipeline is six **specialized roles**
-that a single AI assistant (GitHub Copilot with Claude Opus) steps into at each
-stage of the software development lifecycle. The power comes from:
+that GitHub Copilot steps into at each stage of the software development
+lifecycle. The power comes from:
 
 1. **Role specialization** — each `.github/agents/<role>.agent.md` gives the model
    focused instructions, inputs, and output formats for one stage
@@ -24,7 +25,13 @@ Raw Request → @1-requirements → @2-design → @3-implementation → @4-test 
 
 See `governance/agent-pipeline-overview.md` for the full diagram.
 
-## Quick Start (Demo Flow)
+## Prerequisites
+
+- **VS Code** with the [GitHub Copilot extension](https://marketplace.visualstudio.com/items?itemName=GitHub.copilot)
+- **GitHub Copilot** subscription with agent mode enabled (Copilot Pro, Business, or Enterprise)
+- **Open this folder as the workspace root** — the agents and workspace instructions are discovered automatically from `.github/`
+
+## Quick Start
 
 **Step 1:** Drop a feature request into `projects/<project>/input/request.md`
 
@@ -40,13 +47,13 @@ picker and give it the project to process
 | File | Purpose |
 |------|---------|
 | `.github/copilot-instructions.md` | Workspace instructions (auto-loaded by Copilot) |
-| `DEMO-SCRIPT.md` | Step-by-step demo script with prompts and talking points |
 | `governance/enterprise-standards.md` | Non-negotiable constraints for all agents |
 | `.github/agents/*.agent.md` | Copilot custom agent definitions (appear in agent picker) |
 | `templates/` | Reusable output templates (all 6 stages) |
 | `.github/PULL_REQUEST_TEMPLATE.md` | PR checklist enforcing standards |
 | `.github/workflows/ci-template.yml` | Python CI pipeline template |
 | `.github/workflows/ci-template-go.yml` | Go CI pipeline template |
+| `WALKTHROUGH.md` | Step-by-step demo walkthrough with prompts and talking points |
 
 ## Included Projects
 
@@ -54,6 +61,7 @@ picker and give it the project to process
 |---------|---------|
 | `projects/expense-portal/` | **Primary demo project** — Finance BRD, run the pipeline live |
 | `projects/example-ticket-app/` | **Golden path reference** — completed pipeline output to show the end state |
+| `projects/policy-chatbot/` | **Additional input** — corporate policy chatbot BRD, ready for pipeline processing |
 
 ## Enterprise Standards Summary
 
