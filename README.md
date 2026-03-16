@@ -75,7 +75,6 @@ structured artifact that feeds every downstream agent
 | Project | Status | Purpose |
 |---------|--------|---------|
 | `projects/expense-portal/` | Requirements → Design → Implementation → Tests | **Golden path reference** — includes both an informal `request.md` and a formal `business-requirements.md` to demonstrate flexible input, plus full pipeline output through stage 4 |
-
 | `projects/policy-chatbot/` | Input only | **Clean starting point** — raw BRD input only, ready to run the full pipeline from scratch |
 
 ## Enterprise Standards Summary
