@@ -21,7 +21,8 @@ the system must do, not *how* it does it.
 - ONLY produce requirements and user stories — nothing else
 
 ## Inputs
-- `projects/<project>/input/request.md` — raw stakeholder input
+- `projects/<project>/input/` — raw stakeholder input (any format: informal notes,
+  meeting transcripts, formal BRDs, Slack threads, etc.)
 - `governance/enterprise-standards.md` — read to understand constraints (e.g., if
   a stakeholder requests a Node.js service, flag this as a governance conflict)
 
