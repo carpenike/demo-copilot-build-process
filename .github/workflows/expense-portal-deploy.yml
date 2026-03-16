@@ -1,0 +1,168 @@
+# CD Pipeline — Expense Portal
+# Deploys to dev → staging → production with environment gates.
+# Triggers only on merge to main after CI passes.
+
+name: CD — Expense Portal
+
+on:
+  workflow_run:
+    workflows: ["CI — Expense Portal"]
+    types: [completed]
+    branches: [main]
+
+env:
+  PROJECT: "expense-portal"
+  ACR_REGISTRY: "${{ secrets.ACR_LOGIN_SERVER }}"
+  IMAGE_NAME: "expense-portal"
+
+jobs:
+  # Only run if CI succeeded on a push to main (not PRs)
+  gate:
+    name: Deployment Gate
+    runs-on: ubuntu-latest
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push'
+    outputs:
+      image-tag: ${{ github.event.workflow_run.head_sha }}
+    steps:
+      - name: Confirm CI passed
+        run: echo "CI passed for ${{ github.event.workflow_run.head_sha }}"
+
+  # ─── Deploy to Dev ────────────────────────────────────────────────────────────
+  deploy-dev:
+    name: Deploy to Dev
+    runs-on: ubuntu-latest
+    needs: gate
+    environment: dev
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Set AKS context
+        uses: azure/aks-set-context@v4
+        with:
+          resource-group: ${{ secrets.AKS_RESOURCE_GROUP }}
+          cluster-name: ${{ secrets.AKS_CLUSTER_NAME_DEV }}
+
+      - name: Deploy to dev
+        run: |
+          IMAGE_TAG="${{ env.ACR_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.gate.outputs.image-tag }}"
+          kubectl set image deployment/${{ env.IMAGE_NAME }} \
+            ${{ env.IMAGE_NAME }}="$IMAGE_TAG" \
+            -n ${{ env.PROJECT }}
+          kubectl rollout status deployment/${{ env.IMAGE_NAME }} \
+            -n ${{ env.PROJECT }} --timeout=300s
+
+      - name: Smoke test
+        run: |
+          DEV_URL="${{ secrets.DEV_SERVICE_URL }}"
+          for endpoint in /health /ready; do
+            status=$(curl -s -o /dev/null -w "%{http_code}" "${DEV_URL}${endpoint}")
+            if [ "$status" != "200" ]; then
+              echo "Smoke test failed: ${endpoint} returned ${status}"
+              exit 1
+            fi
+          done
+          echo "Smoke tests passed"
+
+  # ─── Deploy to Staging ─────────────────────────────────────────────────────────
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [gate, deploy-dev]
+    environment: staging
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Set AKS context
+        uses: azure/aks-set-context@v4
+        with:
+          resource-group: ${{ secrets.AKS_RESOURCE_GROUP }}
+          cluster-name: ${{ secrets.AKS_CLUSTER_NAME_STAGING }}
+
+      - name: Deploy to staging
+        run: |
+          IMAGE_TAG="${{ env.ACR_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.gate.outputs.image-tag }}"
+          kubectl set image deployment/${{ env.IMAGE_NAME }} \
+            ${{ env.IMAGE_NAME }}="$IMAGE_TAG" \
+            -n ${{ env.PROJECT }}
+          kubectl rollout status deployment/${{ env.IMAGE_NAME }} \
+            -n ${{ env.PROJECT }} --timeout=300s
+
+      - name: Smoke test
+        run: |
+          STAGING_URL="${{ secrets.STAGING_SERVICE_URL }}"
+          for endpoint in /health /ready; do
+            status=$(curl -s -o /dev/null -w "%{http_code}" "${STAGING_URL}${endpoint}")
+            if [ "$status" != "200" ]; then
+              echo "Smoke test failed: ${endpoint} returned ${status}"
+              exit 1
+            fi
+          done
+          echo "Smoke tests passed"
+
+  # ─── Deploy to Production ──────────────────────────────────────────────────────
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [gate, deploy-staging]
+    environment: production
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Set AKS context
+        uses: azure/aks-set-context@v4
+        with:
+          resource-group: ${{ secrets.AKS_RESOURCE_GROUP }}
+          cluster-name: ${{ secrets.AKS_CLUSTER_NAME_PROD }}
+
+      - name: Deploy to production
+        run: |
+          IMAGE_TAG="${{ env.ACR_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.gate.outputs.image-tag }}"
+          kubectl set image deployment/${{ env.IMAGE_NAME }} \
+            ${{ env.IMAGE_NAME }}="$IMAGE_TAG" \
+            -n ${{ env.PROJECT }}
+          kubectl rollout status deployment/${{ env.IMAGE_NAME }} \
+            -n ${{ env.PROJECT }} --timeout=300s
+
+      - name: Smoke test
+        run: |
+          PROD_URL="${{ secrets.PROD_SERVICE_URL }}"
+          for endpoint in /health /ready; do
+            status=$(curl -s -o /dev/null -w "%{http_code}" "${PROD_URL}${endpoint}")
+            if [ "$status" != "200" ]; then
+              echo "Smoke test failed: ${endpoint} returned ${status}"
+              exit 1
+            fi
+          done
+          echo "Smoke tests passed"

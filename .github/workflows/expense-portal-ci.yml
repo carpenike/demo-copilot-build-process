@@ -1,25 +1,25 @@
-# CI Pipeline Template — Python
-# Copy this file to .github/workflows/<project>-ci.yml and replace placeholders.
+# CI Pipeline — Expense Portal
+# Generated from ci-template.yml for the expense-portal project.
 # All stages are REQUIRED. Do not remove stages without Platform Engineering approval.
 
-name: CI — [Project Name]
+name: CI — Expense Portal
 
 on:
   pull_request:
     branches: [main]
     paths:
-      - 'projects/[project-name]/src/**'
-      - 'projects/[project-name]/tests/**'
+      - 'projects/expense-portal/src/**'
+      - 'projects/expense-portal/tests/**'
   push:
     branches: [main]
     paths:
-      - 'projects/[project-name]/src/**'
+      - 'projects/expense-portal/src/**'
 
 env:
-  PROJECT: "[project-name]"
+  PROJECT: "expense-portal"
   PYTHON_VERSION: "3.11"
   ACR_REGISTRY: "${{ secrets.ACR_LOGIN_SERVER }}"
-  IMAGE_NAME: "[project-name]"
+  IMAGE_NAME: "expense-portal"
 
 jobs:
   # ─── Stage 1: Lint ────────────────────────────────────────────────────────────

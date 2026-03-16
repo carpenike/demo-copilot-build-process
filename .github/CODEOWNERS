@@ -1,0 +1,18 @@
+# CODEOWNERS — Agentic Build Pipeline
+# Defines code ownership for required review (branch protection requires code owner reviews).
+# See: .github/branch-protection.md
+
+# Default — Platform Engineering owns everything
+*                                   @carpenike
+
+# Governance and standards
+/governance/                        @carpenike
+/.github/copilot-instructions.md    @carpenike
+/.github/agents/                    @carpenike
+
+# CI/CD pipeline definitions
+/.github/workflows/                 @carpenike
+
+# Project-specific ownership (add team leads as projects are onboarded)
+/projects/expense-portal/           @carpenike
+/projects/policy-chatbot/           @carpenike
