@@ -40,6 +40,8 @@ Desktop.ini
 *.tfstate
 *.tfstate.backup
 .terraform.lock.hcl
+*.tfvars
+!*.tfvars.example
 
 # Docker
 *.log
