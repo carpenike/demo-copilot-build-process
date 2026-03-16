@@ -41,7 +41,7 @@ first. Do NOT proceed without validated inputs.
 Then present your plan before starting:
 - List the SLOs you will define (derived from which NFRs)
 - List the alerts you will create
-- List the output files (runbook.md, alert-rules.yaml, slo-definitions.md, dashboard-spec.md)
+- List the output files (runbook.md, alert-rules.bicep, slo-definitions.md, dashboard-spec.md)
 - Ask the user to confirm before proceeding
 
 ## Inputs
@@ -51,9 +51,13 @@ Then present your plan before starting:
 
 ## Outputs (save to `projects/<project>/operations/`)
 - `runbook.md` — operational runbook for on-call engineers
-- `alert-rules.yaml` — Prometheus alerting rules
-- `slo-definitions.md` — formal SLO/SLA documentation
-- `dashboard-spec.md` — Azure Monitor dashboard specification
+- `alert-rules.bicep` — Azure Monitor alert rules as Bicep resources
+  (`Microsoft.Insights/metricAlerts`, `Microsoft.Insights/scheduledQueryRules`)
+- `slo-definitions.md` — formal SLO/SLA documentation with KQL queries
+- `dashboard-spec.md` — Azure Monitor Workbooks or Azure Managed Grafana dashboard specification
+
+> **Do NOT produce Prometheus-format alert rules.** All alerting MUST be defined
+> as Azure Monitor Bicep resources. SLO queries MUST use KQL, not PromQL.
 
 Use the templates at `templates/monitor/` as the starting structure.
 
@@ -73,19 +77,61 @@ non-functional targets as inputs:
 - **Alert:** p99 > 500ms for 3 consecutive 5-minute windows
 ```
 
-## Alert Rules (`alert-rules.yaml`)
-Alerts must be meaningful — no alert that cannot be actioned by the on-call
-engineer. Every alert must have a `runbook_url` annotation pointing to the
-relevant runbook section.
+## Alert Rules (`alert-rules.bicep`)
+Alerts MUST be defined as **Azure Monitor Bicep resources** — not Prometheus
+YAML files or Terraform `.tf` files. Use `Microsoft.Insights/metricAlerts` for
+metric-based alerts and `Microsoft.Insights/scheduledQueryRules` for
+log/KQL-based alerts.
+
+Every alert must include a `description` with a runbook URL.
 
 Standard alert categories to define for every service:
-- `HighErrorRate` — 5xx rate exceeds SLO threshold
-- `HighLatency` — p99 latency exceeds SLO threshold
-- `ServiceDown` — no healthy pods
-- `PodRestartLoop` — pod restarting more than 3 times in 10 minutes
-- `HighMemoryUsage` — memory > 80% of limit
-- `SLOBurnRateFast` — error budget burning > 2x rate
-- `SLOBurnRateSlow` — error budget burning > 1x rate for 1h
+- `HighErrorRate` — 5xx rate exceeds SLO threshold (KQL over Application Insights requests)
+- `HighLatency` — p95/p99 latency exceeds SLO threshold (KQL over Application Insights)
+- `ServiceDown` — no healthy instances (Azure Monitor metric alert on container health)
+- `HighMemoryUsage` — memory > 80% of limit (Azure Monitor container metrics)
+- `SLOBurnRateFast` — error budget burning > 2x rate (scheduled KQL query)
+- `SLOBurnRateSlow` — error budget burning > 1x rate for 1h (scheduled KQL query)
+
+### Example Bicep alert resource
+```bicep
+resource highErrorRate 'Microsoft.Insights/scheduledQueryRules@2023-03-15-preview' = {
+  name: '${projectName}-high-error-rate'
+  location: location
+  properties: {
+    description: '5xx error rate > 1% for 5 min. Runbook: https://runbooks.internal/${projectName}#high-error-rate'
+    severity: 0
+    enabled: true
+    scopes: [
+      applicationInsightsId
+    ]
+    evaluationFrequency: 'PT5M'
+    windowSize: 'PT5M'
+    criteria: {
+      allOf: [
+        {
+          query: '''
+            requests
+            | where timestamp > ago(5m)
+            | where name !in ("/health", "/ready")
+            | summarize total = count(), errors = countif(resultCode startswith "5")
+            | extend error_rate = todouble(errors) / todouble(total)
+            | where error_rate > 0.01
+          '''
+          timeAggregation: 'Count'
+          operator: 'GreaterThan'
+          threshold: 0
+        }
+      ]
+    }
+    actions: {
+      actionGroups: [
+        criticalActionGroupId
+      ]
+    }
+  }
+}
+```
 
 ## After Completion — Verify Outputs Before Handoff
 Before committing, you MUST verify that all required outputs were produced
@@ -95,14 +141,16 @@ all items pass.
 
 **Output Verification Gate (all must pass):**
 1. `projects/<project>/operations/runbook.md` exists with remediation steps for every alert
-2. `projects/<project>/operations/alert-rules.yaml` exists with all standard alert categories
-3. `projects/<project>/operations/slo-definitions.md` exists with targets derived from NFRs
+2. `projects/<project>/operations/alert-rules.bicep` exists with Azure Monitor alert resources
+3. `projects/<project>/operations/slo-definitions.md` exists with KQL queries and targets derived from NFRs
 4. `projects/<project>/operations/dashboard-spec.md` exists covering error rate, latency, throughput, saturation
 5. SLOs are derived from non-functional requirements (measurable targets, not arbitrary)
-6. Every alert has a `runbook_url` annotation
+6. Every alert includes a description with runbook URL
 7. Runbook covers every alert that is defined
 8. Alert thresholds match SLO targets
 9. No alert fires without a clear remediation path documented
+10. No PromQL expressions anywhere — all queries use KQL
+11. Alerts use Azure Monitor Bicep resources — no Terraform `.tf` files or standalone YAML files
 
 List each item with ✅ or ❌ status. If any item is ❌, fix it before continuing.
 
@@ -111,5 +159,4 @@ Follow the **Agent Git Workflow** defined in `.github/copilot-instructions.md`:
 1. Stage only the files you produced under `projects/<project>/operations/`
 2. Propose a commit message: `feat(<project>): monitoring — <summary>`
 3. Ask the user to confirm before committing
-4. Print the handoff summary — this is the final pipeline stage. Suggest the user
-   review the full feature branch, then push and open a PR.
+4. Print the handoff summary — next agent is **@7-review**

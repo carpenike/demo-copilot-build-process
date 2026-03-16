@@ -1,6 +1,6 @@
 # Agentic Build Pipeline — Overview
 
-This document describes how the six-agent pipeline works end-to-end and how
+This document describes how the seven-agent pipeline works end-to-end and how
 artifacts flow between stages. Every agent is a native Copilot custom agent
 defined in [`.github/agents/`](../.github/agents/), with workspace-wide context from
 [`.github/copilot-instructions.md`](../.github/copilot-instructions.md) and constrained by
@@ -51,7 +51,7 @@ flowchart TD
     subgraph DEP ["@5-deployment"]
         direction LR
         DEP_IN["Input: ADRs + Dockerfile\n+ enterprise-standards"]
-        DEP_OUT["Output: terraform/\n+ GitHub Actions workflows"]
+        DEP_OUT["Output: Bicep modules\n+ GitHub Actions workflows"]
     end
 
     DEP --> MON
@@ -59,7 +59,15 @@ flowchart TD
     subgraph MON ["@6-monitor"]
         direction LR
         MON_IN["Input: requirements.md\n+ deployed service config"]
-        MON_OUT["Output: runbook.md\n+ alert-rules.yaml + dashboards"]
+        MON_OUT["Output: runbook.md\n+ alert-rules.bicep + dashboards"]
+    end
+
+    MON --> REV
+
+    subgraph REV ["@7-review"]
+        direction LR
+        REV_IN["Input: All artifacts\n+ enterprise-standards.md"]
+        REV_OUT["Output: review-report.md\n+ auto-fixes"]
     end
 ```
 
@@ -80,7 +88,7 @@ Copilot Chat agent picker. Select an agent by name to invoke it.
 1. Drop a feature request into `projects/<project>/input/` (any format — informal notes or formal BRD)
 2. Select **@1-requirements** in the agent picker
 3. Review the output, then continue with each agent in order:
-   **@2-design** → **@3-implementation** → **@4-test** → **@5-deployment** → **@6-monitor**
+   **@2-design** → **@3-implementation** → **@4-test** → **@5-deployment** → **@6-monitor** → **@7-review**
 4. Each agent verifies its outputs before handing off to the next stage
 
 ---
@@ -99,9 +107,11 @@ Copilot Chat agent picker. Select an agent by name to invoke it.
 | `openapi.yaml` | @3-implementation | @4-test, @6-monitor |
 | `Dockerfile` | @3-implementation | @5-deployment |
 | `test-plan.md` | @4-test | @5-deployment (prerequisite check) |
-| `terraform/`, `k8s/` | @5-deployment | @6-monitor |
+| `*.bicep`, `k8s/` | @5-deployment | @6-monitor |
 | CI/CD workflows | @5-deployment | — (GitHub Actions) |
 | `runbook.md` | @6-monitor | — (ops team) |
-| `alert-rules.yaml` | @6-monitor | — (ops team) |
+| `alert-rules.bicep` | @6-monitor | — (ops team) |
 | `slo-definitions.md` | @6-monitor | — (ops team) |
 | `dashboard-spec.md` | @6-monitor | — (ops team) |
+| `PREREQUISITES.md` | @5-deployment | — (platform team) |
+| `review-report.md` | @7-review | — (PR reviewers) |

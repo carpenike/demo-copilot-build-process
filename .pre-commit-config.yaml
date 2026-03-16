@@ -1,0 +1,51 @@
+# Pre-commit hooks — install with `pre-commit install`
+# Enforces code quality locally before commits reach CI.
+# See governance/enterprise-standards.md for the full policy.
+
+repos:
+  # --- General file hygiene ---
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-added-large-files
+        args: ['--maxkb=500']
+      - id: check-merge-conflict
+      - id: detect-private-key
+
+  # --- Secrets detection ---
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.18.0
+    hooks:
+      - id: gitleaks
+
+  # --- Python: ruff (lint + format) ---
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.0
+    hooks:
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+      - id: ruff-format
+
+  # --- Python: mypy (type checking) ---
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.13.0
+    hooks:
+      - id: mypy
+        additional_dependencies:
+          - pydantic
+          - pydantic-settings
+        args: [--strict]
+
+  # --- Bicep linting ---
+  - repo: local
+    hooks:
+      - id: bicep-lint
+        name: Bicep lint
+        entry: az bicep build --file
+        language: system
+        files: '\.bicep$'
+        pass_filenames: true

@@ -8,9 +8,10 @@
 
 ## What This Repository Is
 
-This repository contains an agentic software development pipeline. Six
+This repository contains an agentic software development pipeline. Seven
 specialized agent roles collaborate to take a raw feature request through
-requirements, design, implementation, testing, deployment, and monitoring.
+requirements, design, implementation, testing, deployment, monitoring, and
+final compliance review.
 
 The agents are defined in `.github/agents/` and appear in the Copilot Chat
 agent picker:
@@ -21,8 +22,9 @@ agent picker:
 | @2-design | `2-design.agent.md` | Requirements → ADRs + wireframe spec + data model |
 | @3-implementation | `3-implementation.agent.md` | ADRs + spec → source code + Dockerfile + OpenAPI |
 | @4-test | `4-test.agent.md` | Requirements → test plan + test scaffolding |
-| @5-deployment | `5-deployment.agent.md` | ADRs + Dockerfile → Terraform + K8s + CI/CD |
-| @6-monitor | `6-monitor.agent.md` | NFRs → SLOs + alerts + runbook + dashboard |
+| @5-deployment | `5-deployment.agent.md` | ADRs + Dockerfile → Bicep + CI/CD + prerequisites |
+| @6-monitor | `6-monitor.agent.md` | NFRs → SLOs + Azure Monitor alerts + runbook + dashboard |
+| @7-review | `7-review.agent.md` | Full compliance review against enterprise standards |
 
 ---
 
@@ -36,8 +38,18 @@ No exceptions without an approved ADR and VP Engineering sign-off. If a user or
 stakeholder suggests using another language, you must surface this as a governance
 conflict and propose the closest compliant alternative.
 
+**Azure PaaS-first.** All technology decisions MUST prefer Microsoft first-party
+Azure PaaS services. Use Azure Container Apps over AKS, Azure Monitor over
+Prometheus/Grafana, OpenTelemetry + Azure Monitor exporter over standalone
+Prometheus client libraries. See `governance/enterprise-standards.md` for the
+complete Cloud Service Preference Policy.
+
 **Framework and infrastructure choices are constrained.** See
 `governance/enterprise-standards.md` for the approved list.
+
+**Code quality is enforced.** All Python projects must use ruff (with the
+mandatory rule set), mypy strict mode, and 80% test coverage. See
+`governance/enterprise-standards.md` § Code Quality Standards.
 
 **No secrets in code or config files.** If you are about to write a secret,
 credential, or API key — stop, and instead write a reference to Azure Key Vault.
@@ -47,7 +59,7 @@ credential, or API key — stop, and instead write a reference to Azure Key Vaul
 ## Pipeline Flow
 
 ```
-Raw Request → @1-requirements → @2-design → @3-implementation → @4-test → @5-deployment → @6-monitor
+Raw Request → @1-requirements → @2-design → @3-implementation → @4-test → @5-deployment → @6-monitor → @7-review
 ```
 
 Each agent produces artifacts that feed the next. See
@@ -67,13 +79,15 @@ ownership matrix.
 │   │   ├── 3-implementation.agent.md
 │   │   ├── 4-test.agent.md
 │   │   ├── 5-deployment.agent.md
-│   │   └── 6-monitor.agent.md
+│   │   ├── 6-monitor.agent.md
+│   │   └── 7-review.agent.md
 │   ├── PULL_REQUEST_TEMPLATE.md
 │   ├── branch-protection.md
 │   ├── copilot-instructions.md        ← You are here (workspace instructions)
 │   └── workflows/
 │       ├── ci-template.yml.template   ← Python CI pipeline template
-│       └── ci-template-go.yml.template ← Go CI pipeline template
+│       ├── ci-template-go.yml.template ← Go CI pipeline template
+│       └── cd-template.yml.template   ← Bicep CD pipeline template
 │
 ├── governance/
 │   ├── enterprise-standards.md        ← ALWAYS read before making technology decisions
@@ -113,7 +127,7 @@ ownership matrix.
 
 1. Create `projects/<project-name>/input/request.md` with the raw request
 2. Select the **@1-requirements** agent in Copilot Chat and process the project
-3. Follow the pipeline in order: @1-requirements → @2-design → @3-implementation → @4-test → @5-deployment → @6-monitor
+3. Follow the pipeline in order: @1-requirements → @2-design → @3-implementation → @4-test → @5-deployment → @6-monitor → @7-review
 4. Each stage produces artifacts that feed the next stage
 
 ---
@@ -163,6 +177,7 @@ agent in the pipeline.
 | @4-test | `feat(expense-portal): tests — ...` |
 | @5-deployment | `feat(expense-portal): deployment — ...` |
 | @6-monitor | `feat(expense-portal): monitoring — ...` |
+| @7-review | `feat(expense-portal): review — ...` |
 
 ---
 

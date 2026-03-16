@@ -102,16 +102,28 @@ src/
 - Configuration via environment variables only; no hardcoded values
 
 ### Python Specifics
-- Type hints on all function signatures (enforced by mypy)
+- Type hints on all function signatures (enforced by mypy strict mode)
 - Line length: 100 characters (ruff)
 - Imports: absolute imports only, sorted by isort rules
 - Use `async/await` throughout for FastAPI routes
+- **ruff rule sets:** Use the mandatory set defined in `governance/enterprise-standards.md`
+  § Code Quality Standards. Minimum: `E, F, I, N, W, UP, B, SIM, S, A, C4, PT, RUF, T20`
+- **mypy:** `strict = true` with `pydantic.mypy` plugin
+- **CORS:** Never use `allow_origins=["*"]`. List explicit origins only.
 
 ### Go Specifics
 - `gofmt` and `golint` must pass with zero warnings
 - Error wrapping: `fmt.Errorf("doing X: %w", err)`
 - Context propagation: every function that does I/O takes `ctx context.Context` as first arg
 - No `init()` functions except in `main` packages
+
+### Observability Instrumentation
+All services use **OpenTelemetry SDK with the Azure Monitor exporter** for
+metrics, traces, and logs. Do NOT use `prometheus-fastapi-instrumentator` or
+any standalone Prometheus client library.
+
+Python: `azure-monitor-opentelemetry` + `opentelemetry-instrumentation-fastapi`
+Go: `azure-sdk-for-go` OTEL bridge
 
 ### Dockerfile Standards
 ```dockerfile
@@ -126,13 +138,18 @@ FROM gcr.io/distroless/static-debian12 AS runtime
 USER nonroot:nonroot
 ```
 
+> Base images MUST come from the approved internal registry — not public
+> Docker Hub.
+
 ## Required Endpoints (all services)
 Every service MUST implement these regardless of business function:
 ```
 GET /health   → 200 {"status": "ok"}
 GET /ready    → 200 {"status": "ready"} or 503 if dependencies not healthy
-GET /metrics  → Prometheus-format metrics
 ```
+
+> `/metrics` is NOT required. Metrics are exported via the OpenTelemetry SDK
+> to Azure Monitor, not scraped from a Prometheus endpoint.
 
 ## After Completion — Verify Outputs Before Handoff
 Before committing, you MUST verify that all required outputs were produced

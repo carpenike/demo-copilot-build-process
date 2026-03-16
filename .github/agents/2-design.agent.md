@@ -62,11 +62,17 @@ Then present your plan before starting:
 Read the requirements and identify every place where a significant architectural
 decision must be made. Common decision points:
 - Language choice (constrained by governance)
+- **Compute platform** — Azure Container Apps (preferred) vs AKS (requires ADR
+  justifying why ACA is insufficient). See `governance/enterprise-standards.md`
+  § Cloud Service Preference Policy.
 - Service decomposition (monolith vs. microservices)
-- Data storage engine selection
+- Data storage engine selection (Azure PaaS-first — e.g., Azure Database for
+  PostgreSQL, Azure Cosmos DB, Azure Cache for Redis)
 - API style (REST, gRPC, event-driven)
-- Authentication mechanism
-- External service integrations
+- Authentication mechanism (prefer Microsoft Entra ID)
+- **Observability** — must use Azure Monitor / Application Insights with
+  OpenTelemetry SDK. Do NOT design for self-managed Prometheus or Grafana.
+- External service integrations (prefer Azure-native services)
 
 ### Step 2 — Write ADRs
 For each decision point, create an ADR using `templates/design/adr-template.md`.

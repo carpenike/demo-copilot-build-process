@@ -12,7 +12,14 @@
 - **Indicator (SLI):** Proportion of HTTP requests that return a non-5xx status code
 - **Target:** [99.9%] of requests over a rolling 30-day window
 - **Error Budget:** [43.2 minutes/month]
-- **Measurement:** `1 - (sum 5xx responses / sum all responses)` over 30 days
+- **Measurement (KQL):**
+  ```kql
+  requests
+  | where timestamp > ago(30d)
+  | where name !in ("/health", "/ready")
+  | summarize total = count(), errors = countif(resultCode startswith "5")
+  | extend availability = 1.0 - (todouble(errors) / todouble(total))
+  ```
 - **Alert Policy:**
   - Fast burn (> 2x budget rate for 5min) → **Page on-call**
   - Slow burn (> 1x budget rate for 1h) → **Create ticket**
@@ -23,7 +30,13 @@
 
 - **Indicator (SLI):** p99 response time for non-health-check endpoints
 - **Target:** p99 < [X]ms for [95%] of 5-minute windows in a 30-day period
-- **Measurement:** `histogram_quantile(0.99, rate(http_request_duration_seconds_bucket[5m]))`
+- **Measurement (KQL):**
+  ```kql
+  requests
+  | where timestamp > ago(5m)
+  | where name !in ("/health", "/ready")
+  | summarize p99_ms = percentile(duration, 99)
+  ```
 - **Alert Policy:**
   - p99 > threshold for 3 consecutive 5-minute windows → **Page on-call**
 
@@ -33,7 +46,13 @@
 
 - **Indicator (SLI):** Age of the most recent successfully processed record
 - **Target:** Data no older than [N] minutes during business hours
-- **Measurement:** `current_time - last_successful_sync_timestamp`
+- **Measurement (KQL):**
+  ```kql
+  customMetrics
+  | where name == "last_successful_sync_timestamp"
+  | summarize latest = max(timestamp)
+  | extend age_minutes = datetime_diff('minute', now(), latest)
+  ```
 - **Alert Policy:**
   - Freshness > threshold for 10 minutes → **Create ticket**
 
