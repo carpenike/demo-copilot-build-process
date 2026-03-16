@@ -29,7 +29,16 @@ Confirm which project you are working on. You need:
 If the user's prompt specifies the project, proceed immediately.
 If it is missing or ambiguous, ask the user to confirm before continuing.
 
-Once the project is confirmed, present your plan before starting:
+Once the project is confirmed, **validate that the previous agents' outputs exist**:
+- Read `projects/<project>/requirements/requirements.md` — must contain NFR targets for SLO derivation
+- Verify `projects/<project>/infrastructure/` exists with deployment manifests
+- Read `projects/<project>/design/wireframe-spec.md` — must define endpoints and expected behaviors
+
+If requirements are missing, STOP and tell the user to run **@1-requirements** first.
+If infrastructure artifacts are missing, STOP and tell the user to run **@5-deployment**
+first. Do NOT proceed without validated inputs.
+
+Then present your plan before starting:
 - List the SLOs you will define (derived from which NFRs)
 - List the alerts you will create
 - List the output files (runbook.md, alert-rules.yaml, slo-definitions.md, dashboard-spec.md)
@@ -78,18 +87,29 @@ Standard alert categories to define for every service:
 - `SLOBurnRateFast` — error budget burning > 2x rate
 - `SLOBurnRateSlow` — error budget burning > 1x rate for 1h
 
-## After Completion — Commit and Hand Off
+## After Completion — Verify Outputs Before Handoff
+Before committing, you MUST verify that all required outputs were produced
+successfully. Run through each item below and confirm it explicitly. If any
+item fails, fix it before proceeding. Do NOT print the handoff summary until
+all items pass.
+
+**Output Verification Gate (all must pass):**
+1. `projects/<project>/operations/runbook.md` exists with remediation steps for every alert
+2. `projects/<project>/operations/alert-rules.yaml` exists with all standard alert categories
+3. `projects/<project>/operations/slo-definitions.md` exists with targets derived from NFRs
+4. `projects/<project>/operations/dashboard-spec.md` exists covering error rate, latency, throughput, saturation
+5. SLOs are derived from non-functional requirements (measurable targets, not arbitrary)
+6. Every alert has a `runbook_url` annotation
+7. Runbook covers every alert that is defined
+8. Alert thresholds match SLO targets
+9. No alert fires without a clear remediation path documented
+
+List each item with ✅ or ❌ status. If any item is ❌, fix it before continuing.
+
+## Commit and Hand Off
 Follow the **Agent Git Workflow** defined in `.github/copilot-instructions.md`:
 1. Stage only the files you produced under `projects/<project>/operations/`
 2. Propose a commit message: `feat(<project>): monitoring — <summary>`
 3. Ask the user to confirm before committing
 4. Print the handoff summary — this is the final pipeline stage. Suggest the user
    review the full feature branch, then push and open a PR.
-
-## Output Quality Checklist
-- [ ] SLOs derived from non-functional requirements (measurable targets)
-- [ ] Every alert has a runbook URL
-- [ ] Runbook covers every alert that is defined
-- [ ] Alert thresholds match SLO targets (not arbitrary round numbers)
-- [ ] Dashboard covers: error rate, latency (p50/p99), throughput, saturation
-- [ ] No alert fires without a clear remediation path documented

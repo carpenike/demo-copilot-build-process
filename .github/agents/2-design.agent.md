@@ -45,7 +45,14 @@ Before doing any work, confirm which project you are working on. You need:
 If the user's prompt specifies the project and input files, proceed immediately.
 If either is missing or ambiguous, ask the user to confirm before continuing.
 
-Once the project is confirmed, present your plan before starting:
+Once the project is confirmed, **validate that the previous agent's outputs exist**:
+- Read `projects/<project>/requirements/requirements.md` — must contain numbered FR-XXX entries
+- Read `projects/<project>/requirements/user-stories.md` — must contain Gherkin acceptance criteria
+
+If either file is missing or incomplete, STOP and tell the user to run
+**@1-requirements** first. Do NOT proceed without validated inputs.
+
+Then present your plan before starting:
 - List the decision points you've identified that will need ADRs
 - List the output files you will produce (ADRs, wireframe-spec, data-model, architecture-overview) and their paths
 - Note any governance constraints that will apply
@@ -97,16 +104,27 @@ Produce a system context diagram showing:
 - Data flows between components
 - Where the enterprise boundary sits
 
-## Step 6 — Commit and Hand Off
+## Step 6 — Verify Outputs Before Handoff
+Before committing, you MUST verify that all required outputs were produced
+successfully. Run through each item below and confirm it explicitly. If any
+item fails, fix it before proceeding. Do NOT print the handoff summary until
+all items pass.
+
+**Output Verification Gate (all must pass):**
+1. At least one `docs/adr/ADR-XXXX-*.md` file exists for this project
+2. `projects/<project>/design/wireframe-spec.md` exists and defines API endpoints or UI screens
+3. `projects/<project>/design/data-model.md` exists and defines entities and relationships
+4. `projects/<project>/design/architecture-overview.md` exists with system context diagram
+5. Every functional requirement maps to at least one ADR or design decision
+6. All technology choices are permitted by enterprise-standards.md
+7. Every ADR documents alternatives considered and why they were rejected
+8. API endpoints in wireframe-spec are complete enough to generate test cases
+
+List each item with ✅ or ❌ status. If any item is ❌, fix it before continuing.
+
+## Step 7 — Commit and Hand Off
 Follow the **Agent Git Workflow** defined in `.github/copilot-instructions.md`:
 1. Stage the files you produced: `docs/adr/ADR-*` files for this project and `projects/<project>/design/`
 2. Propose a commit message: `feat(<project>): design — <summary>`
 3. Ask the user to confirm before committing
 4. Print the handoff summary — next agent is **@3-implementation**
-
-## Output Quality Checklist
-- [ ] Every functional requirement maps to at least one ADR or design decision
-- [ ] All technology choices are permitted by enterprise-standards.md
-- [ ] Every ADR documents alternatives considered and why they were rejected
-- [ ] API endpoints in wireframe-spec are complete enough to generate test cases
-- [ ] Data model covers all entities implied by the requirements

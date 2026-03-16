@@ -94,16 +94,26 @@ Example flags:
 - Stakeholder requested a Node.js service → BLOCKED by language policy
 - Stakeholder wants email/password auth → Flag for security review
 
-## Step 6 — Commit and Hand Off
+## Step 6 — Verify Outputs Before Handoff
+Before committing, you MUST verify that all required outputs were produced
+successfully. Run through each item below and confirm it explicitly. If any
+item fails, fix it before proceeding. Do NOT print the handoff summary until
+all items pass.
+
+**Output Verification Gate (all must pass):**
+1. `projects/<project>/requirements/requirements.md` exists and contains FR-XXX entries
+2. `projects/<project>/requirements/user-stories.md` exists and contains Gherkin acceptance criteria
+3. Every functional requirement is testable (a QA engineer could write a test for it)
+4. No technology decisions are embedded in requirements
+5. Non-functional requirements have measurable targets (not "fast" but "p99 < 200ms")
+6. All governance conflicts are surfaced in a `## Governance Flags` section
+7. User stories have acceptance criteria in Gherkin format
+
+List each item with ✅ or ❌ status. If any item is ❌, fix it before continuing.
+
+## Step 7 — Commit and Hand Off
 Follow the **Agent Git Workflow** defined in `.github/copilot-instructions.md`:
 1. Stage only the files you produced under `projects/<project>/requirements/`
 2. Propose a commit message: `feat(<project>): requirements — <summary>`
 3. Ask the user to confirm before committing
 4. Print the handoff summary — next agent is **@2-design**
-
-## Output Quality Checklist
-- [ ] Every functional requirement is testable (a QA engineer could write a test for it)
-- [ ] No technology decisions embedded in requirements
-- [ ] Non-functional requirements have measurable targets (not "fast" but "p99 < 200ms")
-- [ ] All governance conflicts are surfaced
-- [ ] User stories have acceptance criteria in Gherkin format

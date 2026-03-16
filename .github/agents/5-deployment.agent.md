@@ -27,7 +27,17 @@ Confirm which project you are working on. You need:
 If the user's prompt specifies the project, proceed immediately.
 If it is missing or ambiguous, ask the user to confirm before continuing.
 
-Once the project is confirmed, present your plan before starting:
+Once the project is confirmed, **validate that the previous agents' outputs exist**:
+- Read at least one `docs/adr/ADR-XXXX-*.md` relevant to this project
+- Verify `projects/<project>/src/Dockerfile` exists
+- Verify `projects/<project>/tests/test-plan.md` exists (tests must be defined before deployment)
+- Read `governance/enterprise-standards.md`
+
+If the Dockerfile is missing, STOP and tell the user to run **@3-implementation**
+first. If test artifacts are missing, STOP and tell the user to run **@4-test**
+first. Do NOT proceed without validated inputs.
+
+Then present your plan before starting:
 - List the infrastructure components you will produce (Terraform modules, K8s manifests)
 - List the CI/CD workflows you will generate
 - Note the deployment environments (dev, staging, production)
@@ -113,19 +123,29 @@ main merge
    └─► production (manual approval gate required)
 ```
 
-## After Completion — Commit and Hand Off
+## After Completion — Verify Outputs Before Handoff
+Before committing, you MUST verify that all required outputs were produced
+successfully. Run through each item below and confirm it explicitly. If any
+item fails, fix it before proceeding. Do NOT print the handoff summary until
+all items pass.
+
+**Output Verification Gate (all must pass):**
+1. `projects/<project>/infrastructure/terraform/` exists with `main.tf`, `variables.tf`, `outputs.tf`
+2. `projects/<project>/infrastructure/k8s/` exists with Deployment, Service, HPA, PDB, NetworkPolicy, ServiceAccount manifests
+3. `.github/workflows/<project>-ci.yml` exists with all required stages (lint, test, security, build, integration)
+4. `.github/workflows/<project>-deploy.yml` exists with environment-gated deployment
+5. All Kubernetes manifests include resource limits and requests
+6. Liveness and readiness probes configured pointing to `/health` and `/ready`
+7. Secrets reference External Secrets Operator (no plaintext secrets in manifests)
+8. NetworkPolicy explicitly defined with default-deny
+9. Deploy pipeline has manual approval gate for production
+10. Terraform uses internal registry modules only
+
+List each item with ✅ or ❌ status. If any item is ❌, fix it before continuing.
+
+## Commit and Hand Off
 Follow the **Agent Git Workflow** defined in `.github/copilot-instructions.md`:
 1. Stage the files you produced: `projects/<project>/infrastructure/` and `.github/workflows/<project>-*.yml`
 2. Propose a commit message: `feat(<project>): deployment — <summary>`
 3. Ask the user to confirm before committing
 4. Print the handoff summary — next agent is **@6-monitor**
-
-## Output Quality Checklist
-- [ ] All Kubernetes manifests include resource limits and requests
-- [ ] Liveness and readiness probes configured
-- [ ] HPA defined with appropriate min/max replica counts
-- [ ] Secrets via External Secrets Operator (no plaintext secrets in manifests)
-- [ ] NetworkPolicy explicitly defined
-- [ ] CI pipeline includes all required stages (lint, test, security, build, integration)
-- [ ] Deploy pipeline has manual approval gate for production
-- [ ] Terraform uses internal registry modules only

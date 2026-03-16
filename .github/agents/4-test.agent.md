@@ -29,7 +29,17 @@ Confirm which project you are working on. You need:
 If the user's prompt specifies the project, proceed immediately.
 If it is missing or ambiguous, ask the user to confirm before continuing.
 
-Once the project is confirmed, present your plan before starting:
+Once the project is confirmed, **validate that the previous agents' outputs exist**:
+- Read `projects/<project>/requirements/requirements.md` — must contain numbered FR-XXX entries
+- Read `projects/<project>/requirements/user-stories.md` — must contain acceptance criteria
+- Read `projects/<project>/design/wireframe-spec.md` — must define API contracts to test against
+- Verify `projects/<project>/src/` exists and contains implementation code
+
+If requirements or design files are missing, STOP and tell the user to run
+the earlier agents first. If `src/` is missing, STOP and tell the user to run
+**@3-implementation** first. Do NOT proceed without validated inputs.
+
+Then present your plan before starting:
 - State how many functional requirements and user stories you will cover
 - List the test categories you will produce (unit, integration, e2e, load)
 - List the output files and their paths (test-plan.md, test files, integration/)
@@ -94,17 +104,28 @@ Use the template at `templates/test/test-plan-template.md` as the starting struc
 - **Pass/Fail criteria:** ...
 ```
 
-## After Completion — Commit and Hand Off
+## After Completion — Verify Outputs Before Handoff
+Before committing, you MUST verify that all required outputs were produced
+successfully. Run through each item below and confirm it explicitly. If any
+item fails, fix it before proceeding. Do NOT print the handoff summary until
+all items pass.
+
+**Output Verification Gate (all must pass):**
+1. `projects/<project>/tests/test-plan.md` exists with a requirements coverage matrix
+2. Unit test files exist covering core business logic
+3. `projects/<project>/tests/integration/` exists with API integration tests
+4. Every FR has at least one corresponding test scenario
+5. Every user story acceptance criterion has a corresponding test
+6. All API endpoints in wireframe-spec have integration tests
+7. Auth/authz edge cases covered (unauthenticated, insufficient permissions)
+8. Error paths tested (not just happy paths)
+9. Tests are independent (no test depends on another test's state)
+
+List each item with ✅ or ❌ status. If any item is ❌, fix it before continuing.
+
+## Commit and Hand Off
 Follow the **Agent Git Workflow** defined in `.github/copilot-instructions.md`:
 1. Stage only the files you produced under `projects/<project>/tests/`
 2. Propose a commit message: `feat(<project>): tests — <summary>`
 3. Ask the user to confirm before committing
 4. Print the handoff summary — next agent is **@5-deployment**
-
-## Output Quality Checklist
-- [ ] Every FR has at least one corresponding test scenario
-- [ ] Every user story acceptance criterion has a corresponding test
-- [ ] All API endpoints in wireframe-spec have integration tests
-- [ ] Auth/authz edge cases covered (unauthenticated, insufficient permissions)
-- [ ] Error paths tested (not just happy paths)
-- [ ] Tests are independent (no test depends on another test's state)
