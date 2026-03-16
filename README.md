@@ -35,9 +35,15 @@ flowchart TD
 
     style INPUT fill:#f4a261,color:#000
     style DONE fill:#2d6a4f,color:#fff
+    style REQ fill:#6c63ff,color:#fff
+    style DES fill:#6c63ff,color:#fff
+    style IMP fill:#6c63ff,color:#fff
+    style TST fill:#6c63ff,color:#fff
+    style DEP fill:#6c63ff,color:#fff
+    style MON fill:#6c63ff,color:#fff
 ```
 
-See [`governance/agent-pipeline-overview.md`](governance/agent-pipeline-overview.md) for the full diagram with inputs and outputs.
+> **Legend:** Each purple node is an independently defined [Copilot agent](.github/agents/) with its own role instructions, allowed tools, and validation gates. Arrows show the artifacts that flow between stages. See [`governance/agent-pipeline-overview.md`](governance/agent-pipeline-overview.md) for the full diagram.
 
 ## Prerequisites
 
