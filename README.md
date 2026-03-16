@@ -41,22 +41,17 @@ See `governance/agent-pipeline-overview.md` for the full diagram with inputs and
 
 ## Quick Start
 
-**Step 1:** Drop a feature request into `projects/<project>/input/`
-
 > [!NOTE]
-> This can be anything — a casual stream-of-consciousness paragraph, a Slack thread
+> The input can be anything — a casual stream-of-consciousness paragraph, a Slack thread
 > copy-paste, or a formal Business Requirements Document. The @1-requirements agent
 > normalizes any input format into structured engineering requirements. See
 > `projects/expense-portal/input/request.md` for an informal example and
 > `projects/expense-portal/input/business-requirements.md` for a formal one.
 
-**Step 2:** In Copilot Chat, select the **@1-requirements** agent from the agent
-picker and give it the project to process
-
-**Step 3:** Review the output in `projects/<project>/requirements/` — this is the
-structured artifact that feeds every downstream agent
-
-**Step 4:** Continue through each agent role in sequence (@2-design → @3-implementation → @4-test → @5-deployment → @6-monitor)
+1. Drop a feature request into `projects/<project>/input/`
+2. In Copilot Chat, select **@1-requirements** from the agent picker and give it the project to process
+3. Review the output in `projects/<project>/requirements/` — this is the structured artifact that feeds every downstream agent
+4. Continue through each agent role in sequence: @2-design → @3-implementation → @4-test → @5-deployment → @6-monitor
 
 ## Key Files
 
