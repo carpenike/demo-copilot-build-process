@@ -24,16 +24,14 @@ lifecycle. The power comes from:
 ## Pipeline at a Glance
 
 ```mermaid
-flowchart LR
-    INPUT["Raw Request\n📝"]
-
-    INPUT --> REQ["@1-requirements"]
-    REQ -->|"requirements.md\nuser-stories.md"| DES["@2-design"]
-    DES -->|"ADRs\nwireframe-spec.md\ndata-model.md"| IMP["@3-implementation"]
-    IMP -->|"source code\nopenapi.yaml\nDockerfile"| TST["@4-test"]
-    TST -->|"test-plan.md\ntest suites"| DEP["@5-deployment"]
-    DEP -->|"terraform/\nk8s manifests\nCI/CD workflows"| MON["@6-monitor"]
-    MON -->|"runbook.md\nalert-rules.yaml\nSLO definitions"| DONE["Production\nReady ✅"]
+flowchart TD
+    INPUT[\"📝 Raw Request\"] -->|\"any format\"| REQ[\"@1-requirements\"]
+    REQ -->|\"requirements.md\\nuser-stories.md\"| DES[\"@2-design\"]
+    DES -->|\"ADRs · wireframe-spec.md\\ndata-model.md\"| IMP[\"@3-implementation\"]
+    IMP -->|\"source code · openapi.yaml\\nDockerfile\"| TST[\"@4-test\"]
+    TST -->|\"test-plan.md\\ntest suites\"| DEP[\"@5-deployment\"]
+    DEP -->|\"terraform/ · k8s manifests\\nCI/CD workflows\"| MON[\"@6-monitor\"]
+    MON -->|\"runbook.md · alert-rules.yaml\\nSLO definitions\"| DONE[\"Production Ready ✅\"]
 
     style INPUT fill:#f4a261,color:#000
     style DONE fill:#2d6a4f,color:#fff
