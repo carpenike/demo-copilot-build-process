@@ -1,8 +1,11 @@
 # Multi-stage build for Policy Chatbot (ADR-0008)
-# Base images from approved internal registry
+# IMPORTANT: In production, replace python:3.11-slim with the approved internal
+# registry image (e.g., acmeacr.azurecr.io/base-images/python:3.11-slim).
+# The CI pipeline builds with ACR-sourced base images via --build-arg.
 
 # Stage 1: build
-FROM python:3.11-slim AS builder
+ARG BASE_IMAGE=python:3.11-slim
+FROM ${BASE_IMAGE} AS builder
 
 WORKDIR /build
 
@@ -19,7 +22,7 @@ RUN uv pip install --system --no-cache -r pyproject.toml
 COPY app/ app/
 
 # Stage 2: runtime
-FROM python:3.11-slim AS runtime
+FROM ${BASE_IMAGE} AS runtime
 
 # Non-root user required by enterprise security policy
 RUN groupadd -r appuser && useradd -r -g appuser -d /app -s /sbin/nologin appuser
