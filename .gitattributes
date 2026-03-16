@@ -1,0 +1,32 @@
+# Normalize all text files to LF in the repository.
+# Git will convert to LF on checkin and leave as-is on checkout.
+# This ensures consistent diffs across Windows (VSCode) and macOS.
+
+* text=auto eol=lf
+
+# Explicitly text files
+*.md        text eol=lf
+*.py        text eol=lf
+*.go        text eol=lf
+*.yml       text eol=lf
+*.yaml      text eol=lf
+*.toml      text eol=lf
+*.json      text eol=lf
+*.sh        text eol=lf
+*.txt       text eol=lf
+*.ini       text eol=lf
+*.cfg       text eol=lf
+*.env       text eol=lf
+Dockerfile  text eol=lf
+Makefile    text eol=lf
+
+# Binary files — never touch line endings
+*.png       binary
+*.jpg       binary
+*.jpeg      binary
+*.gif       binary
+*.ico       binary
+*.pdf       binary
+*.docx      binary
+*.xlsx      binary
+*.pptx      binary

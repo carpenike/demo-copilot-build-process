@@ -63,7 +63,7 @@ Any language not listed above is **prohibited** for new projects. This includes
 - All services must expose a `/health` and `/ready` endpoint
 - TLS 1.2+ required for all service-to-service communication
 - No public-facing endpoints without API gateway (Azure API Management)
-- SAST scanning must pass before merge (see `.github/workflows/security-scan.yml`)
+- SAST scanning (GitHub Advanced Security / CodeQL) must pass before merge (configured in repository settings and enforced via CI)
 - All Docker base images must be sourced from the approved internal registry
 - Dependency scanning (Microsoft Defender for Containers + GitHub Advanced Security) required in every CI pipeline
 
