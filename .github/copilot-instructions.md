@@ -140,8 +140,11 @@ agent in the pipeline.
 ### Before Writing Any Files
 1. **Check the current branch.** Run `git branch --show-current`.
 2. If you are on `main`, **stop and ask the user** whether to create a feature branch.
-   Suggest: `feat/<project>-<agent-stage>` (e.g., `feat/expense-portal-requirements`).
-3. If a suitable feature branch already exists, confirm with the user before switching.
+   Suggest: `feat/<project>` (e.g., `feat/expense-portal`). All agents in the
+   pipeline commit to the **same branch** — each agent's work is separated by a
+   distinct commit, not a separate branch.
+3. If a feature branch for this project already exists (e.g., created by a prior
+   agent in the pipeline), **continue on it** — do not create a new branch.
 
 ### After Completing All Outputs
 1. **Stage only the files you produced.** Use explicit paths — never `git add .` or `git add -A`.
