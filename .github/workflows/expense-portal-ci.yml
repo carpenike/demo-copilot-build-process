@@ -1,5 +1,5 @@
 # CI Pipeline — Expense Portal
-# Generated from ci-template.yml for the expense-portal project.
+# Generated from ci-template.yml.template for the expense-portal project.
 # All stages are REQUIRED. Do not remove stages without Platform Engineering approval.
 
 name: CI — Expense Portal

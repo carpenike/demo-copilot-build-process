@@ -76,8 +76,8 @@ flowchart TD
 | [`.github/agents/*.agent.md`](.github/agents/) | Copilot custom agent definitions (appear in agent picker) |
 | [`templates/`](templates/) | Reusable output templates (all 6 stages) |
 | [`.github/PULL_REQUEST_TEMPLATE.md`](.github/PULL_REQUEST_TEMPLATE.md) | PR checklist enforcing standards |
-| [`.github/workflows/ci-template.yml`](.github/workflows/ci-template.yml) | Python CI pipeline template |
-| [`.github/workflows/ci-template-go.yml`](.github/workflows/ci-template-go.yml) | Go CI pipeline template |
+| [`.github/workflows/ci-template.yml.template`](.github/workflows/ci-template.yml.template) | Python CI pipeline template |
+| [`.github/workflows/ci-template-go.yml.template`](.github/workflows/ci-template-go.yml.template) | Go CI pipeline template |
 | [`WALKTHROUGH.md`](WALKTHROUGH.md) | Step-by-step demo walkthrough with prompts and talking points |
 | [`docs/architecture/platform-architecture.md`](docs/architecture/platform-architecture.md) | Cross-project platform architecture with Mermaid diagrams |
 | [`docs/runbooks/platform-incident-response.md`](docs/runbooks/platform-incident-response.md) | Cross-cutting incident response runbook (AKS, PostgreSQL, Redis, CI/CD) |

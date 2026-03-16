@@ -72,8 +72,8 @@ ownership matrix.
 │   ├── branch-protection.md
 │   ├── copilot-instructions.md        ← You are here (workspace instructions)
 │   └── workflows/
-│       ├── ci-template.yml            ← Python CI pipeline template
-│       └── ci-template-go.yml         ← Go CI pipeline template
+│       ├── ci-template.yml.template   ← Python CI pipeline template
+│       └── ci-template-go.yml.template ← Go CI pipeline template
 │
 ├── governance/
 │   ├── enterprise-standards.md        ← ALWAYS read before making technology decisions
