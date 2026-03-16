@@ -1,4 +1,4 @@
-"""Celery application configuration (ADR-0008)."""
+"""Celery application configuration (ADR-0003)."""
 
 from celery import Celery
 from celery.schedules import crontab

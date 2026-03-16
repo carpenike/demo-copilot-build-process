@@ -11,15 +11,13 @@ governance compliance, and consequences.
 | [ADR-0001](ADR-0001-language-selection.md) | All projects | Python + FastAPI or Go + chi as approved languages | Accepted |
 | [ADR-0002](ADR-0002-data-storage.md) | All projects | Azure Database for PostgreSQL + built-in FTS | Accepted |
 | [ADR-0003](ADR-0003-email-notifications.md) | All projects | Celery + Redis + Azure Communication Services | Accepted |
+| [ADR-0004](ADR-0004-platform-authentication.md) | All projects | Microsoft Entra ID (OAuth 2.0 / OIDC) + application-level RBAC | Accepted |
 
 ### Project-Level Decisions
 | ADR | Project | Decision | Status |
 |-----|---------|----------|--------|
-| [ADR-0004](ADR-0004-expense-portal-language-selection.md) | expense-portal | Python + FastAPI for backend | Proposed |
-| [ADR-0005](ADR-0005-expense-portal-data-storage.md) | expense-portal | PostgreSQL + Azure Blob Storage | Proposed |
-| [ADR-0006](ADR-0006-expense-portal-authentication.md) | expense-portal | Microsoft Entra ID (OAuth 2.0 / OIDC) | Proposed |
-| [ADR-0007](ADR-0007-expense-portal-ocr-service.md) | expense-portal | Azure AI Document Intelligence for OCR | Proposed |
-| [ADR-0008](ADR-0008-expense-portal-async-processing.md) | expense-portal | Celery + Redis for async tasks | Proposed |
+| [ADR-0005](ADR-0005-expense-portal-blob-storage.md) | expense-portal | Azure Blob Storage with 7-year immutable retention | Proposed |
+| [ADR-0006](ADR-0006-expense-portal-ocr-service.md) | expense-portal | Azure AI Document Intelligence for receipt OCR | Proposed |
 
 ## Creating New ADRs
 

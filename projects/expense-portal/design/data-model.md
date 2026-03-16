@@ -3,7 +3,7 @@
 > **Version:** 1.0
 > **Date:** 2026-03-13
 > **Produced by:** Design Agent
-> **Related ADRs:** ADR-0005 (data storage), ADR-0006 (authentication)
+> **Related ADRs:** ADR-0002 (data storage), ADR-0004 (authentication), ADR-0005 (blob storage)
 
 ---
 

@@ -1,4 +1,4 @@
-# Multi-stage build — Expense Portal API (ADR-0004)
+# Multi-stage build — Expense Portal API (ADR-0001)
 # Stage 1: build dependencies
 FROM python:3.11-slim AS builder
 

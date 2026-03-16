@@ -4,7 +4,7 @@
 > **Date:** 2026-03-13
 > **Produced by:** Design Agent
 > **Input:** `projects/expense-portal/requirements/requirements.md`
-> **Related ADRs:** ADR-0004, ADR-0005, ADR-0006, ADR-0007, ADR-0008
+> **Related ADRs:** ADR-0001, ADR-0002, ADR-0003, ADR-0004, ADR-0005, ADR-0006
 
 ---
 
@@ -12,7 +12,7 @@
 
 ### Authentication
 
-**Mechanism:** Microsoft Entra ID OIDC (Authorization Code + PKCE) — see ADR-0006
+**Mechanism:** Microsoft Entra ID OIDC (Authorization Code + PKCE) — see ADR-0004
 
 | Header | Value |
 |--------|-------|

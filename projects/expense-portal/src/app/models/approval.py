@@ -37,7 +37,7 @@ class ApprovalAction(Base):
 
 
 class ActionToken(Base):
-    """Single-use, time-bounded tokens for email approval links (ADR-0006)."""
+    """Single-use, time-bounded tokens for email approval links (ADR-0004)."""
 
     __tablename__ = "action_tokens"
     __table_args__ = (Index("ix_action_tokens_token", "token", unique=True),)

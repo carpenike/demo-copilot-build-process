@@ -54,7 +54,7 @@ def _create_action_token(
     approver_id: str,
     action: str,
 ) -> str:
-    """Create a single-use, time-bounded email action token (ADR-0006)."""
+    """Create a single-use, time-bounded email action token (ADR-0004)."""
     from app.models.approval import ActionToken
 
     token = secrets.token_urlsafe(32)

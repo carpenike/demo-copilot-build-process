@@ -1,4 +1,4 @@
-"""OCR processing tasks — receipt extraction via Azure Document Intelligence (ADR-0007)."""
+"""OCR processing tasks — receipt extraction via Azure Document Intelligence (ADR-0006)."""
 
 import structlog
 from celery import shared_task

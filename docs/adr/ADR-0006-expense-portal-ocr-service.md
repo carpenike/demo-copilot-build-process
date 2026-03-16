@@ -1,4 +1,4 @@
-# ADR-0007: OCR Service for Receipt Processing
+# ADR-0006: OCR Service for Receipt Processing
 
 > **Status:** Proposed
 > **Date:** 2026-03-13
@@ -108,7 +108,7 @@ Related requirements: FR-003, FR-004, NFR-002.
 - **SDK:** `azure-ai-documentintelligence` Python package
 - **Processing flow:**
   1. User uploads receipt → file saved to Azure Blob Storage (ADR-0005)
-  2. Celery task queued for OCR processing (ADR-0008)
+  2. Celery task queued for OCR processing (ADR-0003)
   3. Celery worker calls Document Intelligence `analyze_document` with the prebuilt-receipt model
   4. Worker extracts amount, vendor, date from response; checks confidence scores
   5. Fields with confidence ≥ 85% are saved as pre-filled values on the line item
@@ -120,5 +120,6 @@ Related requirements: FR-003, FR-004, NFR-002.
 
 ## References
 - [Azure AI Document Intelligence — Receipt model](https://learn.microsoft.com/en-us/azure/ai-services/document-intelligence/prebuilt/receipt)
-- Related ADRs: ADR-0004 (language), ADR-0005 (blob storage), ADR-0008 (async processing)
+- Related platform ADRs: ADR-0001 (language), ADR-0003 (async processing)
+- Related project ADRs: ADR-0005 (blob storage)
 - Related requirements: FR-003, FR-004, NFR-002

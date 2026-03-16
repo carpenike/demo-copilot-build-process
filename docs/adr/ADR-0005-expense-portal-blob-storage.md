@@ -1,4 +1,4 @@
-# ADR-0005: Data Storage for Expense Portal
+# ADR-0005: Blob Storage & Data Retention for Expense Portal
 
 > **Status:** Proposed
 > **Date:** 2026-03-13
@@ -126,5 +126,5 @@ Related requirements: FR-001–FR-021, NFR-006, NFR-009, NFR-011, NFR-013–NFR-
 ## References
 - [Azure Database for PostgreSQL — Flexible Server](https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/)
 - [Azure Blob Storage immutability policies](https://learn.microsoft.com/en-us/azure/storage/blobs/immutable-storage-overview)
-- Related ADRs: ADR-0004 (language selection)
+- Related platform ADRs: ADR-0002 (data storage strategy)
 - Related requirements: FR-001–FR-021, NFR-006, NFR-009, NFR-011, NFR-013–NFR-015

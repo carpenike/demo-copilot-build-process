@@ -1,4 +1,4 @@
-"""OIDC authentication routes — Microsoft Entra ID (ADR-0006)."""
+"""OIDC authentication routes — Microsoft Entra ID (ADR-0004)."""
 
 import secrets
 

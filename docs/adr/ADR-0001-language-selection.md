@@ -132,4 +132,4 @@ approved alternative and documents the trade-off in the project-level ADR.
 
 ## References
 - `governance/enterprise-standards.md` — Language Policy section
-- Project-level ADRs that inherit this decision: ADR-0004 (expense-portal)
+- Related: ADR-0004 (authentication)

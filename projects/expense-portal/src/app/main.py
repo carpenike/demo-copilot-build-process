@@ -42,7 +42,7 @@ def create_app() -> FastAPI:
         redoc_url="/redoc" if settings.debug else None,
     )
 
-    # Session middleware for server-side sessions (ADR-0006)
+    # Session middleware for server-side sessions (ADR-0004)
     app.add_middleware(
         SessionMiddleware,
         secret_key=settings.session_secret_key,

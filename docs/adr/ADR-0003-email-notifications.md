@@ -95,5 +95,4 @@ The enterprise standards (`governance/enterprise-standards.md`) specify
 
 ## References
 - `governance/enterprise-standards.md` — Framework Policy (Celery + Redis)
-- Project-level ADRs that inherit this decision: ADR-0008 (expense-portal)
 - Related: ADR-0001 (language selection), ADR-0002 (data storage)

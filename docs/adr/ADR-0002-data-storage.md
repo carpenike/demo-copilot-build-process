@@ -96,5 +96,4 @@ unless scale or requirements demand it.
 
 ## References
 - `governance/enterprise-standards.md` — Infrastructure & Deployment Policy
-- Project-level ADRs that inherit this decision: ADR-0005 (expense-portal)
-- Related: ADR-0001 (language selection)
+- Related: ADR-0001 (language selection), ADR-0004 (authentication)

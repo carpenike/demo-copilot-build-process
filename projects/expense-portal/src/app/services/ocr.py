@@ -1,4 +1,4 @@
-"""Azure AI Document Intelligence client for receipt OCR (ADR-0007)."""
+"""Azure AI Document Intelligence client for receipt OCR (ADR-0006)."""
 
 from dataclasses import dataclass
 from decimal import Decimal
