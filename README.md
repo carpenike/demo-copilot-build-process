@@ -33,19 +33,22 @@ See `governance/agent-pipeline-overview.md` for the full diagram with inputs and
 
 ## Prerequisites
 
-- **VS Code** with the [GitHub Copilot extension](https://marketplace.visualstudio.com/items?itemName=GitHub.copilot)
-- **GitHub Copilot** subscription with agent mode enabled (Copilot Pro, Business, or Enterprise)
-- **Open this folder as the workspace root** — the agents and workspace instructions are discovered automatically from `.github/`
+> [!IMPORTANT]
+> This repo requires **VS Code** with the [GitHub Copilot extension](https://marketplace.visualstudio.com/items?itemName=GitHub.copilot)
+> and a **GitHub Copilot** subscription with agent mode enabled (Copilot Pro, Business, or Enterprise).
+> You must **open this folder as the workspace root** — the agents and workspace instructions
+> are discovered automatically from `.github/`.
 
 ## Quick Start
 
 **Step 1:** Drop a feature request into `projects/<project>/input/`
 
-This can be anything — a casual stream-of-consciousness paragraph, a Slack thread
-copy-paste, or a formal Business Requirements Document. The @1-requirements agent
-normalizes any input format into structured engineering requirements. See
-`projects/expense-portal/input/request.md` for an informal example and
-`projects/expense-portal/input/business-requirements.md` for a formal one.
+> [!NOTE]
+> This can be anything — a casual stream-of-consciousness paragraph, a Slack thread
+> copy-paste, or a formal Business Requirements Document. The @1-requirements agent
+> normalizes any input format into structured engineering requirements. See
+> `projects/expense-portal/input/request.md` for an informal example and
+> `projects/expense-portal/input/business-requirements.md` for a formal one.
 
 **Step 2:** In Copilot Chat, select the **@1-requirements** agent from the agent
 picker and give it the project to process
@@ -79,6 +82,7 @@ structured artifact that feeds every downstream agent
 
 ## Enterprise Standards Summary
 
+> [!TIP]
 > These standards are an **example governance framework** included to demonstrate
 > how enterprise constraints flow through the pipeline. They are defined in
 > [`governance/enterprise-standards.md`](governance/enterprise-standards.md) and
