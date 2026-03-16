@@ -79,7 +79,16 @@ structured artifact that feeds every downstream agent
 
 ## Enterprise Standards Summary
 
-- **Languages:** Python 3.11+ and Go 1.22+ only
+> These standards are an **example governance framework** included to demonstrate
+> how enterprise constraints flow through the pipeline. They are defined in
+> [`governance/enterprise-standards.md`](governance/enterprise-standards.md) and
+> enforced via platform-wide ADRs in [`docs/adr/`](docs/adr/). Customize them
+> to match your organization's policies.
+
+- **Languages:** Python 3.11+ and Go 1.22+ only ([ADR-0001](docs/adr/ADR-0001-language-selection.md))
+- **Data Storage:** Azure Database for PostgreSQL ([ADR-0002](docs/adr/ADR-0002-data-storage.md))
+- **Async Processing:** Celery + Redis ([ADR-0003](docs/adr/ADR-0003-email-notifications.md))
+- **Authentication:** Microsoft Entra ID / OIDC ([ADR-0004](docs/adr/ADR-0004-platform-authentication.md))
 - **Containers:** Docker (multi-stage builds, non-root, distroless base)
 - **Orchestration:** Kubernetes on AKS
 - **CI/CD:** GitHub Actions with mandatory lint → test → security → build → integration stages
