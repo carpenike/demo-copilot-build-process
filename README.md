@@ -72,11 +72,11 @@ structured artifact that feeds every downstream agent
 
 ## Included Projects
 
-| Project | Purpose |
-|---------|---------|
-| `projects/expense-portal/` | **Primary demo project** — Finance BRD, run the pipeline live |
-| `projects/example-ticket-app/` | **Golden path reference** — completed pipeline output to show the end state |
-| `projects/policy-chatbot/` | **Additional input** — corporate policy chatbot BRD, ready for pipeline processing |
+| Project | Status | Purpose |
+|---------|--------|---------|
+| `projects/expense-portal/` | Requirements → Design → Implementation → Tests | **Golden path reference** — includes both an informal `request.md` and a formal `business-requirements.md` to demonstrate flexible input, plus full pipeline output through stage 4 |
+| `projects/example-ticket-app/` | Requirements → Design | **Early-stage reference** — shows how the pipeline handles informal input and catches governance violations (stakeholder requested Node.js → blocked) |
+| `projects/policy-chatbot/` | Input only | **Clean starting point** — raw BRD input only, ready to run the full pipeline from scratch |
 
 ## Enterprise Standards Summary
 
