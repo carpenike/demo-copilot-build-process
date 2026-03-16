@@ -2,9 +2,9 @@
 
 This document describes how the six-agent pipeline works end-to-end and how
 artifacts flow between stages. Every agent is a native Copilot custom agent
-defined in `.github/agents/*.agent.md`, with workspace-wide context from
-`.github/copilot-instructions.md` and constrained by
-`governance/enterprise-standards.md`.
+defined in [`.github/agents/`](../.github/agents/), with workspace-wide context from
+[`.github/copilot-instructions.md`](../.github/copilot-instructions.md) and constrained by
+[`governance/enterprise-standards.md`](enterprise-standards.md).
 
 ---
 
@@ -67,19 +67,21 @@ flowchart TD
 
 ## Using the Pipeline in GitHub Copilot (VSCode)
 
-Agents are defined in `.github/agents/` and appear automatically in the
+Agents are defined in [`.github/agents/`](../.github/agents/) and appear automatically in the
 Copilot Chat agent picker. Select an agent by name to invoke it.
 
-**Recommended demo flow:**
+> [!IMPORTANT]
+> Each agent validates that the previous agent's artifacts exist before starting.
+> If inputs are missing, the agent will stop and tell you which earlier agent to
+> run first. This ensures the pipeline completes successfully in order.
 
-1. Drop a raw feature request into `projects/<project-name>/input/request.md`
-2. Select **@1-requirements** in the agent picker and process the request
-3. Save output to `projects/<project-name>/requirements/`
-4. Select **@2-design** → feed requirements → save ADRs to `docs/adr/`
-5. Select **@3-implementation** → begin coding against the ADR
-6. Select **@4-test** → generate test plan
-7. Select **@5-deployment** → generate IaC + workflows
-8. Select **@6-monitor** → generate runbook + alert config
+**Recommended flow:**
+
+1. Drop a feature request into `projects/<project>/input/` (any format — informal notes or formal BRD)
+2. Select **@1-requirements** in the agent picker
+3. Review the output, then continue with each agent in order:
+   **@2-design** → **@3-implementation** → **@4-test** → **@5-deployment** → **@6-monitor**
+4. Each agent verifies its outputs before handing off to the next stage
 
 ---
 
@@ -87,14 +89,19 @@ Copilot Chat agent picker. Select an agent by name to invoke it.
 
 | Artifact | Producing Agent | Consuming Agent(s) |
 |----------|----------------|-------------------|
-| `requirements.md` | Requirements | Design, Test, Monitor |
-| `user-stories.md` | Requirements | Design, Test |
-| `docs/adr/ADR-XXXX-*.md` | Design | Code, Deployment |
-| `wireframe-spec.md` | Design | Code |
-| Source code | Implementation (@3-implementation) | Test, Deployment |
-| `openapi.yaml` | Implementation (@3-implementation) | Test, Monitor |
-| `Dockerfile` | Implementation (@3-implementation) | Deployment |
-| `test-plan.md` | Test | — (human review) |
-| `terraform/` | Deployment | Monitor |
-| `runbook.md` | Monitor | — (ops team) |
-| `alert-rules.yaml` | Monitor | — (ops team) |
+| `requirements.md` | @1-requirements | @2-design, @4-test, @6-monitor |
+| `user-stories.md` | @1-requirements | @2-design, @4-test |
+| `docs/adr/ADR-XXXX-*.md` | @2-design | @3-implementation, @5-deployment |
+| `wireframe-spec.md` | @2-design | @3-implementation, @4-test |
+| `data-model.md` | @2-design | @3-implementation |
+| `architecture-overview.md` | @2-design | @3-implementation |
+| Source code | @3-implementation | @4-test, @5-deployment |
+| `openapi.yaml` | @3-implementation | @4-test, @6-monitor |
+| `Dockerfile` | @3-implementation | @5-deployment |
+| `test-plan.md` | @4-test | @5-deployment (prerequisite check) |
+| `terraform/`, `k8s/` | @5-deployment | @6-monitor |
+| CI/CD workflows | @5-deployment | — (GitHub Actions) |
+| `runbook.md` | @6-monitor | — (ops team) |
+| `alert-rules.yaml` | @6-monitor | — (ops team) |
+| `slo-definitions.md` | @6-monitor | — (ops team) |
+| `dashboard-spec.md` | @6-monitor | — (ops team) |
