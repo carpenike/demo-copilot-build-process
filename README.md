@@ -67,6 +67,8 @@ structured artifact that feeds every downstream agent
 | `.github/workflows/ci-template.yml` | Python CI pipeline template |
 | `.github/workflows/ci-template-go.yml` | Go CI pipeline template |
 | `WALKTHROUGH.md` | Step-by-step demo walkthrough with prompts and talking points |
+| `docs/architecture/platform-architecture.md` | Cross-project platform architecture with Mermaid diagrams |
+| `docs/runbooks/platform-incident-response.md` | Cross-cutting incident response runbook (AKS, PostgreSQL, Redis, CI/CD) |
 
 ## Included Projects
 
