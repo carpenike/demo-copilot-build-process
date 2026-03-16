@@ -49,9 +49,9 @@ See `governance/agent-pipeline-overview.md` for the full diagram with inputs and
 > `projects/expense-portal/input/business-requirements.md` for a formal one.
 
 1. Drop a feature request into `projects/<project>/input/`
-2. In Copilot Chat, select **@1-requirements** from the agent picker and give it the project to process
-3. Review the output in `projects/<project>/requirements/` — this is the structured artifact that feeds every downstream agent
-4. Continue through each agent role in sequence: @2-design → @3-implementation → @4-test → @5-deployment → @6-monitor
+2. Select **@1-requirements** in the Copilot Chat agent picker
+3. Review the output in `projects/<project>/requirements/`
+4. Repeat with each agent in order: **@2-design** → **@3-implementation** → **@4-test** → **@5-deployment** → **@6-monitor**
 
 ## Key Files
 
