@@ -7,10 +7,10 @@
 #
 # Examples:
 #   ./scripts/check-prerequisites.sh policy-chatbot dev
-#   ./scripts/check-prerequisites.sh policy-chatbot dev --subscription "My Sub"
+#   ./scripts/check-prerequisites.sh policy-chatbot dev --location westus2
 #   ./scripts/check-prerequisites.sh policy-chatbot dev --tenant <tenant-id> -s "My Sub"
 #   ./scripts/check-prerequisites.sh policy-chatbot dev --login
-#   ./scripts/check-prerequisites.sh policy-chatbot dev -s 8cff5c8a-... --fix
+#   ./scripts/check-prerequisites.sh policy-chatbot dev -s 8cff5c8a-... -l westus2 --fix
 #
 # Requires: az CLI (logged in), gh CLI (authenticated), jq
 # ──────────────────────────────────────────────────────────────────────────────
@@ -36,6 +36,7 @@ PROJECT=""
 ENVIRONMENT=""
 SUBSCRIPTION=""
 TENANT=""
+LOCATION=""
 FIX_MODE=""
 DO_LOGIN=""
 
@@ -44,6 +45,7 @@ while [[ $# -gt 0 ]]; do
         --fix)                FIX_MODE="--fix"; shift ;;
         --subscription|-s)    SUBSCRIPTION="$2"; shift 2 ;;
         --tenant|-t)          TENANT="$2"; shift 2 ;;
+        --location|-l)        LOCATION="$2"; shift 2 ;;
         --login)              DO_LOGIN="true"; shift ;;
         *)
             if [[ -z "$PROJECT" ]]; then PROJECT="$1"
@@ -62,14 +64,16 @@ if [[ -z "$PROJECT" ]] || [[ -z "$ENVIRONMENT" ]]; then
     echo "Options:"
     echo "  --subscription, -s <name-or-id>  Azure subscription (default: current az account)"
     echo "  --tenant, -t <tenant-id>         Azure AD tenant ID (triggers az login --tenant)"
+    echo "  --location, -l <region>           Azure region (default: eastus)"
     echo "  --login                           Force az login (re-authenticate)"
     echo "  --fix                             Auto-create missing Azure resources"
     echo ""
     echo "Examples:"
     echo "  $0 policy-chatbot dev"
+    echo "  $0 policy-chatbot dev --location westus2"
     echo "  $0 policy-chatbot dev --subscription 'My Sub' --tenant 'my-tenant-id'"
     echo "  $0 policy-chatbot dev --login"
-    echo "  $0 policy-chatbot dev -s 8cff5c8a-... --fix"
+    echo "  $0 policy-chatbot dev -s 8cff5c8a-... -l westus2 --fix"
     exit 1
 fi
 
@@ -80,7 +84,7 @@ fi
 
 REPO="carpenike/demo-copilot-build-process"
 RG="rg-${PROJECT}-${ENVIRONMENT}"
-LOCATION="eastus"
+LOCATION="${LOCATION:-eastus}"
 
 PASS_COUNT=0
 FAIL_COUNT=0
