@@ -225,12 +225,14 @@ resource acrPullRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-
 
 // ─── Role Assignment: ACA → Key Vault Secrets User ──────────────────────────
 
+var keyVaultNameComputed = '${take(resourcePrefix, 20)}-kv'
+
 resource keyVaultResource 'Microsoft.KeyVault/vaults@2023-07-01' existing = {
-  name: keyVault.outputs.keyVaultName
+  name: keyVaultNameComputed
 }
 
 resource kvSecretsRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(keyVaultResource.id, '${resourcePrefix}-api', kvSecretsUserRoleId)
+  name: guid(keyVaultNameComputed, '${resourcePrefix}-api', kvSecretsUserRoleId)
   scope: keyVaultResource
   properties: {
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', kvSecretsUserRoleId)
