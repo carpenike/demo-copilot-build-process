@@ -202,25 +202,11 @@ module containerApp 'modules/container-app.bicep' = {
 
 // ─── Role Assignment: ACA → ACR Pull ────────────────────────────────────────
 
-@description('ACR name for role assignment (must exist in the same resource group)')
-param acrName string = ''
-
-// AcrPull built-in role ID
-var acrPullRoleId = '7f951dda-4ed3-4680-a7ca-43fe172d538d'
-
-resource acr 'Microsoft.ContainerRegistry/registries@2023-07-01' existing = {
-  name: acrName
-}
-
-resource acrPullRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (!empty(acrName)) {
-  name: guid(acr.id, containerApp.name, acrPullRoleId)
-  scope: acr
-  properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', acrPullRoleId)
-    principalId: containerApp.outputs.containerAppIdentityPrincipalId
-    principalType: 'ServicePrincipal'
-  }
-}
+// ─── Note: ACR Pull Permission ──────────────────────────────────────────────
+// The ACA managed identity requires AcrPull role on the ACR registry.
+// This is handled by the bootstrap script (scripts/check-prerequisites.sh --fix)
+// because the CI service principal has Contributor role which cannot create
+// role assignments. Run the bootstrap script once after initial deployment.
 
 // ─── Outputs ────────────────────────────────────────────────────────────────
 
