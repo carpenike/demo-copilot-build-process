@@ -148,8 +148,18 @@ agent in the pipeline.
 
 ### After Completing All Outputs
 1. **Stage only the files you produced.** Use explicit paths — never `git add .` or `git add -A`.
-2. **Show the user a commit preview** — list the staged files and proposed commit message.
-3. **Ask the user to confirm before committing.** Do not commit automatically.
+2. **Run local code quality checks (Python projects).** Before showing the commit
+   preview, run these commands from the project's `src/` directory and fix any
+   errors. Repeat until all pass:
+   ```bash
+   cd projects/<project>/src
+   uvx ruff check app/          # lint — must exit 0
+   uvx ruff format --check app/ # format — must exit 0
+   ```
+   If `uvx` is not available, try `ruff` directly or `python3 -m ruff`.
+   Do NOT commit code that fails these checks — fix and re-verify.
+3. **Show the user a commit preview** — list the staged files and proposed commit message.
+4. **Ask the user to confirm before committing.** Do not commit automatically.
 4. **Commit with a conventional commit message** following this format:
    ```
    feat(<project>): <agent-role> — <short summary>

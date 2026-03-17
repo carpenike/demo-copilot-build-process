@@ -165,8 +165,12 @@ all items pass.
 5. `/health`, `/ready`, `/metrics` endpoints are implemented
 6. No secrets or credentials in any file
 7. No TODO comments left in new code
-8. Linter passes with zero warnings — run `make lint` and verify
-9. Dockerfile builds successfully — run `make docker-build` and verify
+8. **Ruff lint passes** — run `uvx ruff check app/` from `projects/<project>/src/`
+   and verify exit code 0. If errors are found, fix them and re-run until clean.
+9. **Ruff format passes** — run `uvx ruff format --check app/` from
+   `projects/<project>/src/` and verify exit code 0. If files need reformatting,
+   run `uvx ruff format app/` to auto-fix, then re-verify.
+10. Dockerfile builds successfully — run `make docker-build` and verify
 
 List each item with ✅ or ❌ status. If any item is ❌, fix it before continuing.
 
