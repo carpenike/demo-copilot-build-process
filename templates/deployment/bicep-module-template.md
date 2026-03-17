@@ -105,9 +105,16 @@ Without this, containers will crash with: `secret "capp-<app-name>" not found`.
 
 ### Azure OpenAI Managed Identity Access
 
-When the app uses `DefaultAzureCredential` to call Azure OpenAI, the ACA
-managed identity needs the `Cognitive Services OpenAI User` role on the OpenAI
-resource. Handle via bootstrap script (same circular dependency as AcrPull).
+When the app uses `DefaultAzureCredential` to call Azure OpenAI, two things
+are required:
+
+1. **Custom subdomain** — the OpenAI resource MUST be created with
+   `--custom-domain <name>` (or `customSubDomainName` in Bicep/REST). Without
+   a custom subdomain, Azure rejects token auth with: *"Please provide a custom
+   subdomain for token authentication, otherwise API key is required."*
+2. **Role assignment** — the ACA managed identity needs the
+   `Cognitive Services OpenAI User` role on the OpenAI resource. Handle via
+   bootstrap script (same circular dependency as AcrPull).
 
 ### Common Pitfalls
 
