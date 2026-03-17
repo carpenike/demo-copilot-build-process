@@ -163,8 +163,10 @@ agent in the pipeline.
    cd projects/<project>/src
    uvx ruff check app/          # lint — must exit 0
    uvx ruff format --check app/ # format — must exit 0
+   mypy app/                    # type check — must exit 0
    ```
    If `uvx` is not available, try `ruff` directly or `python3 -m ruff`.
+   If `mypy` is not installed, install it via `uv pip install mypy` first.
    Do NOT commit code that fails these checks — fix and re-verify.
 3. **Show the user a commit preview** — list the staged files and proposed commit message.
 4. **Ask the user to confirm before committing.** Do not commit automatically.

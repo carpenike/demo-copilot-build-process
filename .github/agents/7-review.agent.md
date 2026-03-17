@@ -203,7 +203,10 @@ to regenerate Bicep for ACA instead of AKS"]
 7. **Ruff format passes** — run `uvx ruff format --check app/` from
    `projects/<project>/src/`. If files need reformatting, run
    `uvx ruff format app/` and document the fix.
-8. **Unit tests pass** — set placeholder env vars and run from
+8. **Mypy passes** — run `mypy app/` from `projects/<project>/src/` and verify
+   exit code 0. If type errors exist, fix them and document in the review report.
+   This is a mandatory gate — do not skip mypy even if ruff passes.
+9. **Unit tests pass** — set placeholder env vars and run from
    `projects/<project>/src/`:
    ```bash
    cd projects/<project>/src
