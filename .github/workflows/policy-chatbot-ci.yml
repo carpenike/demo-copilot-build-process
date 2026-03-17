@@ -261,6 +261,7 @@ jobs:
             azureOpenAIEndpoint=${{ secrets.AZURE_OPENAI_ENDPOINT }}
             azureSearchEndpoint=https://policy-chatbot-dev-search.search.windows.net
             servicenowInstanceUrl=${{ secrets.SERVICENOW_INSTANCE_URL }}
+            databaseLocation=westus2
           deploymentMode: Incremental
           deploymentName: ${{ env.PROJECT }}-dev-${{ github.sha }}
 

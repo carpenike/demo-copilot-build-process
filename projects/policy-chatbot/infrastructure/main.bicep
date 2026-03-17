@@ -54,6 +54,9 @@ param servicenowInstanceUrl string
 @description('CORS allowed origins (explicit list, never wildcard)')
 param corsAllowedOrigins array = []
 
+@description('Location override for PostgreSQL (some subscriptions restrict certain regions)')
+param databaseLocation string = location
+
 // ─── Environment-specific sizing ────────────────────────────────────────────
 
 var envConfig = {
@@ -126,7 +129,7 @@ module keyVault 'modules/key-vault.bicep' = {
 module database 'modules/database.bicep' = {
   name: '${resourcePrefix}-database'
   params: {
-    location: location
+    location: databaseLocation
     resourcePrefix: resourcePrefix
     administratorPassword: postgresAdminPassword
     skuName: config.postgresSkuName
