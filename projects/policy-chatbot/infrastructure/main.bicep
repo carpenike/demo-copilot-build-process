@@ -201,27 +201,13 @@ module containerApp 'modules/container-app.bicep' = {
 }
 
 // ─── Role Assignment: ACA → ACR Pull ────────────────────────────────────────
-// Requires Owner or User Access Administrator on the resource group.
+// IMPORTANT: AcrPull is NOT managed by Bicep due to circular dependency.
+// ACA immediately tries to pull the image on creation, but the role assignment
+// requires the ACA's principal ID (which only exists after creation).
+// Handle via bootstrap script: ./scripts/check-prerequisites.sh <project> <env> --fix
+// The script assigns AcrPull after the first deployment creates the ACA identity.
 
-@description('ACR name for AcrPull role assignment')
-param acrName string = ''
-
-var acrPullRoleId = '7f951dda-4ed3-4680-a7ca-43fe172d538d'
 var kvSecretsUserRoleId = '4633458b-17de-408a-b874-0445c86b69e6'
-
-resource acr 'Microsoft.ContainerRegistry/registries@2023-07-01' existing = {
-  name: acrName
-}
-
-resource acrPullRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (!empty(acrName)) {
-  name: guid(acr.id, '${resourcePrefix}-api', acrPullRoleId)
-  scope: acr
-  properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', acrPullRoleId)
-    principalId: containerApp.outputs.containerAppIdentityPrincipalId
-    principalType: 'ServicePrincipal'
-  }
-}
 
 // ─── Role Assignment: ACA → Key Vault Secrets User ──────────────────────────
 

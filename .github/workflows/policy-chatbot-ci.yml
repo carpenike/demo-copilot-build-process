@@ -253,7 +253,6 @@ jobs:
             projects/${{ env.PROJECT }}/infrastructure/main.dev.bicepparam
             imageTag=${{ github.sha }}
             acrLoginServer=${{ env.ACR_REGISTRY }}
-            acrName=${{ secrets.ACR_NAME }}
             postgresAdminPassword=${{ secrets.POSTGRES_ADMIN_PASSWORD }}
             redisAccessKey=placeholder
             entraTenantId=${{ secrets.ENTRA_TENANT_ID }}
