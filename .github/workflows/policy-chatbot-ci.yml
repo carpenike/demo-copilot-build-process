@@ -14,6 +14,10 @@ on:
     paths:
       - 'projects/policy-chatbot/src/**'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   PROJECT: "policy-chatbot"
   PYTHON_VERSION: "3.11"
@@ -108,15 +112,15 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@v4
         with:
           languages: python
 
       - name: Autobuild
-        uses: github/codeql-action/autobuild@v3
+        uses: github/codeql-action/autobuild@v4
 
       - name: Run CodeQL analysis
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@v4
         with:
           category: "/language:python"
 
@@ -249,6 +253,14 @@ jobs:
             projects/${{ env.PROJECT }}/infrastructure/main.dev.bicepparam
             imageTag=${{ github.sha }}
             acrLoginServer=${{ env.ACR_REGISTRY }}
+            postgresAdminPassword=${{ secrets.POSTGRES_ADMIN_PASSWORD }}
+            redisAccessKey=placeholder
+            entraTenantId=${{ secrets.ENTRA_TENANT_ID }}
+            entraClientId=${{ secrets.ENTRA_CLIENT_ID }}
+            entraClientSecret=${{ secrets.ENTRA_CLIENT_SECRET }}
+            azureOpenAIEndpoint=${{ secrets.AZURE_OPENAI_ENDPOINT }}
+            azureSearchEndpoint=https://policy-chatbot-dev-search.search.windows.net
+            servicenowInstanceUrl=${{ secrets.SERVICENOW_INSTANCE_URL }}
           deploymentMode: Incremental
           deploymentName: ${{ env.PROJECT }}-dev-${{ github.sha }}
 

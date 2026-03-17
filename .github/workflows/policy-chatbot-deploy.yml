@@ -11,6 +11,10 @@ on:
     paths:
       - 'projects/policy-chatbot/**'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   PROJECT: "policy-chatbot"
   ACR_REGISTRY: "${{ secrets.ACR_LOGIN_SERVER }}"
