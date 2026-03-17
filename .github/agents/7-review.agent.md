@@ -118,6 +118,36 @@ Then present your review plan:
       equivalent exists
 - [ ] Dependency versions are pinned (minimum version, not floating)
 
+### 7. Framework Coverage — New Services
+Review the project's infrastructure and source code for Azure services or
+integration patterns that are NOT yet covered by the framework's templates,
+bootstrap script, or agent instructions. If the project introduces a service
+for the first time, flag it as a **framework gap** in the review report.
+
+**How to check:** Compare the Azure resources in `infrastructure/main.bicep`
+and service clients in `src/app/services/` against the services that have
+conditional support in:
+- `scripts/check-prerequisites.sh` (feature flags: `--with-openai`, `--with-search`, `--with-entra-auth`)
+- `templates/deployment/bicep-module-template.md` (role assignment patterns)
+- `.github/agents/5-deployment.agent.md` (deployment constraints)
+
+**Flag as a framework gap if the project uses any of these and there is no
+matching conditional section in the framework files:**
+- A new Azure PaaS service (e.g., Cosmos DB, Service Bus, Event Grid)
+- A new managed identity role assignment pattern not in the Bicep template
+- A new external integration (e.g., ServiceNow, Salesforce, Datadog)
+- A new authentication pattern not covered by `--with-entra-auth`
+- A new CI/CD post-deploy step (e.g., seed data, cache warmup)
+
+For each gap, add a finding to the review report:
+```
+### Finding: Framework Gap — [Service Name]
+**Severity:** Info
+**Action:** Add `--with-[service]` flag to bootstrap script, role assignment
+pattern to Bicep template, and conditional section to @5-deployment agent.
+This ensures the next project using this service gets automated setup.
+```
+
 ## Review Report Format
 
 ```markdown
