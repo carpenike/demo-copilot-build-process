@@ -208,9 +208,11 @@ all items pass.
     prior pipeline run, set placeholder env vars and run:
     ```bash
     cd projects/<project>/src
-    python -m pytest ../tests/ -x -q
+    python -m pytest ../tests/ -x -q --cov=app --cov-fail-under=80
     ```
     If tests fail due to your code changes, fix the code (not the tests).
+    If coverage drops below 80%, add tests or adjust coverage config to omit
+    startup/infrastructure code (not business logic).
 12. Dockerfile builds successfully — run `make docker-build` and verify
 
 List each item with ✅ or ❌ status. If any item is ❌, fix it before continuing.

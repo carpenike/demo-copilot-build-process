@@ -206,14 +206,15 @@ to regenerate Bicep for ACA instead of AKS"]
 8. **Mypy passes** — run `mypy app/` from `projects/<project>/src/` and verify
    exit code 0. If type errors exist, fix them and document in the review report.
    This is a mandatory gate — do not skip mypy even if ruff passes.
-9. **Unit tests pass** — set placeholder env vars and run from
+9. **Unit tests pass with coverage gate** — set placeholder env vars and run from
    `projects/<project>/src/`:
    ```bash
    cd projects/<project>/src
-   python -m pytest ../tests/ -x -q
+   python -m pytest ../tests/ -x -q --cov=app --cov-fail-under=80
    ```
    If tests fail, investigate and fix if the issue is minor (wrong assertion,
-   mock setup). If the fix requires significant code changes, flag it in the
+   mock setup). If coverage is below 80%, flag it in the review report.
+   If the fix requires significant code changes, flag it in the
    review report as requiring re-routing to the appropriate agent.
 
 List each item with ✅ or ❌ status.

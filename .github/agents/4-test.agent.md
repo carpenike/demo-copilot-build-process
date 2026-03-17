@@ -132,15 +132,16 @@ all items pass.
 7. Auth/authz edge cases covered (unauthenticated, insufficient permissions)
 8. Error paths tested (not just happy paths)
 9. Tests are independent (no test depends on another test's state)
-10. **Tests pass locally** — set placeholder env vars and run from `projects/<project>/src/`:
+10. **Tests pass locally with coverage gate** — set placeholder env vars and run from `projects/<project>/src/`:
     ```bash
     export [PROJECT_PREFIX]_DATABASE_URL="postgresql+asyncpg://test:test@localhost/testdb"
     # ... set all required Settings env vars with placeholders (see app/config.py)
     cd projects/<project>/src
-    python -m pytest ../tests/ -x -q
+    python -m pytest ../tests/ -x -q --cov=app --cov-fail-under=80
     ```
     If any test fails, fix the test code and re-run until all pass.
-    Do NOT commit tests that fail.
+    If coverage is below 80%, add more tests — do not lower the threshold.
+    Do NOT commit tests that fail or miss the coverage target.
 
 List each item with ✅ or ❌ status. If any item is ❌, fix it before continuing.
 
