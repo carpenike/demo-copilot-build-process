@@ -678,6 +678,50 @@ else
     fi
 fi
 
+# ─── Section 10: ACA → ACR Pull Permission (post-deployment) ────────────────
+
+echo ""
+echo -e "${BLUE}═══ ACA → ACR Pull Permission ═══${NC}"
+
+if [[ -n "$ACCOUNT_INFO" ]] && [[ -n "${ACR_NAME:-}" ]]; then
+    # Check if ACA exists (only after first deployment)
+    ACA_PRINCIPAL=$(az rest --method GET \
+        --url "https://management.azure.com/subscriptions/${SUB_ID}/resourceGroups/${RG}/providers/Microsoft.App/containerApps/${PROJECT}-${ENVIRONMENT}-api?api-version=2024-03-01" \
+        2>/dev/null | jq -r '.identity.principalId // empty' 2>/dev/null)
+
+    if [[ -n "$ACA_PRINCIPAL" ]]; then
+        ACR_SCOPE="/subscriptions/${SUB_ID}/resourceGroups/${RG}/providers/Microsoft.ContainerRegistry/registries/${ACR_NAME}"
+        HAS_ACRPULL=$(az role assignment list \
+            --assignee "$ACA_PRINCIPAL" \
+            --role AcrPull \
+            --scope "$ACR_SCOPE" \
+            --query "[0].id" -o tsv 2>/dev/null)
+
+        if [[ -n "$HAS_ACRPULL" ]]; then
+            pass "ACA has AcrPull role on ACR"
+        else
+            fail "ACA missing AcrPull role on ACR"
+            if [[ "$FIX_MODE" == "--fix" ]]; then
+                echo "    Assigning AcrPull role..."
+                if az role assignment create \
+                    --assignee "$ACA_PRINCIPAL" \
+                    --role AcrPull \
+                    --scope "$ACR_SCOPE" \
+                    --output none 2>/dev/null; then
+                    pass "AcrPull role assigned"
+                    ((FAIL_COUNT--))
+                else
+                    echo "    Failed — may need Owner/User Access Administrator permissions"
+                fi
+            fi
+        fi
+    else
+        skip "ACA not deployed yet — AcrPull check skipped (run after first deployment)"
+    fi
+else
+    skip "ACA → ACR check (not logged in or ACR not found)"
+fi
+
 # ─── Summary ─────────────────────────────────────────────────────────────────
 
 echo ""
