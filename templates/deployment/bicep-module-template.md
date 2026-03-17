@@ -73,6 +73,31 @@ resource acrPullRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-
 
 Without this, ACA will fail with: `unable to pull image using Managed identity`.
 
+### Key Vault Secrets User Permission
+
+When ACA references Key Vault secrets via `keyVaultUrl` + `identity: 'system'`,
+the managed identity also needs the `Key Vault Secrets User` role on the vault:
+
+```bicep
+var kvSecretsUserRoleId = '4633458b-17de-408a-b874-0445c86b69e6'
+
+resource keyVaultResource 'Microsoft.KeyVault/vaults@2023-07-01' existing = {
+  name: keyVault.outputs.keyVaultName
+}
+
+resource kvSecretsRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(keyVaultResource.id, '${resourcePrefix}-api', kvSecretsUserRoleId)
+  scope: keyVaultResource
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', kvSecretsUserRoleId)
+    principalId: containerApp.outputs.principalId
+    principalType: 'ServicePrincipal'
+  }
+}
+```
+
+Without this, containers will crash with: `secret "capp-<app-name>" not found`.
+
 ---
 
 ## Azure Container Apps (Preferred Compute)
