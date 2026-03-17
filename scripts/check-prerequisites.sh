@@ -437,6 +437,76 @@ if [[ -n "$ACCOUNT_INFO" ]]; then
         else
             fail "App Role 'Administrator' not configured"
         fi
+
+        # Check Application ID URI
+        APP_ID_URI=$(az ad app show --id "$APP_ID" --query "identifierUris[0]" -o tsv 2>/dev/null || echo "")
+        if [[ -n "$APP_ID_URI" ]]; then
+            pass "Application ID URI set: ${APP_ID_URI}"
+        else
+            fail "Application ID URI not set"
+            if [[ "$FIX_MODE" == "--fix" ]]; then
+                az rest --method PATCH \
+                    --url "https://graph.microsoft.com/v1.0/applications/${APP_OBJECT_ID}" \
+                    --headers "Content-Type=application/json" \
+                    --body "{\"identifierUris\":[\"api://${APP_ID}\"]}" 2>/dev/null
+                pass "Application ID URI set to api://${APP_ID}"
+                ((FAIL_COUNT--))
+            fi
+        fi
+
+        # Check accessTokenAcceptedVersion (must be 2 for v2.0 tokens)
+        TOKEN_VERSION=$(az rest --method GET \
+            --url "https://graph.microsoft.com/v1.0/applications/${APP_OBJECT_ID}" \
+            --query "api.requestedAccessTokenVersion" -o tsv 2>/dev/null || echo "null")
+        if [[ "$TOKEN_VERSION" == "2" ]]; then
+            pass "Access token version set to v2.0"
+        else
+            fail "Access token version is ${TOKEN_VERSION} (must be 2 for v2.0 tokens)"
+            if [[ "$FIX_MODE" == "--fix" ]]; then
+                az rest --method PATCH \
+                    --url "https://graph.microsoft.com/v1.0/applications/${APP_OBJECT_ID}" \
+                    --headers "Content-Type=application/json" \
+                    --body '{"api":{"requestedAccessTokenVersion":2}}' 2>/dev/null
+                pass "Access token version set to 2"
+                ((FAIL_COUNT--))
+            fi
+        fi
+
+        # Check OAuth2 permission scope (user_impersonation)
+        SCOPE_COUNT=$(az rest --method GET \
+            --url "https://graph.microsoft.com/v1.0/applications/${APP_OBJECT_ID}" \
+            --query "api.oauth2PermissionScopes | length(@)" -o tsv 2>/dev/null || echo "0")
+        if [[ "$SCOPE_COUNT" -gt 0 ]]; then
+            pass "OAuth2 permission scope defined (${SCOPE_COUNT} scope(s))"
+        else
+            fail "No OAuth2 permission scopes defined (need user_impersonation)"
+            if [[ "$FIX_MODE" == "--fix" ]]; then
+                SCOPE_ID=$(python3 -c "import uuid; print(uuid.uuid4())" 2>/dev/null || uuidgen | tr '[:upper:]' '[:lower:]')
+                az rest --method PATCH \
+                    --url "https://graph.microsoft.com/v1.0/applications/${APP_OBJECT_ID}" \
+                    --headers "Content-Type=application/json" \
+                    --body "{\"api\":{\"oauth2PermissionScopes\":[{\"id\":\"${SCOPE_ID}\",\"adminConsentDescription\":\"Access ${PROJECT} API\",\"adminConsentDisplayName\":\"Access ${PROJECT}\",\"isEnabled\":true,\"type\":\"User\",\"userConsentDescription\":\"Access ${PROJECT} on your behalf\",\"userConsentDisplayName\":\"Access ${PROJECT}\",\"value\":\"user_impersonation\"}]}}" 2>/dev/null
+
+                # Pre-authorize Azure CLI
+                AZURE_CLI_APP_ID="04b07795-8ddb-461a-bbee-02f9e1bf7b46"
+                az rest --method PATCH \
+                    --url "https://graph.microsoft.com/v1.0/applications/${APP_OBJECT_ID}" \
+                    --headers "Content-Type=application/json" \
+                    --body "{\"api\":{\"preAuthorizedApplications\":[{\"appId\":\"${AZURE_CLI_APP_ID}\",\"delegatedPermissionIds\":[\"${SCOPE_ID}\"]}]}}" 2>/dev/null
+                pass "OAuth2 scope + Azure CLI pre-authorization configured"
+                ((FAIL_COUNT--))
+            fi
+        fi
+
+        # Check Azure CLI pre-authorization
+        PREAUTH_COUNT=$(az rest --method GET \
+            --url "https://graph.microsoft.com/v1.0/applications/${APP_OBJECT_ID}" \
+            --query "api.preAuthorizedApplications | length(@)" -o tsv 2>/dev/null || echo "0")
+        if [[ "$PREAUTH_COUNT" -gt 0 ]]; then
+            pass "Azure CLI pre-authorized for token acquisition"
+        else
+            warn "Azure CLI not pre-authorized — users will need admin consent to get tokens via 'az account get-access-token'"
+        fi
     fi
 else
     skip "Entra ID check (not logged in)"
@@ -684,6 +754,8 @@ fi
 echo ""
 echo -e "${BLUE}═══ ACA → ACR Pull Permission ═══${NC}"
 
+ACA_PRINCIPAL=""
+
 if [[ -n "$ACCOUNT_INFO" ]] && [[ -n "${ACR_NAME:-}" ]]; then
     # Check if ACA exists (only after first deployment)
     ACA_PRINCIPAL=$(az rest --method GET \
@@ -721,6 +793,103 @@ if [[ -n "$ACCOUNT_INFO" ]] && [[ -n "${ACR_NAME:-}" ]]; then
     fi
 else
     skip "ACA → ACR check (not logged in or ACR not found)"
+fi
+
+# ─── Section 11: ACA → AI Search & OpenAI Permissions (post-deployment) ─────
+
+echo ""
+echo -e "${BLUE}═══ ACA → AI Search & OpenAI Permissions ═══${NC}"
+
+if [[ -n "$ACCOUNT_INFO" ]] && [[ -n "${ACA_PRINCIPAL:-}" ]]; then
+    # --- Azure AI Search ---
+    SEARCH_NAME="${PROJECT}-${ENVIRONMENT}-search"
+    SEARCH_EXISTS=$(az search service show --name "$SEARCH_NAME" --resource-group "$RG" --query "name" -o tsv 2>/dev/null || echo "")
+
+    if [[ -n "$SEARCH_EXISTS" ]]; then
+        pass "Azure AI Search found: ${SEARCH_NAME}"
+
+        # Check auth mode
+        SEARCH_AUTH=$(az search service show --name "$SEARCH_NAME" --resource-group "$RG" \
+            --query "authOptions" -o json 2>/dev/null || echo "{}")
+        if echo "$SEARCH_AUTH" | jq -e '.aadOrApiKey' &>/dev/null; then
+            pass "AI Search RBAC auth enabled (aadOrApiKey)"
+        else
+            fail "AI Search using apiKeyOnly — RBAC auth not enabled"
+            if [[ "$FIX_MODE" == "--fix" ]]; then
+                echo "    Enabling RBAC auth on AI Search..."
+                if az search service update --name "$SEARCH_NAME" --resource-group "$RG" \
+                    --auth-options aadOrApiKey \
+                    --aad-auth-failure-mode http401WithBearerChallenge \
+                    -o none 2>/dev/null; then
+                    pass "AI Search RBAC auth enabled"
+                    ((FAIL_COUNT--))
+                else
+                    echo "    Failed to update AI Search auth mode"
+                fi
+            fi
+        fi
+
+        # Check role assignments
+        SEARCH_SCOPE="/subscriptions/${SUB_ID}/resourceGroups/${RG}/providers/Microsoft.Search/searchServices/${SEARCH_NAME}"
+        for ROLE in "Search Index Data Reader" "Search Index Data Contributor" "Search Service Contributor"; do
+            HAS_ROLE=$(az role assignment list \
+                --assignee "$ACA_PRINCIPAL" \
+                --role "$ROLE" \
+                --scope "$SEARCH_SCOPE" \
+                --query "[0].id" -o tsv 2>/dev/null)
+            if [[ -n "$HAS_ROLE" ]]; then
+                pass "ACA has '${ROLE}' on AI Search"
+            else
+                fail "ACA missing '${ROLE}' on AI Search"
+                if [[ "$FIX_MODE" == "--fix" ]]; then
+                    if az role assignment create \
+                        --assignee "$ACA_PRINCIPAL" \
+                        --role "$ROLE" \
+                        --scope "$SEARCH_SCOPE" \
+                        --output none 2>/dev/null; then
+                        pass "'${ROLE}' assigned"
+                        ((FAIL_COUNT--))
+                    fi
+                fi
+            fi
+        done
+    else
+        skip "AI Search '${SEARCH_NAME}' not found — skipping role checks"
+    fi
+
+    # --- Azure OpenAI ---
+    if [[ -n "${OPENAI_NAME:-}" ]] && [[ -n "${OPENAI_RG:-}" ]]; then
+        OPENAI_SCOPE="/subscriptions/${SUB_ID}/resourceGroups/${OPENAI_RG}/providers/Microsoft.CognitiveServices/accounts/${OPENAI_NAME}"
+        OPENAI_ROLE="Cognitive Services OpenAI User"
+        HAS_OPENAI_ROLE=$(az role assignment list \
+            --assignee "$ACA_PRINCIPAL" \
+            --role "$OPENAI_ROLE" \
+            --scope "$OPENAI_SCOPE" \
+            --query "[0].id" -o tsv 2>/dev/null)
+        if [[ -n "$HAS_OPENAI_ROLE" ]]; then
+            pass "ACA has '${OPENAI_ROLE}' on Azure OpenAI"
+        else
+            fail "ACA missing '${OPENAI_ROLE}' on Azure OpenAI"
+            if [[ "$FIX_MODE" == "--fix" ]]; then
+                if az role assignment create \
+                    --assignee "$ACA_PRINCIPAL" \
+                    --role "$OPENAI_ROLE" \
+                    --scope "$OPENAI_SCOPE" \
+                    --output none 2>/dev/null; then
+                    pass "'${OPENAI_ROLE}' assigned"
+                    ((FAIL_COUNT--))
+                fi
+            fi
+        fi
+    else
+        skip "Azure OpenAI not found — skipping role check"
+    fi
+else
+    if [[ -z "${ACA_PRINCIPAL:-}" ]]; then
+        skip "ACA not deployed yet — AI Search & OpenAI role checks skipped"
+    else
+        skip "AI Search & OpenAI role checks (not logged in)"
+    fi
 fi
 
 # ─── Summary ─────────────────────────────────────────────────────────────────

@@ -103,6 +103,64 @@ resource kvSecretsRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-0
 
 Without this, containers will crash with: `secret "capp-<app-name>" not found`.
 
+### Azure AI Search RBAC Authentication
+
+Azure AI Search defaults to `apiKeyOnly` which blocks managed identity auth.
+The search module MUST set `aadOrApiKey` auth and the ACA identity needs reader
+roles:
+
+```bicep
+// In the search module (search.bicep):
+resource searchService 'Microsoft.Search/searchServices@2024-03-01-preview' = {
+  name: searchName
+  location: location
+  sku: { name: 'basic' }
+  properties: {
+    replicaCount: 1
+    partitionCount: 1
+    hostingMode: 'default'
+    authOptions: {
+      aadOrApiKey: {
+        aadAuthFailureMode: 'http401WithBearerChallenge'
+      }
+    }
+  }
+}
+```
+
+```bicep
+// In main.bicep — role assignments for ACA → AI Search:
+var searchIndexDataReaderRoleId = '1407120a-92aa-4202-b7e9-c0e197c71c8f'
+var searchIndexDataContributorRoleId = '8ebe5a00-799e-43f5-93ac-243d3dce84a7'
+
+resource searchResource 'Microsoft.Search/searchServices@2024-03-01-preview' existing = {
+  name: '${resourcePrefix}-search'
+}
+
+resource searchReaderRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(searchResource.id, '${resourcePrefix}-api', searchIndexDataReaderRoleId)
+  scope: searchResource
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', searchIndexDataReaderRoleId)
+    principalId: containerApp.outputs.principalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
+resource searchContributorRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(searchResource.id, '${resourcePrefix}-api', searchIndexDataContributorRoleId)
+  scope: searchResource
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', searchIndexDataContributorRoleId)
+    principalId: containerApp.outputs.principalId
+    principalType: 'ServicePrincipal'
+  }
+}
+```
+
+Without this, the app gets `403 Forbidden` when calling AI Search from the
+container app's managed identity.
+
 ### Azure OpenAI Managed Identity Access
 
 When the app uses `DefaultAzureCredential` to call Azure OpenAI, two things
@@ -113,8 +171,26 @@ are required:
    a custom subdomain, Azure rejects token auth with: *"Please provide a custom
    subdomain for token authentication, otherwise API key is required."*
 2. **Role assignment** — the ACA managed identity needs the
-   `Cognitive Services OpenAI User` role on the OpenAI resource. Handle via
-   bootstrap script (same circular dependency as AcrPull).
+   `Cognitive Services OpenAI User` role on the OpenAI resource:
+
+```bicep
+// In main.bicep:
+var cognitiveServicesOpenAIUserRoleId = '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd'
+
+resource openAiResource 'Microsoft.CognitiveServices/accounts@2024-10-01' existing = {
+  name: openAiName
+}
+
+resource openAiRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(openAiResource.id, '${resourcePrefix}-api', cognitiveServicesOpenAIUserRoleId)
+  scope: openAiResource
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', cognitiveServicesOpenAIUserRoleId)
+    principalId: containerApp.outputs.principalId
+    principalType: 'ServicePrincipal'
+  }
+}
+```
 
 ### Common Pitfalls
 
@@ -128,6 +204,19 @@ are required:
 - **asyncpg uses `ssl=require`** not `sslmode=require` in connection strings.
 - **Azure OpenAI `models.list()` doesn't work** — use a minimal
   `embeddings.create()` call for health checks instead.
+- **Azure AI Search defaults to `apiKeyOnly`** — you MUST set `authOptions` to
+  `aadOrApiKey` in the Bicep module, otherwise managed identity auth fails with
+  `403 Forbidden`.
+- **Database tables don't exist on first deploy.** The app will crash-loop with
+  `UndefinedTableError` unless you run Alembic migrations. Always include a
+  migration step in CI/CD deploy jobs.
+- **FastAPI lifespan for resource init.** Use a lifespan context manager to
+  call `ensure_index()` or similar initialization on startup. Without this,
+  the first user request that hits an uninitialized resource (e.g., missing
+  search index) returns a 500 error.
+- **Entra ID token version.** App registrations default to v1.0 tokens. Set
+  `requestedAccessTokenVersion: 2` in the app manifest. v1.0 tokens have
+  different audience and issuer formats that cause JWT validation failures.
 
 ---
 

@@ -36,6 +36,20 @@ you produce must be consistent with `governance/enterprise-standards.md`.
   `Settings` fields (e.g., `POLICYCHAT_DATABASE_URL`, `POLICYCHAT_REDIS_URL`)
   so that tests which import the app can construct `Settings` without real
   credentials.
+- FastAPI apps that depend on external resources (e.g., Azure AI Search indexes,
+  database schemas) MUST use a **lifespan context manager** to initialize those
+  resources on startup. For example, call `search_service.ensure_index()` in the
+  lifespan so the search index is created automatically on first deploy — do NOT
+  rely on manual steps or separate migration jobs for index creation.
+- When SQLAlchemy ORM models are defined, you MUST also produce **Alembic
+  migration files** (not just models). The deployment pipeline needs a migration
+  step to create/update tables. Produce:
+  - `alembic.ini` — configured with `sqlalchemy.url` placeholder
+  - `alembic/env.py` — imports all models for auto-detection
+  - `alembic/versions/001_initial_schema.py` — initial migration with all tables
+  The `env.py` must read the database URL from app config at runtime, not from
+  a hardcoded string. The Alembic migration must be runnable from within the
+  Docker container: `alembic upgrade head`.
 
 ## Before You Start
 Confirm which project you are working on. You need:

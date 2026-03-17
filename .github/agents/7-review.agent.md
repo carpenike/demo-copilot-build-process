@@ -94,6 +94,12 @@ Then present your review plan:
 - [ ] CD pipeline is environment-gated: dev → staging → production
 - [ ] Production deployment requires manual approval
 - [ ] `PREREQUISITES.md` or bootstrap doc exists listing Azure prerequisites
+- [ ] If Azure AI Search is used: Bicep sets `authOptions: aadOrApiKey` (not apiKeyOnly)
+- [ ] Role assignments exist for ACA managed identity → AI Search (Reader + Contributor)
+- [ ] Role assignments exist for ACA managed identity → Azure OpenAI (Cognitive Services OpenAI User)
+- [ ] Database migration step exists in CI/CD deploy jobs (alembic upgrade head)
+- [ ] Alembic migration files exist if SQLAlchemy models are defined
+- [ ] FastAPI app uses lifespan to initialize external resources (e.g., search index creation)
 
 ### 5. Cross-Artifact Consistency
 - [ ] Every FR in requirements.md maps to at least one test
