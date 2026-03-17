@@ -14,15 +14,16 @@ from fastapi import Depends, HTTPException, Request, status
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator
 
-    from redis.asyncio import Redis
-    from sqlalchemy.ext.asyncio import AsyncSession
+# Runtime imports needed for Annotated type aliases used by FastAPI
+from redis.asyncio import Redis
+from sqlalchemy.ext.asyncio import AsyncSession
 
-    from app.config import Settings
-    from app.services.conversation_service import ConversationService
-    from app.services.document_service import DocumentService
-    from app.services.feedback_service import FeedbackService
-    from app.services.llm_service import LLMService
-    from app.services.search_service import SearchService
+from app.config import Settings
+from app.services.conversation_service import ConversationService
+from app.services.document_service import DocumentService
+from app.services.feedback_service import FeedbackService
+from app.services.llm_service import LLMService
+from app.services.search_service import SearchService
 
 
 def get_settings(request: Request) -> Settings:
