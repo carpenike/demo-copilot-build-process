@@ -156,7 +156,28 @@ implementation including the deploy-to-dev stage.
 ## Azure Container Apps Standards (Preferred)
 
 When ACA is selected as the compute platform, the Bicep modules must configure:
-- `Microsoft.App/managedEnvironments` — with Log Analytics workspace integration
+- `Microsoft.App/managedEnvironments` — with Log Analytics workspace integration:
+  ```bicep
+  // The monitoring module must output BOTH customerId and sharedKey:
+  // output logAnalyticsCustomerId string = logAnalytics.properties.customerId
+  // output logAnalyticsSharedKey string = logAnalytics.listKeys().primarySharedKey
+  //
+  // WRONG — resource ID is NOT the customerId:
+  // customerId: monitoring.outputs.logAnalyticsId  // ← This is the resource ID, NOT the customer ID
+  //
+  // RIGHT — use the workspace customer ID (a GUID) and shared key:
+  resource acaEnvironment 'Microsoft.App/managedEnvironments@2024-03-01' = {
+    properties: {
+      appLogsConfiguration: {
+        destination: 'log-analytics'
+        logAnalyticsConfiguration: {
+          customerId: monitoring.outputs.logAnalyticsCustomerId  // properties.customerId
+          sharedKey: monitoring.outputs.logAnalyticsSharedKey    // listKeys().primarySharedKey
+        }
+      }
+    }
+  }
+  ```
 - `Microsoft.App/containerApps` per service (API, worker, etc.) with:
   - Health probes pointing to `/health` (liveness) and `/ready` (readiness)
   - Min/max replicas (min 2 for production API, scaling on HTTP concurrency)
