@@ -36,7 +36,7 @@ those resources:
 value: 'postgresql+asyncpg://myadmin:${password}@myserver-pg.postgres.database.azure.com:5432/mydb'
 
 // RIGHT — derived from module outputs
-value: 'postgresql+asyncpg://${database.outputs.adminLogin}:${password}@${database.outputs.serverFqdn}:5432/${database.outputs.databaseName}?sslmode=require'
+value: 'postgresql+asyncpg://${database.outputs.adminLogin}:${password}@${database.outputs.serverFqdn}:5432/${database.outputs.databaseName}?ssl=require'
 ```
 
 The Key Vault module must `dependsOn` any module whose outputs it references.
@@ -118,6 +118,9 @@ resource. Handle via bootstrap script (same circular dependency as AcrPull).
 - **All required Settings fields must have env vars** in the container app Bicep.
   Missing env vars cause pydantic `ValidationError` on startup — the app
   crash-loops with no clear error in multi-worker mode.
+- **asyncpg uses `ssl=require`** not `sslmode=require` in connection strings.
+- **Azure OpenAI `models.list()` doesn't work** — use a minimal
+  `embeddings.create()` call for health checks instead.
 
 ---
 
