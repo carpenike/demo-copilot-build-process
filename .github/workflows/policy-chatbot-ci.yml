@@ -260,7 +260,7 @@ jobs:
             entraClientSecret=${{ secrets.ENTRA_CLIENT_SECRET }}
             azureOpenAIEndpoint=${{ secrets.AZURE_OPENAI_ENDPOINT }}
             servicenowInstanceUrl=${{ secrets.SERVICENOW_INSTANCE_URL }}
-            databaseLocation=westus2
+            databaseLocation=centralus
           deploymentMode: Incremental
           deploymentName: ${{ env.PROJECT }}-dev-${{ github.sha }}
 
