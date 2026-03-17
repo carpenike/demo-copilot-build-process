@@ -120,11 +120,10 @@ jobs:
           docker build -t ${{ env.IMAGE_NAME }}:scan \
             projects/${{ env.PROJECT }}/src/
 
-      - name: Run Microsoft Defender for Containers scan
-        uses: Azure/container-scan@v0
+      - name: Run Microsoft Security DevOps scan
+        uses: microsoft/security-devops-action@v1
         with:
-          image-name: '${{ env.IMAGE_NAME }}:scan'
-          severity-threshold: 'CRITICAL'
+          tools: container
 
   # ─── Stage 4: Build & Push ────────────────────────────────────────────────────
   build:
