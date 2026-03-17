@@ -245,6 +245,47 @@ jobs:
           # Add lines like: postgresAdminPassword=${{ secrets.POSTGRES_ADMIN_PASSWORD }}
           deploymentMode: Incremental
           deploymentName: ${{ env.PROJECT }}-dev-${{ github.sha }}
+        continue-on-error: true
+        id: deploy
+
+      # On first deploy, ACA managed identity may not have AcrPull yet because
+      # Bicep creates the ACA + role assignment simultaneously, but RBAC takes
+      # 1-5 minutes to propagate. This step ensures AcrPull is assigned and
+      # propagated, then retries if the first deploy failed.
+      - name: Assign AcrPull to ACA managed identities
+        if: always() && steps.deploy.outcome != 'skipped'
+        run: |
+          ACR_ID=$(az acr show --name ${{ secrets.ACR_NAME }} --query id -o tsv 2>/dev/null || echo "")
+          for APP_SUFFIX in api worker; do
+            APP_NAME="${{ env.IMAGE_NAME }}-dev-${APP_SUFFIX}"
+            PRINCIPAL_ID=$(az containerapp show \
+              --name "$APP_NAME" \
+              --resource-group ${{ secrets.ACA_RESOURCE_GROUP_DEV }} \
+              --query "identity.principalId" -o tsv 2>/dev/null || echo "")
+            if [ -n "$PRINCIPAL_ID" ] && [ -n "$ACR_ID" ]; then
+              echo "Assigning AcrPull to ${APP_NAME}..."
+              az role assignment create \
+                --assignee-object-id "$PRINCIPAL_ID" \
+                --assignee-principal-type ServicePrincipal \
+                --role AcrPull --scope "$ACR_ID" \
+                --output none 2>/dev/null || true
+            fi
+          done
+          echo "Waiting 30s for RBAC propagation..."
+          sleep 30
+
+      - name: Retry deploy if first attempt failed
+        if: steps.deploy.outcome == 'failure'
+        uses: azure/arm-deploy@v2
+        with:
+          resourceGroupName: ${{ secrets.ACA_RESOURCE_GROUP_DEV }}
+          template: projects/${{ env.PROJECT }}/infrastructure/main.bicep
+          parameters: >-
+            projects/${{ env.PROJECT }}/infrastructure/main.dev.bicepparam
+            imageTag=${{ github.sha }}
+            acrLoginServer=${{ env.ACR_REGISTRY }}
+          deploymentMode: Incremental
+          deploymentName: ${{ env.PROJECT }}-dev-${{ github.sha }}-retry
 
       - name: Wait for revision to be ready
         run: |

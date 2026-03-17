@@ -47,6 +47,14 @@ strictly within the infrastructure standards defined in
   dependency as AcrPull). The `main.bicep` must include inline role assignments:
   - **AI Search (if used):** `Search Index Data Reader` + `Search Index Data Contributor`
   - **Azure OpenAI (if used):** `Cognitive Services OpenAI User`
+- **First-deploy RBAC timing:** On first deploy, Bicep creates ACA + role
+  assignments simultaneously, but Azure RBAC takes 1–5 minutes to propagate.
+  The CI `deploy-dev` step MUST handle this with a retry pattern:
+  1. First `azure/arm-deploy` with `continue-on-error: true`
+  2. Post-deploy step: `az role assignment create` for AcrPull on each ACA
+     managed identity + 30s sleep for propagation
+  3. If first deploy failed, retry `azure/arm-deploy`
+  See `.github/workflows/ci-template.yml.template` Stage 6 for the full pattern.
 - If the project has database dependencies (SQLAlchemy + Alembic), CI/CD deploy
   ```yaml
   - name: Run database migrations
