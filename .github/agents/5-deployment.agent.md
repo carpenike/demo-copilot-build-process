@@ -250,12 +250,24 @@ all items pass.
 10. Deploy pipeline has manual approval gate for production
 11. `projects/<project>/infrastructure/PREREQUISITES.md` exists listing all Azure prereqs
 12. No Terraform files (`.tf`) anywhere — Bicep only
-13. **Every field in `app/config.py` Settings class has a matching env var** in the
+13. **Bicep compiles without errors** — run `az bicep build --file main.bicep`
+    from `projects/<project>/infrastructure/` and verify exit code 0. Fix all
+    errors before committing. Common issues:
+    - **BCP120:** Role assignment `name`/`scope` properties cannot use module
+      outputs (runtime values). Compute resource names with the same formula
+      as the module instead of referencing `module.outputs.name`.
+    - **Unused params:** Remove any parameters declared in a module that are
+      not referenced in any resource within that module.
+    - **outputs-should-not-contain-secrets:** Add
+      `#disable-next-line outputs-should-not-contain-secrets` above outputs
+      that intentionally expose `listKeys()` results for cross-module use.
+    If `az bicep` is not installed, install via `az bicep install`.
+14. **Every field in `app/config.py` Settings class has a matching env var** in the
     container app Bicep template. Open `config.py`, list every field with the
     `env_prefix`, and verify each one appears in the `env:` block of
     `container-app.bicep`. Missing env vars cause the app to crash-loop on startup
     with a pydantic `ValidationError`.
-14. `projects/<project>/infrastructure/bootstrap.conf` exists and correctly
+15. `projects/<project>/infrastructure/bootstrap.conf` exists and correctly
     reflects which Azure services the project uses. Verify:
     - `WITH_OPENAI` is set if any ADR or code uses Azure OpenAI
     - `WITH_SEARCH` is set if any ADR or code uses Azure AI Search
