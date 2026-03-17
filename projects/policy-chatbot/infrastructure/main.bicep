@@ -180,8 +180,6 @@ module containerApp 'modules/container-app.bicep' = {
     logAnalyticsWorkspaceId: monitoring.outputs.logAnalyticsWorkspaceId
     appInsightsConnectionString: monitoring.outputs.appInsightsConnectionString
     keyVaultUri: keyVault.outputs.keyVaultUri
-    databaseHost: database.outputs.serverFqdn
-    redisHost: cache.outputs.redisHostName
     searchEndpoint: azureSearchEndpoint
     openAIEndpoint: azureOpenAIEndpoint
     entraTenantId: entraTenantId

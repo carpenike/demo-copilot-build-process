@@ -9,8 +9,6 @@ param acrLoginServer string
 param logAnalyticsWorkspaceId string
 param appInsightsConnectionString string
 param keyVaultUri string
-param databaseHost string
-param redisHost string
 param searchEndpoint string
 param openAIEndpoint string
 param entraTenantId string
