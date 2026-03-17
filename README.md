@@ -107,3 +107,38 @@ flowchart TD
 - **CI/CD:** GitHub Actions with mandatory lint → test → security → build → integration stages
 - **Secrets:** Azure Key Vault only; never in code or config files
 - **Observability:** Structured JSON logs + Prometheus metrics + OpenTelemetry traces (all via Azure Monitor)
+
+## Agent Quality Gates
+
+Each code-producing agent runs local verification before committing. These
+mirror what CI enforces, catching issues before they reach the pipeline:
+
+| Check | Agent 3 (Implementation) | Agent 4 (Test) | Agent 7 (Review) |
+|-------|--------------------------|----------------|-------------------|
+| `uvx ruff check` | ✅ Required | — | ✅ Required |
+| `uvx ruff format --check` | ✅ Required | — | ✅ Required |
+| `python -m pytest` | ✅ If tests exist | ✅ Required | ✅ Required |
+
+Additional constraints enforced by the implementation agent:
+- No `get_settings()` or Azure SDK initialization at module scope
+- All external service clients via FastAPI dependency injection (mockable in tests)
+- CI test steps must set placeholder env vars for all `Settings` fields
+
+## Deployment Prerequisites
+
+Use the bootstrap script to validate and provision Azure resources:
+
+```bash
+# Check what's needed
+./scripts/check-prerequisites.sh <project> dev
+
+# Auto-create missing resources
+./scripts/check-prerequisites.sh <project> dev --fix
+
+# Target a specific Azure tenant + subscription
+./scripts/check-prerequisites.sh <project> dev --tenant <id> -s "Sub Name" --fix
+```
+
+The script validates: Azure resource groups, ACR, OpenAI, Entra ID app
+registration, service principal with OIDC federated credentials, GitHub
+secrets, GitHub environments, and project files.
