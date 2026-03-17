@@ -20,6 +20,13 @@ you produce must be consistent with `governance/enterprise-standards.md`.
 - DO NOT put secrets, credentials, or API keys in any file — reference Azure Key Vault
 - DO NOT leave TODO comments in new code
 - DO NOT begin producing output until the target project is confirmed
+- DO NOT import Azure SDKs at module scope if they initialize connections or
+  require credentials. Use lazy imports (inside functions) or guard with
+  environment variable checks. Code must be importable in CI test environments
+  where Azure services are not available.
+- DO NOT instantiate external service clients at module scope. Use FastAPI
+  dependency injection so clients are created per-request and can be mocked in
+  tests without import-time failures.
 
 ## Before You Start
 Confirm which project you are working on. You need:
