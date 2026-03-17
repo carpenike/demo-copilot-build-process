@@ -40,7 +40,7 @@ jobs:
       - name: Deploy Bicep (dev)
         uses: azure/arm-deploy@v2
         with:
-          resourceGroupName: ${{ secrets.ACA_RESOURCE_GROUP }}
+          resourceGroupName: ${{ secrets.ACA_RESOURCE_GROUP_DEV }}
           template: projects/${{ env.PROJECT }}/infrastructure/main.bicep
           parameters: >-
             projects/${{ env.PROJECT }}/infrastructure/main.dev.bicepparam
@@ -58,7 +58,7 @@ jobs:
           for i in $(seq 1 30); do
             STATUS=$(az containerapp show \
               --name ${{ env.IMAGE_NAME }}-dev-api \
-              --resource-group ${{ secrets.ACA_RESOURCE_GROUP }} \
+              --resource-group ${{ secrets.ACA_RESOURCE_GROUP_DEV }} \
               --query "properties.provisioningState" -o tsv 2>/dev/null || echo "Pending")
             if [ "$STATUS" = "Succeeded" ]; then
               echo "Container App provisioning succeeded"
@@ -76,14 +76,14 @@ jobs:
         run: |
           az containerapp exec \
             --name ${{ env.IMAGE_NAME }}-dev-api \
-            --resource-group ${{ secrets.ACA_RESOURCE_GROUP }} \
+            --resource-group ${{ secrets.ACA_RESOURCE_GROUP_DEV }} \
             --command "alembic upgrade head"
 
       - name: Run smoke tests
         run: |
           FQDN=$(az containerapp show \
             --name ${{ env.IMAGE_NAME }}-dev-api \
-            --resource-group ${{ secrets.ACA_RESOURCE_GROUP }} \
+            --resource-group ${{ secrets.ACA_RESOURCE_GROUP_DEV }} \
             --query "properties.configuration.ingress.fqdn" -o tsv)
 
           curl -sf "https://${FQDN}/health" || exit 1
