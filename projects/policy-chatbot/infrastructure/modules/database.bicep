@@ -40,15 +40,8 @@ resource postgresServer 'Microsoft.DBforPostgreSQL/flexibleServers@2023-12-01-pr
   }
 }
 
-// Require TLS for all connections
-resource sslEnforcement 'Microsoft.DBforPostgreSQL/flexibleServers/configurations@2023-12-01-preview' = {
-  name: 'require_secure_transport'
-  parent: postgresServer
-  properties: {
-    value: 'ON'
-    source: 'user-override'
-  }
-}
+// Note: require_secure_transport defaults to ON on Azure PostgreSQL Flexible Server.
+// Explicitly setting it causes ServerIsBusy conflicts during deployments.
 
 // Create the application database
 resource database 'Microsoft.DBforPostgreSQL/flexibleServers/databases@2023-12-01-preview' = {
