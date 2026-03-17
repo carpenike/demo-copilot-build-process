@@ -3,11 +3,13 @@
 # check-prerequisites.sh — Validate Azure and GitHub prerequisites for a project
 #
 # Usage:
-#   ./scripts/check-prerequisites.sh <project-name> <environment> [--subscription <name-or-id>] [--fix]
+#   ./scripts/check-prerequisites.sh <project-name> <environment> [options]
 #
 # Examples:
 #   ./scripts/check-prerequisites.sh policy-chatbot dev
-#   ./scripts/check-prerequisites.sh policy-chatbot dev --subscription "My Sub Name"
+#   ./scripts/check-prerequisites.sh policy-chatbot dev --subscription "My Sub"
+#   ./scripts/check-prerequisites.sh policy-chatbot dev --tenant <tenant-id> -s "My Sub"
+#   ./scripts/check-prerequisites.sh policy-chatbot dev --login
 #   ./scripts/check-prerequisites.sh policy-chatbot dev -s 8cff5c8a-... --fix
 #
 # Requires: az CLI (logged in), gh CLI (authenticated), jq
@@ -33,12 +35,16 @@ SKIP="${BLUE}⏭️  SKIP${NC}"
 PROJECT=""
 ENVIRONMENT=""
 SUBSCRIPTION=""
+TENANT=""
 FIX_MODE=""
+DO_LOGIN=""
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --fix)       FIX_MODE="--fix"; shift ;;
-        --subscription|-s) SUBSCRIPTION="$2"; shift 2 ;;
+        --fix)                FIX_MODE="--fix"; shift ;;
+        --subscription|-s)    SUBSCRIPTION="$2"; shift 2 ;;
+        --tenant|-t)          TENANT="$2"; shift 2 ;;
+        --login)              DO_LOGIN="true"; shift ;;
         *)
             if [[ -z "$PROJECT" ]]; then PROJECT="$1"
             elif [[ -z "$ENVIRONMENT" ]]; then ENVIRONMENT="$1"
@@ -49,15 +55,20 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ -z "$PROJECT" ]] || [[ -z "$ENVIRONMENT" ]]; then
-    echo "Usage: $0 <project-name> <environment> [--subscription <name-or-id>] [--fix]"
+    echo "Usage: $0 <project-name> <environment> [options]"
     echo ""
     echo "  environment:    dev | staging | production"
-    echo "  --subscription: Azure subscription name or ID (default: current az account)"
-    echo "  --fix:          Auto-create missing Azure resources"
+    echo ""
+    echo "Options:"
+    echo "  --subscription, -s <name-or-id>  Azure subscription (default: current az account)"
+    echo "  --tenant, -t <tenant-id>         Azure AD tenant ID (triggers az login --tenant)"
+    echo "  --login                           Force az login (re-authenticate)"
+    echo "  --fix                             Auto-create missing Azure resources"
     echo ""
     echo "Examples:"
     echo "  $0 policy-chatbot dev"
-    echo "  $0 policy-chatbot dev --subscription 'My Subscription Name'"
+    echo "  $0 policy-chatbot dev --subscription 'My Sub' --tenant 'my-tenant-id'"
+    echo "  $0 policy-chatbot dev --login"
     echo "  $0 policy-chatbot dev -s 8cff5c8a-... --fix"
     exit 1
 fi
@@ -117,6 +128,24 @@ echo ""
 echo -e "${BLUE}═══ Azure Authentication ═══${NC}"
 
 ACCOUNT_INFO=$(az account show 2>/dev/null || true)
+
+# Handle explicit login or tenant switch
+if [[ -n "$DO_LOGIN" ]] || [[ -n "$TENANT" ]]; then
+    echo -e "  Logging in to Azure..."
+    LOGIN_ARGS=()
+    if [[ -n "$TENANT" ]]; then
+        LOGIN_ARGS+=(--tenant "$TENANT")
+        echo -e "  Tenant: ${TENANT}"
+    fi
+    if az login "${LOGIN_ARGS[@]}" --output none 2>/dev/null; then
+        ACCOUNT_INFO=$(az account show 2>/dev/null)
+        pass "Azure login successful"
+    else
+        fail "Azure login failed"
+        ACCOUNT_INFO=""
+    fi
+fi
+
 if [[ -n "$ACCOUNT_INFO" ]]; then
     # Switch subscription if requested
     if [[ -n "$SUBSCRIPTION" ]]; then
@@ -137,7 +166,8 @@ if [[ -n "$ACCOUNT_INFO" ]]; then
         SUB_NAME=$(echo "$ACCOUNT_INFO" | jq -r '.name')
         SUB_ID=$(echo "$ACCOUNT_INFO" | jq -r '.id')
         TENANT_ID=$(echo "$ACCOUNT_INFO" | jq -r '.tenantId')
-        pass "Logged in to Azure subscription: ${SUB_NAME} (${SUB_ID})"
+        pass "Using subscription: ${SUB_NAME} (${SUB_ID})"
+        pass "Tenant: ${TENANT_ID}"
     fi
 else
     fail "Not logged in to Azure CLI — run: az login"
