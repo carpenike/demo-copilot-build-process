@@ -1,0 +1,934 @@
+openapi: "3.1.0"
+info:
+  title: Policy Chatbot API
+  description: Corporate Policy Assistant Chatbot — RAG-powered policy Q&A with Azure OpenAI
+  version: "0.1.0"
+  contact:
+    name: Platform Engineering
+servers:
+  - url: https://policy-chatbot.acme.com
+    description: Production
+  - url: http://localhost:8000
+    description: Local development
+
+paths:
+  /health:
+    get:
+      operationId: health
+      summary: Liveness check
+      tags: [health]
+      responses:
+        "200":
+          description: Service is running
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+
+  /ready:
+    get:
+      operationId: ready
+      summary: Readiness check
+      tags: [health]
+      responses:
+        "200":
+          description: All dependencies reachable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadinessResponse"
+        "503":
+          description: One or more dependencies unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadinessResponse"
+
+  /api/v1/chat:
+    post:
+      operationId: chat
+      summary: Send a message and receive a chatbot response
+      tags: [chat]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChatRequest"
+      responses:
+        "200":
+          description: Chatbot response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatResponse"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+        "401":
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+
+  /api/v1/chat/{conversation_id}/escalate:
+    post:
+      operationId: escalate
+      summary: Escalate conversation to live agent
+      tags: [chat]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: conversation_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EscalateRequest"
+      responses:
+        "200":
+          description: Escalation initiated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EscalationResponse"
+        "404":
+          description: Conversation not found
+
+  /api/v1/chat/{conversation_id}/feedback:
+    post:
+      operationId: feedback
+      summary: Submit feedback on a chatbot response
+      tags: [chat]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: conversation_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FeedbackRequest"
+      responses:
+        "201":
+          description: Feedback recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FeedbackResponse"
+        "409":
+          description: Feedback already submitted for this message
+
+  /api/admin/documents:
+    get:
+      operationId: listDocuments
+      summary: List policy documents
+      tags: [admin]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: cursor
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, retired, processing]
+      responses:
+        "200":
+          description: Paginated list of documents
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentListResponse"
+    post:
+      operationId: uploadDocument
+      summary: Upload a new policy document
+      tags: [admin]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file, title, document_external_id, category, effective_date, owner]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                title:
+                  type: string
+                document_external_id:
+                  type: string
+                category:
+                  type: string
+                  enum: [HR, IT, Finance, Facilities, Legal, Compliance, Safety]
+                effective_date:
+                  type: string
+                  format: date
+                owner:
+                  type: string
+                review_date:
+                  type: string
+                  format: date
+                source_url:
+                  type: string
+      responses:
+        "202":
+          description: Document accepted for indexing
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentUploadResponse"
+        "409":
+          description: Document with this external ID already exists
+
+  /api/admin/documents/{document_id}:
+    put:
+      operationId: updateDocument
+      summary: Upload a new version of an existing document
+      tags: [admin]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: document_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        "202":
+          description: New version accepted for re-indexing
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentUploadResponse"
+
+  /api/admin/documents/{document_id}/retire:
+    post:
+      operationId: retireDocument
+      summary: Retire a document from the active corpus
+      tags: [admin]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: document_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Document retired
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentRetireResponse"
+
+  /api/admin/documents/{document_id}/reindex:
+    post:
+      operationId: reindexDocument
+      summary: Trigger re-indexing of a single document
+      tags: [admin]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: document_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "202":
+          description: Re-indexing queued
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReindexResponse"
+
+  /api/admin/documents/{document_id}/versions:
+    get:
+      operationId: documentVersions
+      summary: View version history of a document
+      tags: [admin]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: document_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Document version history
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentVersionsResponse"
+
+  /api/admin/reindex-all:
+    post:
+      operationId: reindexAll
+      summary: Trigger full corpus re-indexing
+      tags: [admin]
+      security:
+        - bearerAuth: []
+      responses:
+        "202":
+          description: Full re-indexing queued
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReindexResponse"
+
+  /api/admin/reindex-status:
+    get:
+      operationId: reindexStatus
+      summary: Check re-indexing progress
+      tags: [admin]
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Re-index status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReindexStatusResponse"
+
+  /api/admin/test-query:
+    post:
+      operationId: testQuery
+      summary: Test chatbot answer quality
+      tags: [admin]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TestQueryRequest"
+      responses:
+        "200":
+          description: Test query results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TestQueryResponse"
+
+  /api/admin/coverage:
+    get:
+      operationId: coverage
+      summary: Policy domain coverage report
+      tags: [admin]
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Coverage report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CoverageResponse"
+
+  /api/admin/analytics:
+    get:
+      operationId: analytics
+      summary: Analytics dashboard data
+      tags: [admin]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: start_date
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: granularity
+          in: query
+          schema:
+            type: string
+            default: daily
+            enum: [daily, weekly, monthly]
+      responses:
+        "200":
+          description: Analytics data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnalyticsResponse"
+
+  /api/admin/analytics/unanswered:
+    get:
+      operationId: unansweredQueries
+      summary: View unanswered query log
+      tags: [admin]
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Unanswered queries
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnansweredQueriesResponse"
+
+  /api/admin/analytics/flagged:
+    get:
+      operationId: flaggedTopics
+      summary: View topics flagged for review
+      tags: [admin]
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Flagged topics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FlaggedTopicsResponse"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Microsoft Entra ID OAuth 2.0 Bearer token
+
+  schemas:
+    HealthResponse:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+
+    ReadinessResponse:
+      type: object
+      required: [status, checks]
+      properties:
+        status:
+          type: string
+        checks:
+          type: object
+          properties:
+            database:
+              type: string
+            redis:
+              type: string
+            azure_openai:
+              type: string
+            ai_search:
+              type: string
+
+    ChatRequest:
+      type: object
+      required: [message]
+      properties:
+        conversation_id:
+          type: string
+          format: uuid
+        message:
+          type: string
+          minLength: 1
+          maxLength: 2000
+
+    ChatResponse:
+      type: object
+      required: [conversation_id, message_id, response]
+      properties:
+        conversation_id:
+          type: string
+          format: uuid
+        message_id:
+          type: string
+          format: uuid
+        response:
+          $ref: "#/components/schemas/ChatResponseBody"
+
+    ChatResponseBody:
+      type: object
+      required: [content, intent]
+      properties:
+        content:
+          type: string
+        citations:
+          type: array
+          items:
+            $ref: "#/components/schemas/Citation"
+        checklist:
+          $ref: "#/components/schemas/Checklist"
+        disclaimer:
+          type: string
+        intent:
+          $ref: "#/components/schemas/IntentInfo"
+        confidence:
+          type: number
+          format: float
+        escalated:
+          type: boolean
+        escalation:
+          $ref: "#/components/schemas/EscalationInfo"
+
+    Citation:
+      type: object
+      required: [document_title, section, effective_date, source_url]
+      properties:
+        document_title:
+          type: string
+        section:
+          type: string
+        effective_date:
+          type: string
+        source_url:
+          type: string
+
+    Checklist:
+      type: object
+      required: [steps]
+      properties:
+        steps:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChecklistStep"
+
+    ChecklistStep:
+      type: object
+      required: [step_number, text, type]
+      properties:
+        step_number:
+          type: integer
+        text:
+          type: string
+        type:
+          type: string
+          enum: [assisted, manual]
+        details:
+          type: string
+        link:
+          type: string
+        link_label:
+          type: string
+
+    IntentInfo:
+      type: object
+      required: [type]
+      properties:
+        domain:
+          type: string
+        type:
+          type: string
+          enum: [factual, procedural, sensitive]
+
+    EscalationInfo:
+      type: object
+      required: [reason, servicenow_incident_id]
+      properties:
+        reason:
+          type: string
+        servicenow_incident_id:
+          type: string
+
+    EscalateRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+
+    EscalationResponse:
+      type: object
+      required: [conversation_id, escalation]
+      properties:
+        conversation_id:
+          type: string
+          format: uuid
+        escalation:
+          $ref: "#/components/schemas/EscalationInfo"
+
+    FeedbackRequest:
+      type: object
+      required: [message_id, rating]
+      properties:
+        message_id:
+          type: string
+          format: uuid
+        rating:
+          type: string
+          enum: [positive, negative]
+        comment:
+          type: string
+          maxLength: 1000
+
+    FeedbackResponse:
+      type: object
+      required: [feedback_id, message_id, rating]
+      properties:
+        feedback_id:
+          type: string
+          format: uuid
+        message_id:
+          type: string
+          format: uuid
+        rating:
+          type: string
+          enum: [positive, negative]
+        comment:
+          type: string
+
+    ProblemDetail:
+      type: object
+      required: [type, title, status, detail]
+      properties:
+        type:
+          type: string
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        instance:
+          type: string
+
+    DocumentResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        document_external_id:
+          type: string
+        category:
+          type: string
+        effective_date:
+          type: string
+          format: date
+        review_date:
+          type: string
+          format: date
+        owner:
+          type: string
+        source_url:
+          type: string
+        status:
+          type: string
+          enum: [processing, active, retired]
+        current_version:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    DocumentListResponse:
+      type: object
+      required: [data, total]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/DocumentResponse"
+        next_cursor:
+          type: string
+        total:
+          type: integer
+
+    DocumentUploadResponse:
+      type: object
+      required: [id, title, status, version, message]
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        status:
+          type: string
+        version:
+          type: integer
+        message:
+          type: string
+
+    DocumentRetireResponse:
+      type: object
+      required: [id, title, status, message]
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        status:
+          type: string
+        message:
+          type: string
+
+    ReindexResponse:
+      type: object
+      required: [status, message]
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          type: string
+        total_documents:
+          type: integer
+        message:
+          type: string
+
+    ReindexStatusResponse:
+      type: object
+      required: [status, documents_processed, documents_total, started_at]
+      properties:
+        status:
+          type: string
+        documents_processed:
+          type: integer
+        documents_total:
+          type: integer
+        started_at:
+          type: string
+          format: date-time
+        estimated_completion:
+          type: string
+          format: date-time
+
+    DocumentVersionsResponse:
+      type: object
+      required: [document_id, versions]
+      properties:
+        document_id:
+          type: string
+          format: uuid
+        versions:
+          type: array
+          items:
+            $ref: "#/components/schemas/VersionInfo"
+
+    VersionInfo:
+      type: object
+      required: [version_number, status, indexed_by, created_at]
+      properties:
+        version_number:
+          type: integer
+        status:
+          type: string
+        indexed_by:
+          type: string
+        indexed_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+
+    TestQueryRequest:
+      type: object
+      required: [query]
+      properties:
+        query:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        staged_document_id:
+          type: string
+          format: uuid
+
+    TestQueryResponse:
+      type: object
+      required: [live_response]
+      properties:
+        live_response:
+          $ref: "#/components/schemas/TestQueryResult"
+        staged_response:
+          $ref: "#/components/schemas/TestQueryResult"
+
+    TestQueryResult:
+      type: object
+      required: [content]
+      properties:
+        content:
+          type: string
+        citations:
+          type: array
+          items:
+            $ref: "#/components/schemas/Citation"
+        confidence:
+          type: number
+          format: float
+
+    CoverageResponse:
+      type: object
+      required: [categories, total_documents]
+      properties:
+        categories:
+          type: array
+          items:
+            $ref: "#/components/schemas/CategoryCoverage"
+        total_documents:
+          type: integer
+        gaps:
+          type: array
+          items:
+            type: string
+
+    CategoryCoverage:
+      type: object
+      required: [name, document_count, status]
+      properties:
+        name:
+          type: string
+        document_count:
+          type: integer
+        status:
+          type: string
+
+    AnalyticsResponse:
+      type: object
+      required: [period, summary, top_intents, volume_by_period]
+      properties:
+        period:
+          type: object
+          properties:
+            start_date:
+              type: string
+            end_date:
+              type: string
+            granularity:
+              type: string
+        summary:
+          type: object
+          properties:
+            total_queries:
+              type: integer
+            resolution_rate:
+              type: number
+            escalation_rate:
+              type: number
+            average_satisfaction:
+              type: number
+            unanswered_count:
+              type: integer
+        top_intents:
+          type: array
+          items:
+            type: object
+            properties:
+              intent:
+                type: string
+              count:
+                type: integer
+        volume_by_period:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+              count:
+                type: integer
+
+    UnansweredQueriesResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              query:
+                type: string
+              attempted_domain:
+                type: string
+              count:
+                type: integer
+              last_asked:
+                type: string
+                format: date-time
+        next_cursor:
+          type: string
+
+    FlaggedTopicsResponse:
+      type: object
+      required: [flagged_topics]
+      properties:
+        flagged_topics:
+          type: array
+          items:
+            type: object
+            properties:
+              topic:
+                type: string
+              negative_feedback_count:
+                type: integer
+              sample_queries:
+                type: array
+                items:
+                  type: string
+              sample_comments:
+                type: array
+                items:
+                  type: string
