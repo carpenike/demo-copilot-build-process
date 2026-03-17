@@ -81,12 +81,17 @@ the managed identity also needs the `Key Vault Secrets User` role on the vault:
 ```bicep
 var kvSecretsUserRoleId = '4633458b-17de-408a-b874-0445c86b69e6'
 
+// Compute KV name with same formula as the module — NOT from module output.
+// Module outputs are runtime values and cannot be used in name/scope of
+// role assignments (BCP120).
+var keyVaultNameComputed = '${take(resourcePrefix, 20)}-kv'
+
 resource keyVaultResource 'Microsoft.KeyVault/vaults@2023-07-01' existing = {
-  name: keyVault.outputs.keyVaultName
+  name: keyVaultNameComputed
 }
 
 resource kvSecretsRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(keyVaultResource.id, '${resourcePrefix}-api', kvSecretsUserRoleId)
+  name: guid(keyVaultNameComputed, '${resourcePrefix}-api', kvSecretsUserRoleId)
   scope: keyVaultResource
   properties: {
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', kvSecretsUserRoleId)
