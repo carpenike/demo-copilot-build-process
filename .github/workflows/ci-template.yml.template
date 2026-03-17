@@ -285,7 +285,7 @@ jobs:
             imageTag=${{ github.sha }}
             acrLoginServer=${{ env.ACR_REGISTRY }}
           deploymentMode: Incremental
-          deploymentName: ${{ env.PROJECT }}-dev-${{ github.sha }}-retry
+          deploymentName: ${{ env.PROJECT }}-dev-${{ github.sha }}-r
 
       - name: Wait for revision to be ready
         run: |
