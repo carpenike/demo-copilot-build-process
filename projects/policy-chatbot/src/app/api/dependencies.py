@@ -7,7 +7,12 @@ from typing import Annotated
 import httpx
 from fastapi import Depends, HTTPException, Security, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import (
+    AsyncEngine,
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
 
 from app.config import Settings, get_settings
 from app.core.rag_pipeline import RAGPipeline
@@ -35,7 +40,7 @@ _graph_service: GraphService | None = None
 _jwks_cache: dict | None = None  # type: ignore[type-arg]
 
 
-def _get_engine(settings: Settings) -> object:
+def _get_engine(settings: Settings) -> AsyncEngine:
     global _engine
     if _engine is None:
         _engine = create_async_engine(
@@ -53,7 +58,7 @@ def _get_session_factory(settings: Settings) -> async_sessionmaker[AsyncSession]
         engine = _get_engine(settings)
         _session_factory = async_sessionmaker(
             engine,
-            expire_on_commit=False,  # type: ignore[arg-type]
+            expire_on_commit=False,
         )
     return _session_factory
 
@@ -187,7 +192,7 @@ async def get_current_user(
 
     # Decode and validate the JWT claims
     try:
-        import jose.jwt as jose_jwt
+        import jose.jwt as jose_jwt  # type: ignore[import-untyped]
 
         claims = jose_jwt.decode(
             token,

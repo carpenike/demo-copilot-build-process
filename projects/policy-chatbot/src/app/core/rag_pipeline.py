@@ -69,7 +69,8 @@ class RAGPipeline:
         cached = await self._redis.get_cached_response(query_hash)
         if cached:
             logger.info("Cache hit for query", extra={"query_hash": query_hash})
-            return json.loads(cached)
+            result: dict[str, object] = json.loads(cached)
+            return result
 
         # Step 3-7: Check LLM availability and branch accordingly
         llm_available = await self._openai.is_available()

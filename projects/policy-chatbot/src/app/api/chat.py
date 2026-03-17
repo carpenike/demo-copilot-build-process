@@ -179,7 +179,7 @@ async def send_message(
     for citation_data in rag_result.get("citations", []):
         citation = Citation(
             message_id=assistant_message.id,
-            document_id=None,  # type: ignore[arg-type]
+            document_id=None,
             section_heading=citation_data.get("section", ""),
             source_url=citation_data.get("source_url", ""),
         )

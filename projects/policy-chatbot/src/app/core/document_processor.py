@@ -4,7 +4,7 @@ import io
 import logging
 import re
 
-import fitz  # PyMuPDF
+import fitz  # type: ignore[import-untyped]  # PyMuPDF
 from bs4 import BeautifulSoup
 from docx import Document as DocxDocument
 

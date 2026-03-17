@@ -14,7 +14,7 @@ class RedisService:
     """Wraps Azure Cache for Redis for session/cache/rate-limit operations."""
 
     def __init__(self, settings: Settings) -> None:
-        self._redis = redis.from_url(
+        self._redis: redis.Redis[str] = redis.from_url(  # type: ignore[assignment]
             settings.redis_url,
             decode_responses=True,
         )
@@ -72,7 +72,8 @@ class RedisService:
     async def get_cached_response(self, query_hash: str) -> str | None:
         """Check for a cached response for an identical query."""
         key = f"cache:query:{query_hash}"
-        return await self._redis.get(key)
+        result: str | None = await self._redis.get(key)  # type: ignore[assignment]
+        return result
 
     async def set_cached_response(
         self,
@@ -100,7 +101,7 @@ class RedisService:
     async def is_available(self) -> bool:
         """Check if Redis is reachable."""
         try:
-            await self._redis.ping()
+            await self._redis.ping()  # type: ignore[misc]
         except Exception:
             logger.warning("Redis is unavailable")
             return False
