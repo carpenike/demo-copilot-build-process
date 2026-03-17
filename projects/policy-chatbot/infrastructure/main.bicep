@@ -213,7 +213,7 @@ resource acr 'Microsoft.ContainerRegistry/registries@2023-07-01' existing = {
 }
 
 resource acrPullRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (!empty(acrName)) {
-  name: guid(acr.id, containerApp.outputs.containerAppIdentityPrincipalId, acrPullRoleId)
+  name: guid(acr.id, containerApp.name, acrPullRoleId)
   scope: acr
   properties: {
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', acrPullRoleId)
