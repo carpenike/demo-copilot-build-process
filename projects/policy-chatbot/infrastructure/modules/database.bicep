@@ -11,7 +11,7 @@ param administratorPassword string
 param skuName string
 param storageSizeGB int
 
-var serverName = '${resourcePrefix}-pg'
+var serverName = '${resourcePrefix}-${location}-pg'
 
 resource postgresServer 'Microsoft.DBforPostgreSQL/flexibleServers@2023-12-01-preview' = {
   name: serverName

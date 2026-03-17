@@ -15,6 +15,8 @@ param redisAccessKey string
 @secure()
 param entraClientSecret string
 
+param databaseFqdn string
+
 var keyVaultName = '${take(resourcePrefix, 20)}-kv'
 
 resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
@@ -43,7 +45,7 @@ resource dbConnectionStringSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01'
   name: 'db-connection-string'
   parent: keyVault
   properties: {
-    value: 'postgresql+asyncpg://policychatadmin:${postgresAdminPassword}@${resourcePrefix}-pg.postgres.database.azure.com:5432/policychatbot?sslmode=require'
+    value: 'postgresql+asyncpg://policychatadmin:${postgresAdminPassword}@${databaseFqdn}:5432/policychatbot?sslmode=require'
   }
 }
 

@@ -115,12 +115,14 @@ module monitoring 'modules/monitoring.bicep' = {
 
 module keyVault 'modules/key-vault.bicep' = {
   name: '${resourcePrefix}-keyvault'
+  dependsOn: [database]
   params: {
     location: location
     resourcePrefix: resourcePrefix
     postgresAdminPassword: postgresAdminPassword
     redisAccessKey: redisAccessKey
     entraClientSecret: entraClientSecret
+    databaseFqdn: database.outputs.serverFqdn
   }
 }
 
