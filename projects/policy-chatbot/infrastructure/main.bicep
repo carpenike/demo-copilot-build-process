@@ -45,9 +45,6 @@ param entraClientSecret string
 @description('Azure OpenAI endpoint URL')
 param azureOpenAIEndpoint string
 
-@description('Azure AI Search endpoint URL')
-param azureSearchEndpoint string
-
 @description('ServiceNow instance URL')
 param servicenowInstanceUrl string
 
@@ -115,7 +112,7 @@ module monitoring 'modules/monitoring.bicep' = {
 
 module keyVault 'modules/key-vault.bicep' = {
   name: '${resourcePrefix}-keyvault'
-  dependsOn: [database]
+  dependsOn: [database, cache]
   params: {
     location: location
     resourcePrefix: resourcePrefix
@@ -125,6 +122,8 @@ module keyVault 'modules/key-vault.bicep' = {
     databaseFqdn: database.outputs.serverFqdn
     databaseAdminLogin: database.outputs.adminLogin
     databaseName: database.outputs.databaseName
+    redisHostName: cache.outputs.redisHostName
+    redisPort: cache.outputs.redisPort
   }
 }
 
@@ -187,7 +186,7 @@ module containerApp 'modules/container-app.bicep' = {
     logAnalyticsWorkspaceId: monitoring.outputs.logAnalyticsWorkspaceId
     appInsightsConnectionString: monitoring.outputs.appInsightsConnectionString
     keyVaultUri: keyVault.outputs.keyVaultUri
-    searchEndpoint: azureSearchEndpoint
+    searchEndpoint: search.outputs.searchEndpoint
     openAIEndpoint: azureOpenAIEndpoint
     entraTenantId: entraTenantId
     entraClientId: entraClientId

@@ -18,6 +18,8 @@ param entraClientSecret string
 param databaseFqdn string
 param databaseAdminLogin string
 param databaseName string
+param redisHostName string
+param redisPort int
 
 var keyVaultName = '${take(resourcePrefix, 20)}-kv'
 
@@ -55,7 +57,7 @@ resource redisConnectionStringSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-
   name: 'redis-connection-string'
   parent: keyVault
   properties: {
-    value: 'rediss://:${redisAccessKey}@${resourcePrefix}-redis.redis.cache.windows.net:6380/0'
+    value: 'rediss://:${redisAccessKey}@${redisHostName}:${redisPort}/0'
   }
 }
 
