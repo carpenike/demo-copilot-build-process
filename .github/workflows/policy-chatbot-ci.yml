@@ -270,12 +270,16 @@ jobs:
             STATUS=$(az containerapp show \
               --name ${{ env.IMAGE_NAME }}-dev-api \
               --resource-group ${{ secrets.ACA_RESOURCE_GROUP_DEV }} \
-              --query "properties.runningStatus" -o tsv 2>/dev/null || echo "Pending")
-            if [ "$STATUS" = "Running" ]; then
-              echo "Container App is running"
+              --query "properties.provisioningState" -o tsv 2>/dev/null || echo "Pending")
+            echo "Status: $STATUS ($i/30)"
+            if [ "$STATUS" = "Succeeded" ]; then
+              echo "Container App provisioning succeeded"
               break
             fi
-            echo "Waiting for deployment... ($i/30)"
+            if [ "$STATUS" = "Failed" ]; then
+              echo "Container App provisioning failed"
+              exit 1
+            fi
             sleep 10
           done
 
