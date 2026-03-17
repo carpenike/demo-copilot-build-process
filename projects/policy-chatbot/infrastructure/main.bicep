@@ -123,6 +123,8 @@ module keyVault 'modules/key-vault.bicep' = {
     redisAccessKey: redisAccessKey
     entraClientSecret: entraClientSecret
     databaseFqdn: database.outputs.serverFqdn
+    databaseAdminLogin: database.outputs.adminLogin
+    databaseName: database.outputs.databaseName
   }
 }
 
