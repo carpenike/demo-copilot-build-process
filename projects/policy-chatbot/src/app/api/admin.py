@@ -18,7 +18,6 @@ from app.api.dependencies import (
 )
 from app.core.rag_pipeline import RAGPipeline
 from app.models.analytics import AnalyticsEvent
-from app.models.conversation import Conversation
 from app.models.document import Document, DocumentVersion, PolicyCategory
 from app.models.feedback import Feedback, FeedbackFlag
 from app.services.blob_service import BlobService
@@ -131,7 +130,7 @@ class FlaggedTopicResponse(BaseModel):
 
 @router.get("/documents")
 async def list_documents(
-    _user: Annotated[AuthenticatedUser, Depends(require_admin)],
+    user: Annotated[AuthenticatedUser, Depends(require_admin)],
     db: Annotated[AsyncSession, Depends(get_db)],
     category: str | None = None,
     doc_status: Annotated[str | None, Query(alias="status")] = None,
@@ -264,9 +263,9 @@ async def upload_document(
         document_external_id=document_external_id,
         category_id=policy_category.id,
         source_type="blob",
-        effective_date=datetime.strptime(effective_date, "%Y-%m-%d").date(),  # noqa: DTZ007
+        effective_date=datetime.strptime(effective_date, "%Y-%m-%d").date(),
         review_date=(
-            datetime.strptime(review_date, "%Y-%m-%d").date()  # noqa: DTZ007
+            datetime.strptime(review_date, "%Y-%m-%d").date()
             if review_date
             else None
         ),
@@ -308,7 +307,7 @@ async def upload_document(
 @router.post("/documents/{document_id}/reindex", status_code=status.HTTP_202_ACCEPTED)
 async def reindex_document(
     document_id: uuid.UUID,
-    _user: Annotated[AuthenticatedUser, Depends(require_admin)],
+    user: Annotated[AuthenticatedUser, Depends(require_admin)],
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> ReindexResponse:
     """Trigger re-indexing of a specific document (FR-005)."""
@@ -333,7 +332,7 @@ async def reindex_document(
 
 @router.post("/documents/reindex-all", status_code=status.HTTP_202_ACCEPTED)
 async def reindex_all(
-    _user: Annotated[AuthenticatedUser, Depends(require_admin)],
+    user: Annotated[AuthenticatedUser, Depends(require_admin)],
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> ReindexAllResponse:
     """Trigger full corpus re-indexing (FR-005)."""
@@ -356,7 +355,7 @@ async def reindex_all(
 async def update_document(
     document_id: uuid.UUID,
     body: UpdateDocumentRequest,
-    _user: Annotated[AuthenticatedUser, Depends(require_admin)],
+    user: Annotated[AuthenticatedUser, Depends(require_admin)],
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> dict[str, object]:
     """Update document metadata or retire a document (FR-031)."""
@@ -389,7 +388,7 @@ async def update_document(
 @router.get("/documents/{document_id}/versions")
 async def list_versions(
     document_id: uuid.UUID,
-    _user: Annotated[AuthenticatedUser, Depends(require_admin)],
+    user: Annotated[AuthenticatedUser, Depends(require_admin)],
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> dict[str, list[VersionResponse]]:
     """View version history for a document (FR-006)."""
@@ -420,7 +419,7 @@ async def list_versions(
 @router.post("/test-query")
 async def test_query(
     body: TestQueryRequest,
-    _user: Annotated[AuthenticatedUser, Depends(require_admin)],
+    user: Annotated[AuthenticatedUser, Depends(require_admin)],
     rag_pipeline: Annotated[RAGPipeline, Depends(get_rag_pipeline)],
 ) -> dict[str, object]:
     """Preview how the chatbot would answer a question (FR-032)."""
@@ -442,7 +441,7 @@ async def test_query(
 
 @router.get("/analytics")
 async def get_analytics(
-    _user: Annotated[AuthenticatedUser, Depends(require_admin)],
+    user: Annotated[AuthenticatedUser, Depends(require_admin)],
     db: Annotated[AsyncSession, Depends(get_db)],
     period: str = Query(pattern=r"^(day|week|month)$"),
     start_date: str | None = None,
@@ -562,7 +561,7 @@ async def get_analytics(
 
 @router.get("/analytics/flagged-topics")
 async def get_flagged_topics(
-    _user: Annotated[AuthenticatedUser, Depends(require_admin)],
+    user: Annotated[AuthenticatedUser, Depends(require_admin)],
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> FlaggedTopicResponse:
     """View topics flagged for admin review due to repeated negative feedback (FR-030)."""
@@ -589,7 +588,7 @@ async def get_flagged_topics(
 
 @router.get("/coverage")
 async def get_coverage(
-    _user: Annotated[AuthenticatedUser, Depends(require_admin)],
+    user: Annotated[AuthenticatedUser, Depends(require_admin)],
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> CoverageResponse:
     """Display policy coverage report by domain (FR-033)."""

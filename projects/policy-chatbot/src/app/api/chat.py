@@ -129,7 +129,7 @@ async def send_message(
     redis_service: Annotated[RedisService, Depends(get_redis)],
     rag_pipeline: Annotated[RAGPipeline, Depends(get_rag_pipeline)],
 ) -> dict:  # type: ignore[type-arg]
-    """Send a message and receive the chatbot's response (FR-007–FR-021)."""
+    """Send a message and receive the chatbot's response (FR-007 to FR-021)."""
     # Verify conversation ownership
     result = await db.execute(
         select(Conversation).where(
