@@ -36,12 +36,8 @@ def extract_text_from_pdf(data: bytes) -> list[dict[str, str]]:
                     continue
 
                 # Heuristic: detect headings by font size (larger than body text)
-                avg_size = sum(span["size"] for span in line["spans"]) / len(
-                    line["spans"]
-                )
-                is_bold = any(
-                    "bold" in span.get("font", "").lower() for span in line["spans"]
-                )
+                avg_size = sum(span["size"] for span in line["spans"]) / len(line["spans"])
+                is_bold = any("bold" in span.get("font", "").lower() for span in line["spans"])
 
                 if avg_size > 12 or is_bold:
                     if current_content:
@@ -57,9 +53,7 @@ def extract_text_from_pdf(data: bytes) -> list[dict[str, str]]:
                     current_content.append(text)
 
     if current_content:
-        sections.append(
-            {"heading": current_heading, "content": "\n".join(current_content)}
-        )
+        sections.append({"heading": current_heading, "content": "\n".join(current_content)})
 
     doc.close()
     return sections
@@ -91,9 +85,7 @@ def extract_text_from_docx(data: bytes) -> list[dict[str, str]]:
             current_content.append(text)
 
     if current_content:
-        sections.append(
-            {"heading": current_heading, "content": "\n".join(current_content)}
-        )
+        sections.append({"heading": current_heading, "content": "\n".join(current_content)})
 
     return sections
 
@@ -126,9 +118,7 @@ def extract_text_from_html(data: bytes) -> list[dict[str, str]]:
             current_content.append(text)
 
     if current_content:
-        sections.append(
-            {"heading": current_heading, "content": "\n".join(current_content)}
-        )
+        sections.append({"heading": current_heading, "content": "\n".join(current_content)})
 
     return sections
 
@@ -177,9 +167,7 @@ def chunk_sections(
             para_length = len(paragraph)
 
             if current_length + para_length > chunk_size and current_chunk:
-                chunks.append(
-                    {"heading": heading, "content": "\n".join(current_chunk)}
-                )
+                chunks.append({"heading": heading, "content": "\n".join(current_chunk)})
                 # Keep overlap from the end of the previous chunk
                 overlap_text = "\n".join(current_chunk)[-overlap:]
                 current_chunk = [overlap_text, paragraph]

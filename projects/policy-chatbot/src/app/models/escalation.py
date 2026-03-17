@@ -25,6 +25,4 @@ class Escalation(Base):
     servicenow_ticket_id: Mapped[str | None] = mapped_column(String(100))
     transcript_summary: Mapped[str | None] = mapped_column(Text)
     identified_intent: Mapped[str | None] = mapped_column(String(255))
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

@@ -89,9 +89,7 @@ def classify_intent(query: str) -> ClassificationResult:
     are caught and escalated without generating any AI response (FR-016).
     """
     # Check for confidential topics first — highest priority
-    confidential_matches = [
-        p.pattern for p in CONFIDENTIAL_PATTERNS if p.search(query)
-    ]
+    confidential_matches = [p.pattern for p in CONFIDENTIAL_PATTERNS if p.search(query)]
     if confidential_matches:
         return ClassificationResult(
             intent=IntentResult.CONFIDENTIAL,
@@ -101,9 +99,7 @@ def classify_intent(query: str) -> ClassificationResult:
         )
 
     # Check for explicit escalation requests
-    escalation_matches = [
-        p.pattern for p in ESCALATION_PATTERNS if p.search(query)
-    ]
+    escalation_matches = [p.pattern for p in ESCALATION_PATTERNS if p.search(query)]
     if escalation_matches:
         return ClassificationResult(
             intent=IntentResult.ESCALATION_REQUEST,
@@ -113,9 +109,7 @@ def classify_intent(query: str) -> ClassificationResult:
         )
 
     # Determine query type — procedural vs factual
-    procedural_matches = [
-        p.pattern for p in PROCEDURAL_KEYWORDS if p.search(query)
-    ]
+    procedural_matches = [p.pattern for p in PROCEDURAL_KEYWORDS if p.search(query)]
     query_type = QueryType.PROCEDURAL if procedural_matches else QueryType.FACTUAL
 
     return ClassificationResult(

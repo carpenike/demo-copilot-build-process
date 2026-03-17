@@ -152,15 +152,9 @@ class SearchService:
         """Create or update the search index with the required schema."""
         fields = [
             SimpleField(name="id", type=SearchFieldDataType.String, key=True),
-            SimpleField(
-                name="document_id", type=SearchFieldDataType.String, filterable=True
-            ),
-            SimpleField(
-                name="version_id", type=SearchFieldDataType.String, filterable=True
-            ),
-            SimpleField(
-                name="chunk_index", type=SearchFieldDataType.Int32, sortable=True
-            ),
+            SimpleField(name="document_id", type=SearchFieldDataType.String, filterable=True),
+            SimpleField(name="version_id", type=SearchFieldDataType.String, filterable=True),
+            SimpleField(name="chunk_index", type=SearchFieldDataType.Int32, sortable=True),
             SearchableField(name="content", type=SearchFieldDataType.String),
             SearchableField(
                 name="section_heading",
@@ -186,9 +180,7 @@ class SearchService:
                 sortable=True,
             ),
             SimpleField(name="source_url", type=SearchFieldDataType.String),
-            SimpleField(
-                name="owner", type=SearchFieldDataType.String, filterable=True
-            ),
+            SimpleField(name="owner", type=SearchFieldDataType.String, filterable=True),
             SearchField(
                 name="content_vector",
                 type=SearchFieldDataType.Collection(SearchFieldDataType.Single),

@@ -53,9 +53,7 @@ class DocumentListResponse(BaseModel):
 class CreateDocumentRequest(BaseModel):
     title: str = Field(max_length=255)
     document_external_id: str = Field(max_length=100)
-    category: str = Field(
-        pattern=r"^(HR|IT|Finance|Facilities|Legal|Compliance|Safety)$"
-    )
+    category: str = Field(pattern=r"^(HR|IT|Finance|Facilities|Legal|Compliance|Safety)$")
     effective_date: str
     review_date: str | None = None
     owner: str = Field(max_length=255)
@@ -157,9 +155,7 @@ async def list_documents(
     # Get total count
     count_query = select(func.count(Document.id))
     if category:
-        count_query = count_query.join(PolicyCategory).where(
-            PolicyCategory.name == category
-        )
+        count_query = count_query.join(PolicyCategory).where(PolicyCategory.name == category)
     if doc_status:
         count_query = count_query.where(Document.status == doc_status)
     total_result = await db.execute(count_query)
@@ -203,9 +199,7 @@ async def list_documents(
                     if latest_version and latest_version.indexed_at
                     else None
                 ),
-                indexing_status=(
-                    latest_version.indexing_status if latest_version else "pending"
-                ),
+                indexing_status=(latest_version.indexing_status if latest_version else "pending"),
             )
         )
 
@@ -241,9 +235,7 @@ async def upload_document(
         )
 
     # Get or create category
-    cat_result = await db.execute(
-        select(PolicyCategory).where(PolicyCategory.name == category)
-    )
+    cat_result = await db.execute(select(PolicyCategory).where(PolicyCategory.name == category))
     policy_category = cat_result.scalar_one_or_none()
     if not policy_category:
         policy_category = PolicyCategory(name=category)
@@ -264,11 +256,7 @@ async def upload_document(
         category_id=policy_category.id,
         source_type="blob",
         effective_date=datetime.strptime(effective_date, "%Y-%m-%d").date(),
-        review_date=(
-            datetime.strptime(review_date, "%Y-%m-%d").date()
-            if review_date
-            else None
-        ),
+        review_date=(datetime.strptime(review_date, "%Y-%m-%d").date() if review_date else None),
         owner=owner,
     )
     db.add(doc)
@@ -425,9 +413,7 @@ async def test_query(
     """Preview how the chatbot would answer a question (FR-032)."""
     # Use a temporary conversation context for the test
     test_conversation_id = str(uuid.uuid4())
-    current_response = await rag_pipeline.process_query(
-        test_conversation_id, body.query
-    )
+    current_response = await rag_pipeline.process_query(test_conversation_id, body.query)
 
     result: dict[str, object] = {
         "current_corpus_response": current_response,
@@ -456,9 +442,7 @@ async def get_analytics(
         delta = {"day": 1, "week": 7, "month": 30}[period]
         period_start = now - __import__("datetime").timedelta(days=delta)
 
-    period_end = (
-        datetime.fromisoformat(end_date).replace(tzinfo=UTC) if end_date else now
-    )
+    period_end = datetime.fromisoformat(end_date).replace(tzinfo=UTC) if end_date else now
 
     # Query volume
     volume_result = await db.execute(
@@ -517,9 +501,7 @@ async def get_analytics(
         .order_by(func.count(AnalyticsEvent.id).desc())
         .limit(20)
     )
-    top_intents = [
-        {"intent": row[0], "count": row[1]} for row in intent_result.all()
-    ]
+    top_intents = [{"intent": row[0], "count": row[1]} for row in intent_result.all()]
 
     # Unanswered queries
     unanswered_result = await db.execute(
@@ -594,9 +576,7 @@ async def get_coverage(
     """Display policy coverage report by domain (FR-033)."""
     all_domains = ["HR", "IT", "Finance", "Facilities", "Legal", "Compliance", "Safety"]
 
-    result = await db.execute(
-        select(PolicyCategory).order_by(PolicyCategory.name)
-    )
+    result = await db.execute(select(PolicyCategory).order_by(PolicyCategory.name))
     categories = {c.name: c for c in result.scalars().all()}
 
     domains: list[CoverageDomain] = []

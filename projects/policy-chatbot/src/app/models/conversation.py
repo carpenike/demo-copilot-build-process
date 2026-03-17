@@ -25,15 +25,16 @@ class Conversation(Base):
     )
     status: Mapped[str] = mapped_column(
         Enum(
-            "active", "escalated", "closed",
-            name="conversation_status_enum", create_constraint=True,
+            "active",
+            "escalated",
+            "closed",
+            name="conversation_status_enum",
+            create_constraint=True,
         ),
         default="active",
         server_default="active",
     )
-    started_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
-    )
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     last_activity_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
@@ -61,9 +62,7 @@ class Message(Base):
     )
     content: Mapped[str] = mapped_column(Text, nullable=False)
     metadata_: Mapped[dict | None] = mapped_column("metadata", JSONB)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     conversation: Mapped["Conversation"] = relationship(back_populates="messages")
     citations: Mapped[list["Citation"]] = relationship(back_populates="message")
@@ -80,9 +79,7 @@ class Citation(Base):
     message_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("messages.id"), nullable=False, index=True
     )
-    document_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("documents.id"), nullable=False
-    )
+    document_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("documents.id"), nullable=False)
     section_heading: Mapped[str | None] = mapped_column(String(500))
     effective_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     source_url: Mapped[str | None] = mapped_column(String(2048))

@@ -52,7 +52,8 @@ def _get_session_factory(settings: Settings) -> async_sessionmaker[AsyncSession]
     if _session_factory is None:
         engine = _get_engine(settings)
         _session_factory = async_sessionmaker(
-            engine, expire_on_commit=False,  # type: ignore[arg-type]
+            engine,
+            expire_on_commit=False,  # type: ignore[arg-type]
         )
     return _session_factory
 

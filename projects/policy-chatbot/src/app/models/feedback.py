@@ -26,9 +26,7 @@ class Feedback(Base):
         nullable=False,
     )
     comment: Mapped[str | None] = mapped_column(Text)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
 class FeedbackFlag(Base):
@@ -43,8 +41,11 @@ class FeedbackFlag(Base):
     negative_count: Mapped[int] = mapped_column(Integer, default=0)
     status: Mapped[str] = mapped_column(
         Enum(
-            "flagged", "reviewed", "resolved",
-            name="flag_status_enum", create_constraint=True,
+            "flagged",
+            "reviewed",
+            "resolved",
+            name="flag_status_enum",
+            create_constraint=True,
         ),
         default="flagged",
         server_default="flagged",

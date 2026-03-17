@@ -161,14 +161,10 @@ async def send_message(
     db.add(user_message)
 
     # Add to Redis conversation context
-    await redis_service.add_conversation_message(
-        str(conversation_id), "user", body.content
-    )
+    await redis_service.add_conversation_message(str(conversation_id), "user", body.content)
 
     # Run RAG pipeline
-    rag_result = await rag_pipeline.process_query(
-        str(conversation_id), body.content
-    )
+    rag_result = await rag_pipeline.process_query(str(conversation_id), body.content)
 
     # Store assistant response
     assistant_message = Message(
@@ -238,9 +234,7 @@ async def escalate_conversation(
 
     # Get conversation history for transcript
     history = await redis_service.get_conversation_history(str(conversation_id))
-    transcript = "\n".join(
-        f"{m['role'].upper()}: {m['content']}" for m in history
-    )
+    transcript = "\n".join(f"{m['role'].upper()}: {m['content']}" for m in history)
 
     # Get user profile for escalation context
     profile = await redis_service.get_user_session(user.user_id)
@@ -328,9 +322,7 @@ async def submit_feedback(
     # Check if this topic needs flagging (FR-030)
     if body.rating == "negative":
         intent = (message.metadata_ or {}).get("intent", "unknown")
-        flag_result = await db.execute(
-            select(FeedbackFlag).where(FeedbackFlag.topic == intent)
-        )
+        flag_result = await db.execute(select(FeedbackFlag).where(FeedbackFlag.topic == intent))
         existing_flag = flag_result.scalar_one_or_none()
 
         if existing_flag:
