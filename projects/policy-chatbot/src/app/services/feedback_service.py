@@ -68,7 +68,7 @@ class FeedbackService:
             event_type="feedback",
             conversation_id=conversation_id,
             intent_domain=message.intent_domain,
-            metadata_={"rating": rating, "has_comment": comment is not None},  # type: ignore[arg-type]
+            metadata_={"rating": rating, "has_comment": comment is not None},
             event_date=date.today(),
         )
         db.add(event)
@@ -221,7 +221,7 @@ class FeedbackService:
             conversation_id=conversation_id,
             document_id=document_id,
             intent_domain=intent_domain,
-            metadata_=metadata,  # type: ignore[arg-type]
+            metadata_=metadata,
             event_date=date.today(),
         )
         db.add(event)

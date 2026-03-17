@@ -6,6 +6,7 @@ projects/policy-chatbot/design/data-model.md.
 
 import uuid
 from datetime import date, datetime
+from typing import Any
 
 from sqlalchemy import (
     Boolean,
@@ -155,8 +156,8 @@ class Message(Base):
     )
     role: Mapped[str] = mapped_column(String(20), nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=False)
-    citations: Mapped[dict | None] = mapped_column(JSONB)  # type: ignore[assignment]
-    checklist: Mapped[dict | None] = mapped_column(JSONB)  # type: ignore[assignment]
+    citations: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
+    checklist: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
     intent_domain: Mapped[str | None] = mapped_column(String(50))
     intent_type: Mapped[str | None] = mapped_column(String(20))
     confidence_score: Mapped[float | None] = mapped_column(Float)
@@ -202,7 +203,7 @@ class AnalyticsEvent(Base):
     conversation_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
     document_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
     intent_domain: Mapped[str | None] = mapped_column(String(50))
-    metadata_: Mapped[dict | None] = mapped_column("metadata", JSONB)  # type: ignore[assignment]
+    metadata_: Mapped[dict[str, Any] | None] = mapped_column("metadata", JSONB)
     event_date: Mapped[date] = mapped_column(Date, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, default=datetime.utcnow

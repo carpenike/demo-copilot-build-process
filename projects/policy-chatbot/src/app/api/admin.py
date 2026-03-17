@@ -130,7 +130,7 @@ async def upload_document(
     if len(content) > MAX_FILE_SIZE:
         raise HTTPException(status_code=400, detail="File exceeds 50 MB limit")
 
-    admin_id = admin.get("preferred_username", admin.get("sub", "unknown"))
+    admin_id = str(admin.get("preferred_username") or admin.get("sub") or "unknown")
 
     try:
         document = await doc_service.upload_document(
@@ -188,7 +188,7 @@ async def update_document(
         raise HTTPException(status_code=400, detail="Filename is required")
 
     content = await file.read()
-    admin_id = admin.get("preferred_username", admin.get("sub", "unknown"))
+    admin_id = str(admin.get("preferred_username") or admin.get("sub") or "unknown")
 
     document, version = await doc_service.upload_new_version(
         db,

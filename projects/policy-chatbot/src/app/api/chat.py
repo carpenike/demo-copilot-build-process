@@ -59,8 +59,8 @@ async def chat(
     feedback_service: FeedbackServiceDep,
 ) -> ChatResponse:
     """Send a message and receive a chatbot response."""
-    user_id = user.get("sub", user.get("oid", "unknown"))
-    user_name = user.get("name", user.get("preferred_username", "User"))
+    user_id = str(user.get("sub") or user.get("oid") or "unknown")
+    user_name = str(user.get("name") or user.get("preferred_username") or "User")
 
     conversation = await conv_service.get_or_create_conversation(
         db,
@@ -219,7 +219,7 @@ async def feedback(
     feedback_service: FeedbackServiceDep,
 ) -> FeedbackResponse:
     """Submit feedback on a specific assistant message."""
-    user_id = user.get("sub", user.get("oid", "unknown"))
+    user_id = str(user.get("sub") or user.get("oid") or "unknown")
 
     try:
         fb = await feedback_service.submit_feedback(

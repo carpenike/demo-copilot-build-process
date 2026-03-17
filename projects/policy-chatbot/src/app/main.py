@@ -36,15 +36,14 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     app.state.settings = settings
 
     # Configure structured logging
+    log_level: int = structlog.get_level_from_name(settings.log_level)  # type: ignore[operator]
     structlog.configure(
         processors=[
             structlog.processors.TimeStamper(fmt="iso"),
             structlog.processors.add_log_level,
             structlog.processors.JSONRenderer(),
         ],
-        wrapper_class=structlog.make_filtering_bound_logger(
-            structlog.get_level_from_name(settings.log_level)
-        ),
+        wrapper_class=structlog.make_filtering_bound_logger(log_level),
     )
 
     # Configure OpenTelemetry with Azure Monitor
@@ -63,7 +62,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     # Redis
     import redis.asyncio as aioredis
 
-    redis_client = aioredis.from_url(settings.redis_url, decode_responses=True)
+    redis_client = aioredis.from_url(settings.redis_url, decode_responses=True)  # type: ignore[no-untyped-call]
     app.state.redis = redis_client
 
     # Services — initialized once, shared across requests via app.state

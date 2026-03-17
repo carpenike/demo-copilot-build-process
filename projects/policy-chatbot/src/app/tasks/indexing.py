@@ -11,7 +11,7 @@ import re
 from typing import Any
 
 import structlog
-from celery import Celery
+from celery import Celery  # type: ignore[import-untyped]
 
 logger = structlog.get_logger()
 
@@ -136,7 +136,7 @@ def _extract_text_from_bytes(content: bytes, filename: str) -> str:
 
     if ext == "pdf":
         try:
-            import pypdf
+            import pypdf  # type: ignore[import-not-found]
 
             reader = pypdf.PdfReader(__import__("io").BytesIO(content))
             return "\n\n".join(page.extract_text() or "" for page in reader.pages)
@@ -146,7 +146,7 @@ def _extract_text_from_bytes(content: bytes, filename: str) -> str:
 
     if ext == "docx":
         try:
-            import docx
+            import docx  # type: ignore[import-not-found]
 
             doc = docx.Document(__import__("io").BytesIO(content))
             return "\n\n".join(para.text for para in doc.paragraphs if para.text.strip())
@@ -156,10 +156,10 @@ def _extract_text_from_bytes(content: bytes, filename: str) -> str:
 
     if ext in ("html", "htm"):
         try:
-            from bs4 import BeautifulSoup
+            from bs4 import BeautifulSoup  # type: ignore[import-not-found]
 
             soup = BeautifulSoup(content, "html.parser")
-            return soup.get_text(separator="\n\n", strip=True)
+            return soup.get_text(separator="\n\n", strip=True)  # type: ignore[no-any-return]
         except ImportError:
             logger.warning("beautifulsoup_not_installed_using_raw_decode")
             return content.decode("utf-8", errors="replace")

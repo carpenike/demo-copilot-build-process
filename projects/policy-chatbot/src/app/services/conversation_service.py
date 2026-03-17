@@ -28,7 +28,7 @@ logger = structlog.get_logger()
 class ConversationService:
     """Manages conversation lifecycle and context caching."""
 
-    def __init__(self, settings: Settings, redis: Redis) -> None:  # type: ignore[type-arg]
+    def __init__(self, settings: Settings, redis: Redis) -> None:
         self._settings = settings
         self._redis = redis
 
@@ -84,8 +84,8 @@ class ConversationService:
             conversation_id=conversation_id,
             role=role,
             content=content,
-            citations=citations,  # type: ignore[arg-type]
-            checklist=checklist,  # type: ignore[arg-type]
+            citations=citations,
+            checklist=checklist,
             intent_domain=intent_domain,
             intent_type=intent_type,
             confidence_score=confidence_score,

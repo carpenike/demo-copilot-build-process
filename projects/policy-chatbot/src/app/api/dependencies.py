@@ -38,7 +38,7 @@ async def get_db(request: Request) -> AsyncGenerator[AsyncSession, None]:
         yield session
 
 
-async def get_redis(request: Request) -> Redis:  # type: ignore[type-arg]
+async def get_redis(request: Request) -> Redis:
     """Retrieve the Redis client from app state."""
     return request.app.state.redis  # type: ignore[no-any-return]
 
@@ -93,7 +93,7 @@ async def get_current_user(request: Request) -> dict[str, Any]:
     token = auth_header.removeprefix("Bearer ").strip()
 
     try:
-        from jose import jwt
+        from jose import jwt  # type: ignore[import-untyped]
 
         payload: dict[str, Any] = jwt.decode(
             token,
@@ -129,7 +129,7 @@ async def require_admin(
 # Type aliases for cleaner route signatures
 SettingsDep = Annotated[Settings, Depends(get_settings)]
 DbDep = Annotated[AsyncSession, Depends(get_db)]
-RedisDep = Annotated[Redis, Depends(get_redis)]  # type: ignore[type-arg]
+RedisDep = Annotated[Redis, Depends(get_redis)]
 SearchDep = Annotated[SearchService, Depends(get_search_service)]
 LLMDep = Annotated[LLMService, Depends(get_llm_service)]
 DocServiceDep = Annotated[DocumentService, Depends(get_document_service)]
