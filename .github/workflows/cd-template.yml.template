@@ -1,15 +1,16 @@
 # CD Pipeline Template — Bicep Deployment to Azure Container Apps
 # Copy this file to .github/workflows/<project>-deploy.yml and replace placeholders.
-# Environment-gated deployment: dev → staging → production
-# Triggers on merge to main after CI passes.
+# Staging → Production deployment. Triggers on push to main (after PR merge).
+# Dev deployments happen in the CI workflow on PRs — see ci-template.yml.template.
+# Production requires manual approval via GitHub environment protection rules.
 
 name: Deploy — [Project Name]
 
 on:
-  workflow_run:
-    workflows: ["CI — [Project Name]"]
-    types: [completed]
+  push:
     branches: [main]
+    paths:
+      - 'projects/[project-name]/**'
 
 env:
   PROJECT: "[project-name]"
@@ -18,80 +19,12 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
 jobs:
-  # ─── Deploy to Dev ────────────────────────────────────────────────────────────
-  deploy-dev:
-    name: Deploy to Dev
-    runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
-    environment:
-      name: dev
-      url: https://[project-name]-dev.acme.com
-    permissions:
-      id-token: write
-      contents: read
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Login to Azure
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-
-      - name: Deploy Bicep (dev)
-        uses: azure/arm-deploy@v2
-        with:
-          resourceGroupName: ${{ secrets.ACA_RESOURCE_GROUP_DEV }}
-          template: projects/${{ env.PROJECT }}/infrastructure/main.bicep
-          parameters: >-
-            projects/${{ env.PROJECT }}/infrastructure/main.dev.bicepparam
-            imageTag=${{ github.event.workflow_run.head_sha }}
-            acrLoginServer=${{ env.ACR_REGISTRY }}
-          deploymentMode: Incremental
-
-      - name: Wait for revision to be ready
-        run: |
-          az containerapp revision list \
-            --name ${{ env.IMAGE_NAME }}-api \
-            --resource-group ${{ secrets.ACA_RESOURCE_GROUP_DEV }} \
-            --query "[?properties.runningState=='Running'].name" \
-            -o tsv
-          # Wait up to 5 minutes for the new revision
-          for i in $(seq 1 30); do
-            STATUS=$(az containerapp show \
-              --name ${{ env.IMAGE_NAME }}-api \
-              --resource-group ${{ secrets.ACA_RESOURCE_GROUP_DEV }} \
-              --query "properties.runningStatus" -o tsv 2>/dev/null || echo "Pending")
-            if [ "$STATUS" = "Running" ]; then
-              echo "Container App is running"
-              break
-            fi
-            echo "Waiting for deployment... ($i/30)"
-            sleep 10
-          done
-
-      - name: Run smoke tests
-        run: |
-          FQDN=$(az containerapp show \
-            --name ${{ env.IMAGE_NAME }}-api \
-            --resource-group ${{ secrets.ACA_RESOURCE_GROUP_DEV }} \
-            --query "properties.configuration.ingress.fqdn" -o tsv)
-
-          # Health check
-          curl -sf "https://${FQDN}/health" || exit 1
-          # Readiness check
-          curl -sf "https://${FQDN}/ready" || exit 1
-          echo "Smoke tests passed"
-
   # ─── Deploy to Staging ────────────────────────────────────────────────────────
   deploy-staging:
     name: Deploy to Staging
     runs-on: ubuntu-latest
-    needs: deploy-dev
     environment:
       name: staging
-      url: https://[project-name]-staging.acme.com
     permissions:
       id-token: write
       contents: read
@@ -112,15 +45,16 @@ jobs:
           template: projects/${{ env.PROJECT }}/infrastructure/main.bicep
           parameters: >-
             projects/${{ env.PROJECT }}/infrastructure/main.staging.bicepparam
-            imageTag=${{ github.event.workflow_run.head_sha }}
+            imageTag=${{ github.sha }}
             acrLoginServer=${{ env.ACR_REGISTRY }}
           deploymentMode: Incremental
+          deploymentName: ${{ env.PROJECT }}-staging-${{ github.sha }}
 
       - name: Wait for revision to be ready
         run: |
           for i in $(seq 1 30); do
             STATUS=$(az containerapp show \
-              --name ${{ env.IMAGE_NAME }}-api \
+              --name ${{ env.IMAGE_NAME }}-staging-api \
               --resource-group ${{ secrets.ACA_RESOURCE_GROUP_STAGING }} \
               --query "properties.runningStatus" -o tsv 2>/dev/null || echo "Pending")
             if [ "$STATUS" = "Running" ]; then
@@ -134,22 +68,21 @@ jobs:
       - name: Run smoke tests
         run: |
           FQDN=$(az containerapp show \
-            --name ${{ env.IMAGE_NAME }}-api \
+            --name ${{ env.IMAGE_NAME }}-staging-api \
             --resource-group ${{ secrets.ACA_RESOURCE_GROUP_STAGING }} \
             --query "properties.configuration.ingress.fqdn" -o tsv)
 
           curl -sf "https://${FQDN}/health" || exit 1
           curl -sf "https://${FQDN}/ready" || exit 1
-          echo "Smoke tests passed"
+          echo "Staging smoke tests passed"
 
-  # ─── Deploy to Production ─────────────────────────────────────────────────────
+  # ─── Deploy to Production (manual approval gate) ──────────────────────────────
   deploy-production:
     name: Deploy to Production
     runs-on: ubuntu-latest
     needs: deploy-staging
     environment:
       name: production
-      url: https://[project-name].acme.com
     permissions:
       id-token: write
       contents: read
@@ -170,15 +103,16 @@ jobs:
           template: projects/${{ env.PROJECT }}/infrastructure/main.bicep
           parameters: >-
             projects/${{ env.PROJECT }}/infrastructure/main.prod.bicepparam
-            imageTag=${{ github.event.workflow_run.head_sha }}
+            imageTag=${{ github.sha }}
             acrLoginServer=${{ env.ACR_REGISTRY }}
           deploymentMode: Incremental
+          deploymentName: ${{ env.PROJECT }}-prod-${{ github.sha }}
 
       - name: Wait for revision to be ready
         run: |
           for i in $(seq 1 30); do
             STATUS=$(az containerapp show \
-              --name ${{ env.IMAGE_NAME }}-api \
+              --name ${{ env.IMAGE_NAME }}-production-api \
               --resource-group ${{ secrets.ACA_RESOURCE_GROUP_PROD }} \
               --query "properties.runningStatus" -o tsv 2>/dev/null || echo "Pending")
             if [ "$STATUS" = "Running" ]; then
@@ -192,7 +126,7 @@ jobs:
       - name: Run smoke tests
         run: |
           FQDN=$(az containerapp show \
-            --name ${{ env.IMAGE_NAME }}-api \
+            --name ${{ env.IMAGE_NAME }}-production-api \
             --resource-group ${{ secrets.ACA_RESOURCE_GROUP_PROD }} \
             --query "properties.configuration.ingress.fqdn" -o tsv)
 

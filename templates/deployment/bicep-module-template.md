@@ -45,7 +45,7 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
     configuration: {
       activeRevisionsMode: 'Single'
       ingress: {
-        external: false  // Use Azure API Management for public access
+        external: false  // Set true for dev/staging (auto-assigns *.azurecontainerapps.io FQDN)
         targetPort: 8000
         transport: 'http'
       }
