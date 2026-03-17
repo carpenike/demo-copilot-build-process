@@ -19,6 +19,7 @@ env:
   PYTHON_VERSION: "3.11"
   ACR_REGISTRY: "${{ secrets.ACR_LOGIN_SERVER }}"
   IMAGE_NAME: "policy-chatbot"
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
 jobs:
   # ─── Stage 1: Lint ────────────────────────────────────────────────────────────
