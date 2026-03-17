@@ -1,7 +1,9 @@
 """FastAPI application factory — entry point for the Policy Chatbot."""
 
+import logging
+import os
+
 import structlog
-from azure.monitor.opentelemetry import configure_azure_monitor
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -13,8 +15,18 @@ from app.config import get_settings
 settings = get_settings()
 
 # Configure Azure Monitor OpenTelemetry (ADR-0010, enterprise standards)
-if not settings.debug:
-    configure_azure_monitor()
+# Guarded: only initialize when APPLICATIONINSIGHTS_CONNECTION_STRING is set
+# and we're not in debug/test mode. This avoids import failures in test environments
+# where azure-monitor-opentelemetry has SDK version conflicts.
+if not settings.debug and os.environ.get("APPLICATIONINSIGHTS_CONNECTION_STRING"):
+    try:
+        from azure.monitor.opentelemetry import configure_azure_monitor
+
+        configure_azure_monitor()
+    except ImportError:
+        logging.getLogger(__name__).warning(
+            "azure-monitor-opentelemetry not available — telemetry disabled"
+        )
 
 # Configure structured logging — JSON to stdout for Azure Monitor ingestion
 structlog.configure(
