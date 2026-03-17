@@ -93,6 +93,10 @@ Then present your plan before starting:
   - `main.bicep` — orchestrator module that calls child modules
   - `main.bicepparam` — parameter file per environment (dev, staging, production)
   - Child modules for each Azure resource (ACA, database, cache, Key Vault, etc.)
+- `projects/<project>/infrastructure/bootstrap.conf` — machine-readable config
+  for `scripts/check-prerequisites.sh --from-config`. Defines which Azure
+  services the project needs, app roles, extra secrets, and location overrides.
+  See `templates/deployment/bootstrap-conf-template.md` for the format.
 - `.github/workflows/<project>-ci.yml` — CI pipeline
 - `.github/workflows/<project>-deploy.yml` — CD pipeline
 - `projects/<project>/infrastructure/PREREQUISITES.md` — Azure prerequisites
@@ -174,6 +178,7 @@ infrastructure/
   main.dev.bicepparam     # Parameters for dev environment
   main.staging.bicepparam # Parameters for staging environment
   main.prod.bicepparam    # Parameters for production environment
+  bootstrap.conf          # Machine-readable config for check-prerequisites.sh
   modules/
     container-app.bicep   # ACA resource definition
     database.bicep        # Azure Database for PostgreSQL, etc.
@@ -230,6 +235,14 @@ all items pass.
     `env_prefix`, and verify each one appears in the `env:` block of
     `container-app.bicep`. Missing env vars cause the app to crash-loop on startup
     with a pydantic `ValidationError`.
+14. `projects/<project>/infrastructure/bootstrap.conf` exists and correctly
+    reflects which Azure services the project uses. Verify:
+    - `WITH_OPENAI` is set if any ADR or code uses Azure OpenAI
+    - `WITH_SEARCH` is set if any ADR or code uses Azure AI Search
+    - `WITH_ENTRA_AUTH` is set if the project has user-facing authentication
+    - `APP_ROLES` matches the roles defined in the app's auth dependencies
+    - `EXTRA_SECRETS` lists all GitHub secrets beyond the core set
+    - `DATABASE_LOCATION` is set if the database needs a region override
 
 List each item with ✅ or ❌ status. If any item is ❌, fix it before continuing.
 

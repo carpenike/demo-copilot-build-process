@@ -13,6 +13,7 @@ infrastructure/
   main.dev.bicepparam     # Parameters for dev environment
   main.staging.bicepparam # Parameters for staging environment
   main.prod.bicepparam    # Parameters for production environment
+  bootstrap.conf          # Machine-readable config for check-prerequisites.sh
   modules/
     container-app.bicep   # ACA resource definition (preferred compute)
     database.bicep        # Azure Database for PostgreSQL, etc.
