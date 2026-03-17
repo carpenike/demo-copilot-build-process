@@ -84,7 +84,7 @@ fi
 
 REPO="carpenike/demo-copilot-build-process"
 RG="rg-${PROJECT}-${ENVIRONMENT}"
-LOCATION="${LOCATION:-eastus}"
+LOCATION="${LOCATION:-centralus}"
 
 PASS_COUNT=0
 FAIL_COUNT=0
