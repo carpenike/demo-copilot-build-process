@@ -713,6 +713,40 @@ if [[ -n "$ACCOUNT_INFO" ]]; then
     if [[ "$SP_COUNT" -gt 0 ]]; then
         SP_APP_ID=$(echo "$SP" | jq -r '.[0].appId')
         pass "Service principal found: ${SP_NAME} (${SP_APP_ID})"
+
+        # Verify SP has Owner role on the resource group (required for RBAC assignments in Bicep)
+        SP_OBJECT_ID=$(az ad sp show --id "$SP_APP_ID" --query "id" -o tsv 2>/dev/null)
+        if [[ -n "$SP_OBJECT_ID" ]]; then
+            RG_SCOPE="/subscriptions/${SUB_ID}/resourceGroups/${RG}"
+            HAS_OWNER=$(az role assignment list \
+                --assignee "$SP_OBJECT_ID" \
+                --role Owner \
+                --scope "$RG_SCOPE" \
+                --query "[0].id" -o tsv 2>/dev/null)
+            if [[ -n "$HAS_OWNER" ]]; then
+                pass "Service principal has Owner role on '${RG}'"
+            else
+                fail "Service principal missing Owner role on '${RG}' (has Contributor — cannot create RBAC assignments)"
+                if [[ "$FIX_MODE" == "--fix" ]]; then
+                    echo "    Assigning Owner role on '${RG}'..."
+                    if az role assignment create \
+                        --assignee-object-id "$SP_OBJECT_ID" \
+                        --assignee-principal-type ServicePrincipal \
+                        --role Owner \
+                        --scope "$RG_SCOPE" \
+                        --output none 2>/dev/null; then
+                        pass "Owner role assigned to SP on '${RG}'"
+                        ((FAIL_COUNT--))
+                    else
+                        echo "    Failed to assign Owner — you may need User Access Administrator permissions"
+                    fi
+                else
+                    echo "    Bicep deployments with RBAC role assignments require Owner (not just Contributor)."
+                    echo "    Run with --fix to auto-assign, or manually:"
+                    echo "      az role assignment create --assignee-object-id ${SP_OBJECT_ID} --assignee-principal-type ServicePrincipal --role Owner --scope ${RG_SCOPE}"
+                fi
+            fi
+        fi
     else
         fail "Service principal '${SP_NAME}' not found"
         if [[ "$FIX_MODE" == "--fix" ]]; then
