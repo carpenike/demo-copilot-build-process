@@ -16,6 +16,7 @@ param entraClientId string
 param servicenowInstanceUrl string
 param blobAccountUrl string
 param corsAllowedOrigins array
+param externalIngress bool = false
 param minReplicas int
 param maxReplicas int
 param cpuCores string
@@ -50,7 +51,7 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
     configuration: {
       activeRevisionsMode: 'Single'
       ingress: {
-        external: false
+        external: externalIngress
         targetPort: 8000
         transport: 'http'
         corsPolicy: !empty(corsAllowedOrigins) ? {

@@ -187,6 +187,7 @@ module containerApp 'modules/container-app.bicep' = {
     servicenowInstanceUrl: servicenowInstanceUrl
     blobAccountUrl: storage.outputs.blobEndpoint
     corsAllowedOrigins: corsAllowedOrigins
+    externalIngress: environment != 'production'
     minReplicas: config.apiMinReplicas
     maxReplicas: config.apiMaxReplicas
     cpuCores: config.apiCpu

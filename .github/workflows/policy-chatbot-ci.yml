@@ -227,7 +227,6 @@ jobs:
     if: github.event_name == 'pull_request'
     environment:
       name: dev
-      url: https://policy-chatbot-dev.acme.com
     permissions:
       id-token: write
       contents: read
