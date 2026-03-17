@@ -251,4 +251,28 @@ Follow the **Agent Git Workflow** defined in `.github/copilot-instructions.md`:
 1. Stage the files you produced: `projects/<project>/infrastructure/` and `.github/workflows/<project>-*.yml`
 2. Propose a commit message: `feat(<project>): deployment — <summary>`
 3. Ask the user to confirm before committing
-4. Print the handoff summary — next agent is **@6-monitor**
+
+## Bootstrap Azure Resources
+After committing, offer to run the bootstrap script to provision Azure
+resources. This is optional but recommended — it ensures the infrastructure
+exists before the first CI run.
+
+Ask the user:
+> *Would you like me to run the bootstrap script now to provision Azure
+> resources for the dev environment? This will check for (and optionally
+> create) all required Azure services defined in `bootstrap.conf`.*
+
+If the user agrees, run:
+```bash
+./scripts/check-prerequisites.sh <project> dev \
+    --from-config projects/<project>/infrastructure/bootstrap.conf --fix
+```
+
+If the script reports failures that `--fix` cannot resolve (e.g., quota limits,
+region restrictions), surface the failures to the user with remediation steps.
+
+If the user declines, note in the handoff summary that Azure resources need
+to be provisioned manually before the first deployment.
+
+## Handoff
+Print the handoff summary — next agent is **@6-monitor**
