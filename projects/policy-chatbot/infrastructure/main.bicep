@@ -88,8 +88,8 @@ resource acaEnvironment 'Microsoft.App/managedEnvironments@2024-03-01' = {
     appLogsConfiguration: {
       destination: 'log-analytics'
       logAnalyticsConfiguration: {
-        customerId: monitoring.outputs.logAnalyticsId
-        // Shared key is retrieved at deploy time by ARM
+        customerId: monitoring.outputs.logAnalyticsCustomerId
+        sharedKey: monitoring.outputs.logAnalyticsSharedKey
       }
     }
   }
