@@ -200,6 +200,28 @@ module containerApp 'modules/container-app.bicep' = {
   }
 }
 
+// ─── Role Assignment: ACA → ACR Pull ────────────────────────────────────────
+
+@description('ACR name for role assignment (must exist in the same resource group)')
+param acrName string = ''
+
+// AcrPull built-in role ID
+var acrPullRoleId = '7f951dda-4ed3-4680-a7ca-43fe172d538d'
+
+resource acr 'Microsoft.ContainerRegistry/registries@2023-07-01' existing = {
+  name: acrName
+}
+
+resource acrPullRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (!empty(acrName)) {
+  name: guid(acr.id, containerApp.outputs.containerAppIdentityPrincipalId, acrPullRoleId)
+  scope: acr
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', acrPullRoleId)
+    principalId: containerApp.outputs.containerAppIdentityPrincipalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
 // ─── Outputs ────────────────────────────────────────────────────────────────
 
 output containerAppFqdn string = containerApp.outputs.containerAppFqdn
