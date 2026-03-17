@@ -4,7 +4,7 @@ import json
 import logging
 from typing import Any
 
-import redis.asyncio as aioredis  # type: ignore[import-untyped]
+import redis.asyncio as aioredis
 
 from app.config import Settings
 
@@ -15,7 +15,7 @@ class RedisService:
     """Wraps Azure Cache for Redis for session/cache/rate-limit operations."""
 
     def __init__(self, settings: Settings) -> None:
-        self._redis: Any = aioredis.from_url(
+        self._redis: Any = aioredis.from_url(  # type: ignore[no-untyped-call]
             settings.redis_url,
             decode_responses=True,
         )
