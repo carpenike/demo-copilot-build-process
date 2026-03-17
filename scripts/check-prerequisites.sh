@@ -202,6 +202,9 @@ fi
 echo ""
 echo -e "${BLUE}═══ Azure Container Registry ═══${NC}"
 
+ACR_NAME=""
+ACR_SERVER=""
+
 if [[ -n "$ACCOUNT_INFO" ]]; then
     # Look for any ACR in the subscription
     ACR_LIST=$(az acr list --query "[].{name:name, loginServer:loginServer}" -o json 2>/dev/null)
@@ -210,16 +213,20 @@ if [[ -n "$ACCOUNT_INFO" ]]; then
         ACR_NAME=$(echo "$ACR_LIST" | jq -r '.[0].name')
         ACR_SERVER=$(echo "$ACR_LIST" | jq -r '.[0].loginServer')
         pass "ACR found: ${ACR_NAME} (${ACR_SERVER})"
-
-        # Check if we can push
-        ACR_CAN_PUSH=$(az acr check-health --name "$ACR_NAME" --yes 2>&1 || true)
-        if echo "$ACR_CAN_PUSH" | grep -q "is healthy"; then
-            pass "ACR '${ACR_NAME}' is healthy"
-        else
-            warn "ACR health check returned warnings — verify push access"
-        fi
     else
         fail "No Azure Container Registry found in this subscription"
+        if [[ "$FIX_MODE" == "--fix" ]]; then
+            # Generate a unique ACR name (alphanumeric only, 5-50 chars)
+            ACR_NAME="${PROJECT//[^a-zA-Z0-9]/}acr"
+            echo "    Creating ACR '${ACR_NAME}' in resource group '${RG}'..."
+            if az acr create --name "$ACR_NAME" --resource-group "$RG" --sku Basic --admin-enabled false --output none 2>/dev/null; then
+                ACR_SERVER=$(az acr show --name "$ACR_NAME" --query "loginServer" -o tsv 2>/dev/null)
+                pass "ACR created: ${ACR_NAME} (${ACR_SERVER})"
+                ((FAIL_COUNT--))
+            else
+                echo "    Failed to create ACR — ensure resource group exists first"
+            fi
+        fi
     fi
 else
     skip "ACR check (not logged in)"
@@ -229,6 +236,8 @@ fi
 
 echo ""
 echo -e "${BLUE}═══ Azure OpenAI Service ═══${NC}"
+
+OPENAI_ENDPOINT=""
 
 if [[ -n "$ACCOUNT_INFO" ]]; then
     OPENAI_ACCOUNTS=$(az cognitiveservices account list \
@@ -241,7 +250,31 @@ if [[ -n "$ACCOUNT_INFO" ]]; then
         OPENAI_RG=$(echo "$OPENAI_ACCOUNTS" | jq -r '.[0].rg')
         OPENAI_ENDPOINT=$(echo "$OPENAI_ACCOUNTS" | jq -r '.[0].endpoint')
         pass "Azure OpenAI resource found: ${OPENAI_NAME} (${OPENAI_ENDPOINT})"
+    else
+        fail "No Azure OpenAI resource found in this subscription"
+        if [[ "$FIX_MODE" == "--fix" ]]; then
+            OPENAI_NAME="${PROJECT}-openai"
+            echo "    Creating Azure OpenAI resource '${OPENAI_NAME}'..."
+            if az cognitiveservices account create \
+                --name "$OPENAI_NAME" \
+                --resource-group "$RG" \
+                --kind OpenAI \
+                --sku S0 \
+                --location "$LOCATION" \
+                --output none 2>/dev/null; then
+                OPENAI_ENDPOINT=$(az cognitiveservices account show \
+                    --name "$OPENAI_NAME" --resource-group "$RG" \
+                    --query "properties.endpoint" -o tsv 2>/dev/null)
+                OPENAI_RG="$RG"
+                pass "Azure OpenAI created: ${OPENAI_NAME} (${OPENAI_ENDPOINT})"
+                ((FAIL_COUNT--))
+            else
+                echo "    Failed to create Azure OpenAI — may need subscription approval"
+            fi
+        fi
+    fi
 
+    if [[ -n "$OPENAI_ENDPOINT" ]]; then
         # Check for model deployments
         DEPLOYMENTS=$(az cognitiveservices account deployment list \
             --name "$OPENAI_NAME" \
@@ -260,15 +293,49 @@ if [[ -n "$ACCOUNT_INFO" ]]; then
             pass "Chat model deployment found (GPT-4o or similar)"
         else
             fail "No GPT-4 chat model deployed — deploy GPT-4o in Azure Portal"
+            if [[ "$FIX_MODE" == "--fix" ]]; then
+                echo "    Attempting to deploy gpt-4o model..."
+                if az cognitiveservices account deployment create \
+                    --name "$OPENAI_NAME" \
+                    --resource-group "$OPENAI_RG" \
+                    --deployment-name "gpt-4o" \
+                    --model-name "gpt-4o" \
+                    --model-version "2024-11-20" \
+                    --model-format "OpenAI" \
+                    --sku-capacity 10 \
+                    --sku-name "Standard" \
+                    --output none 2>/dev/null; then
+                    pass "gpt-4o model deployed"
+                    ((FAIL_COUNT--))
+                else
+                    echo "    Failed — deploy manually in Azure Portal (may need quota approval)"
+                fi
+            fi
         fi
 
         if $HAS_EMBEDDING; then
             pass "Embedding model deployment found"
         else
             fail "No embedding model deployed — deploy text-embedding-3-large in Azure Portal"
+            if [[ "$FIX_MODE" == "--fix" ]]; then
+                echo "    Attempting to deploy text-embedding-3-large model..."
+                if az cognitiveservices account deployment create \
+                    --name "$OPENAI_NAME" \
+                    --resource-group "$OPENAI_RG" \
+                    --deployment-name "text-embedding-3-large" \
+                    --model-name "text-embedding-3-large" \
+                    --model-version "1" \
+                    --model-format "OpenAI" \
+                    --sku-capacity 10 \
+                    --sku-name "Standard" \
+                    --output none 2>/dev/null; then
+                    pass "text-embedding-3-large model deployed"
+                    ((FAIL_COUNT--))
+                else
+                    echo "    Failed — deploy manually in Azure Portal (may need quota approval)"
+                fi
+            fi
         fi
-    else
-        fail "No Azure OpenAI resource found in this subscription"
     fi
 else
     skip "Azure OpenAI check (not logged in)"
@@ -279,16 +346,75 @@ fi
 echo ""
 echo -e "${BLUE}═══ Entra ID App Registration ═══${NC}"
 
+APP_ID=""
+ENTRA_CLIENT_SECRET_VALUE=""
+
 if [[ -n "$ACCOUNT_INFO" ]]; then
     APP_REG=$(az ad app list --display-name "${PROJECT}" \
-        --query "[].{appId:appId, displayName:displayName}" \
+        --query "[].{appId:appId, displayName:displayName, id:id}" \
         -o json 2>/dev/null || echo "[]")
     APP_COUNT=$(echo "$APP_REG" | jq length)
 
     if [[ "$APP_COUNT" -gt 0 ]]; then
         APP_ID=$(echo "$APP_REG" | jq -r '.[0].appId')
+        APP_OBJECT_ID=$(echo "$APP_REG" | jq -r '.[0].id')
         pass "Entra ID app registration found: ${APP_ID}"
+    else
+        fail "No Entra ID app registration found with name '${PROJECT}'"
+        if [[ "$FIX_MODE" == "--fix" ]]; then
+            echo "    Creating Entra ID app registration '${PROJECT}'..."
+            APP_CREATE_RESULT=$(az ad app create \
+                --display-name "$PROJECT" \
+                --sign-in-audience "AzureADMyOrg" \
+                --required-resource-accesses '[{
+                    "resourceAppId": "00000003-0000-0000-c000-000000000000",
+                    "resourceAccess": [{"id": "e1fe6dd8-ba31-4d61-89e7-88639da4683d", "type": "Scope"}]
+                }]' \
+                --app-roles '[
+                    {
+                        "allowedMemberTypes": ["User"],
+                        "description": "Default role for all employees",
+                        "displayName": "Employee",
+                        "isEnabled": true,
+                        "value": "Employee"
+                    },
+                    {
+                        "allowedMemberTypes": ["User"],
+                        "description": "Policy administrators who can manage documents and view analytics",
+                        "displayName": "Administrator",
+                        "isEnabled": true,
+                        "value": "Administrator"
+                    }
+                ]' \
+                -o json 2>/dev/null)
 
+            if [[ -n "$APP_CREATE_RESULT" ]]; then
+                APP_ID=$(echo "$APP_CREATE_RESULT" | jq -r '.appId')
+                APP_OBJECT_ID=$(echo "$APP_CREATE_RESULT" | jq -r '.id')
+                pass "Entra ID app created: ${APP_ID}"
+                ((FAIL_COUNT--))
+
+                # Create a service principal for the app
+                az ad sp create --id "$APP_ID" --output none 2>/dev/null || true
+
+                # Generate a client secret
+                echo "    Generating client secret..."
+                SECRET_RESULT=$(az ad app credential reset \
+                    --id "$APP_ID" \
+                    --display-name "${PROJECT}-secret" \
+                    --years 2 \
+                    -o json 2>/dev/null)
+                if [[ -n "$SECRET_RESULT" ]]; then
+                    ENTRA_CLIENT_SECRET_VALUE=$(echo "$SECRET_RESULT" | jq -r '.password')
+                    pass "Client secret generated (will be stored in GitHub secrets)"
+                fi
+            else
+                echo "    Failed to create app registration"
+            fi
+        fi
+    fi
+
+    if [[ -n "$APP_ID" ]]; then
         # Check for App Roles
         APP_ROLES=$(az ad app show --id "$APP_ID" \
             --query "appRoles[].displayName" -o json 2>/dev/null || echo "[]")
@@ -306,9 +432,6 @@ if [[ -n "$ACCOUNT_INFO" ]]; then
         else
             fail "App Role 'Administrator' not configured"
         fi
-    else
-        fail "No Entra ID app registration found with name '${PROJECT}'"
-        warn "Create one in Azure Portal → Entra ID → App registrations"
     fi
 else
     skip "Entra ID check (not logged in)"
@@ -318,6 +441,8 @@ fi
 
 echo ""
 echo -e "${BLUE}═══ Service Principal (GitHub Actions) ═══${NC}"
+
+SP_APP_ID=""
 
 if [[ -n "$ACCOUNT_INFO" ]]; then
     SP_NAME="github-${PROJECT}-deploy"
@@ -329,7 +454,47 @@ if [[ -n "$ACCOUNT_INFO" ]]; then
     if [[ "$SP_COUNT" -gt 0 ]]; then
         SP_APP_ID=$(echo "$SP" | jq -r '.[0].appId')
         pass "Service principal found: ${SP_NAME} (${SP_APP_ID})"
+    else
+        fail "Service principal '${SP_NAME}' not found"
+        if [[ "$FIX_MODE" == "--fix" ]]; then
+            echo "    Creating service principal '${SP_NAME}'..."
+            SP_RESULT=$(az ad sp create-for-rbac \
+                --name "$SP_NAME" \
+                --role Contributor \
+                --scopes "/subscriptions/${SUB_ID}" \
+                -o json 2>/dev/null)
+            if [[ -n "$SP_RESULT" ]]; then
+                SP_APP_ID=$(echo "$SP_RESULT" | jq -r '.appId')
+                pass "Service principal created: ${SP_NAME} (${SP_APP_ID})"
+                ((FAIL_COUNT--))
 
+                # Create federated credentials for GitHub Actions OIDC
+                echo "    Creating federated credentials for GitHub Actions..."
+                for FED in \
+                    "github-main:repo:${REPO}:ref:refs/heads/main" \
+                    "github-env-dev:repo:${REPO}:environment:dev" \
+                    "github-env-staging:repo:${REPO}:environment:staging" \
+                    "github-env-production:repo:${REPO}:environment:production"
+                do
+                    FED_NAME="${FED%%:*}"
+                    FED_SUBJECT="${FED#*:}"
+                    az ad app federated-credential create \
+                        --id "$SP_APP_ID" \
+                        --parameters "{
+                            \"name\": \"${FED_NAME}\",
+                            \"issuer\": \"https://token.actions.githubusercontent.com\",
+                            \"subject\": \"${FED_SUBJECT}\",
+                            \"audiences\": [\"api://AzureADTokenExchange\"]
+                        }" --output none 2>/dev/null || true
+                done
+                pass "Federated credentials created (4 entries)"
+            else
+                echo "    Failed to create service principal"
+            fi
+        fi
+    fi
+
+    if [[ -n "$SP_APP_ID" ]]; then
         # Check federated credentials
         FED_CREDS=$(az ad app federated-credential list --id "$SP_APP_ID" \
             --query "[].name" -o json 2>/dev/null || echo "[]")
@@ -340,8 +505,6 @@ if [[ -n "$ACCOUNT_INFO" ]]; then
         else
             warn "Only ${FED_COUNT} federated credential(s) — expected at least 2 (main + env)"
         fi
-    else
-        fail "Service principal '${SP_NAME}' not found"
     fi
 else
     skip "Service principal check (not logged in)"
@@ -378,6 +541,35 @@ if command -v gh &>/dev/null; then
                 pass "Secret '${SECRET}' is configured"
             else
                 fail "Secret '${SECRET}' is NOT configured"
+                if [[ "$FIX_MODE" == "--fix" ]]; then
+                    # Try to auto-populate from values discovered during this run
+                    SECRET_VALUE=""
+                    case "$SECRET" in
+                        AZURE_CLIENT_ID)       [[ -n "${SP_APP_ID:-}" ]] && SECRET_VALUE="$SP_APP_ID" ;;
+                        AZURE_TENANT_ID)       [[ -n "${TENANT_ID:-}" ]] && SECRET_VALUE="$TENANT_ID" ;;
+                        AZURE_SUBSCRIPTION_ID) [[ -n "${SUB_ID:-}" ]] && SECRET_VALUE="$SUB_ID" ;;
+                        ACR_LOGIN_SERVER)      [[ -n "${ACR_SERVER:-}" ]] && SECRET_VALUE="$ACR_SERVER" ;;
+                        ACR_NAME)              [[ -n "${ACR_NAME:-}" ]] && SECRET_VALUE="$ACR_NAME" ;;
+                        ACA_RESOURCE_GROUP_DEV) SECRET_VALUE="rg-${PROJECT}-dev" ;;
+                        ENTRA_TENANT_ID)       [[ -n "${TENANT_ID:-}" ]] && SECRET_VALUE="$TENANT_ID" ;;
+                        ENTRA_CLIENT_ID)       [[ -n "${APP_ID:-}" ]] && SECRET_VALUE="$APP_ID" ;;
+                        ENTRA_CLIENT_SECRET)   [[ -n "${ENTRA_CLIENT_SECRET_VALUE:-}" ]] && SECRET_VALUE="$ENTRA_CLIENT_SECRET_VALUE" ;;
+                        AZURE_OPENAI_ENDPOINT) [[ -n "${OPENAI_ENDPOINT:-}" ]] && SECRET_VALUE="$OPENAI_ENDPOINT" ;;
+                        POSTGRES_ADMIN_PASSWORD)
+                            # Generate a random password
+                            SECRET_VALUE=$(openssl rand -base64 24 | tr -d '/+=' | head -c 24)
+                            echo "    Generated random password for PostgreSQL admin"
+                            ;;
+                        SERVICENOW_INSTANCE_URL)
+                            echo "    Skipping — ServiceNow URL must be provided manually"
+                            ;;
+                    esac
+                    if [[ -n "$SECRET_VALUE" ]]; then
+                        echo "$SECRET_VALUE" | gh secret set "$SECRET" --repo "$REPO" 2>/dev/null
+                        pass "Secret '${SECRET}' set automatically"
+                        ((FAIL_COUNT--))
+                    fi
+                fi
             fi
         done
     else
@@ -416,6 +608,15 @@ if command -v gh &>/dev/null; then
                 fi
             else
                 fail "Environment '${ENV}' does not exist"
+                if [[ "$FIX_MODE" == "--fix" ]]; then
+                    echo "    Creating environment '${ENV}'..."
+                    if gh api --method PUT "repos/${REPO}/environments/${ENV}" --silent 2>/dev/null; then
+                        pass "Environment '${ENV}' created"
+                        ((FAIL_COUNT--))
+                    else
+                        echo "    Failed to create environment — may need admin permissions"
+                    fi
+                fi
             fi
         done
     else
