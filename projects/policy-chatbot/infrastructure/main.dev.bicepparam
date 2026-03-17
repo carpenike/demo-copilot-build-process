@@ -8,6 +8,7 @@ param postgresAdminPassword = readEnvironmentVariable('POSTGRES_ADMIN_PASSWORD',
 param entraIdClientId = readEnvironmentVariable('ENTRA_CLIENT_ID', '')
 param entraIdClientSecret = readEnvironmentVariable('ENTRA_CLIENT_SECRET', '')
 param databaseLocation = ''
+param openAiLocation = 'eastus'
 
 // Dev: smaller SKUs to reduce cost
 param apiMinReplicas = 1

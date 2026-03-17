@@ -62,10 +62,14 @@ param redisSkuName string = 'Basic'
 @description('Azure AI Search SKU')
 param searchSkuName string = 'basic'
 
+@description('Optional location override for Azure OpenAI (not available in all regions)')
+param openAiLocation string = ''
+
 // ─── Variables ─────────────────────────────────────────────────────────────────
 
 var resourcePrefix = 'policy-chatbot-${environment}'
 var effectiveDatabaseLocation = empty(databaseLocation) ? location : databaseLocation
+var effectiveOpenAiLocation = empty(openAiLocation) ? location : openAiLocation
 
 // RBAC role definition IDs
 var acrPullRoleId = '7f951dda-4ed3-4680-a7ca-43fe172d538d'
@@ -142,7 +146,7 @@ module openAi 'modules/openai.bicep' = {
   name: '${resourcePrefix}-openai'
   params: {
     resourcePrefix: resourcePrefix
-    location: location
+    location: effectiveOpenAiLocation
   }
 }
 
@@ -168,7 +172,6 @@ module keyVault 'modules/key-vault.bicep' = {
 
 module containerAppApi 'modules/container-app.bicep' = {
   name: '${resourcePrefix}-api'
-  dependsOn: [keyVault, acaEnvironment]
   params: {
     resourcePrefix: resourcePrefix
     location: location
@@ -192,7 +195,6 @@ module containerAppApi 'modules/container-app.bicep' = {
 
 module containerAppWorker 'modules/container-app.bicep' = {
   name: '${resourcePrefix}-worker'
-  dependsOn: [keyVault, acaEnvironment]
   params: {
     resourcePrefix: resourcePrefix
     location: location
@@ -261,7 +263,6 @@ resource keyVaultResource 'Microsoft.KeyVault/vaults@2023-07-01' existing = {
 resource kvSecretsApi 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   name: guid(keyVaultNameComputed, '${resourcePrefix}-api', kvSecretsUserRoleId)
   scope: keyVaultResource
-  dependsOn: [keyVault]
   properties: {
     roleDefinitionId: subscriptionResourceId(
       'Microsoft.Authorization/roleDefinitions',
@@ -275,7 +276,6 @@ resource kvSecretsApi 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
 resource kvSecretsWorker 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   name: guid(keyVaultNameComputed, '${resourcePrefix}-worker', kvSecretsUserRoleId)
   scope: keyVaultResource
-  dependsOn: [keyVault]
   properties: {
     roleDefinitionId: subscriptionResourceId(
       'Microsoft.Authorization/roleDefinitions',
@@ -295,7 +295,6 @@ resource searchResource 'Microsoft.Search/searchServices@2024-03-01-preview' exi
 resource searchReaderApi 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   name: guid(searchResource.id, '${resourcePrefix}-api', searchIndexDataReaderRoleId)
   scope: searchResource
-  dependsOn: [search]
   properties: {
     roleDefinitionId: subscriptionResourceId(
       'Microsoft.Authorization/roleDefinitions',
@@ -309,7 +308,6 @@ resource searchReaderApi 'Microsoft.Authorization/roleAssignments@2022-04-01' = 
 resource searchContributorApi 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   name: guid(searchResource.id, '${resourcePrefix}-api', searchIndexDataContributorRoleId)
   scope: searchResource
-  dependsOn: [search]
   properties: {
     roleDefinitionId: subscriptionResourceId(
       'Microsoft.Authorization/roleDefinitions',
@@ -323,7 +321,6 @@ resource searchContributorApi 'Microsoft.Authorization/roleAssignments@2022-04-0
 resource searchContributorWorker 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   name: guid(searchResource.id, '${resourcePrefix}-worker', searchIndexDataContributorRoleId)
   scope: searchResource
-  dependsOn: [search]
   properties: {
     roleDefinitionId: subscriptionResourceId(
       'Microsoft.Authorization/roleDefinitions',
@@ -343,7 +340,6 @@ resource openAiResource 'Microsoft.CognitiveServices/accounts@2024-10-01' existi
 resource openAiRoleApi 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   name: guid(openAiResource.id, '${resourcePrefix}-api', cognitiveServicesOpenAIUserRoleId)
   scope: openAiResource
-  dependsOn: [openAi]
   properties: {
     roleDefinitionId: subscriptionResourceId(
       'Microsoft.Authorization/roleDefinitions',
@@ -357,7 +353,6 @@ resource openAiRoleApi 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
 resource openAiRoleWorker 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   name: guid(openAiResource.id, '${resourcePrefix}-worker', cognitiveServicesOpenAIUserRoleId)
   scope: openAiResource
-  dependsOn: [openAi]
   properties: {
     roleDefinitionId: subscriptionResourceId(
       'Microsoft.Authorization/roleDefinitions',
