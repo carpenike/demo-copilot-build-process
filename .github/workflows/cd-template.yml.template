@@ -15,6 +15,7 @@ env:
   PROJECT: "[project-name]"
   ACR_REGISTRY: "${{ secrets.ACR_LOGIN_SERVER }}"
   IMAGE_NAME: "[project-name]"
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
 jobs:
   # ─── Deploy to Dev ────────────────────────────────────────────────────────────
