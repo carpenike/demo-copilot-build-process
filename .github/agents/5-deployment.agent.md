@@ -39,27 +39,15 @@ strictly within the infrastructure standards defined in
   certain resources in specific regions. When this happens, add a location
   override parameter (e.g., `databaseLocation`) rather than moving the entire
   resource group. Document the override in the deploy step parameters.
-- Azure AI Search resources MUST be created with `authOptions: aadOrApiKey` (not
-  the default `apiKeyOnly`) so that ACA managed identity can authenticate via
-  RBAC. The Bicep module for AI Search must include:
-  ```bicep
-  properties: {
-    authOptions: {
-      aadOrApiKey: {
-        aadAuthFailureMode: 'http401WithBearerChallenge'
-      }
-    }
-  }
-  ```
-- ACA managed identity needs RBAC role assignments on Azure AI Search and Azure
-  OpenAI. These are post-deployment (same circular dependency as AcrPull). The
-  `main.bicep` must include inline role assignments for:
-  - **AI Search:** `Search Index Data Reader` + `Search Index Data Contributor`
-  - **Azure OpenAI:** `Cognitive Services OpenAI User`
-  These follow the same pattern as the AcrPull and Key Vault Secrets User role
-  assignments documented in `templates/deployment/bicep-module-template.md`.
-- CI/CD deploy steps that deploy apps with database dependencies MUST include a
-  **database migration step** after the Bicep deployment succeeds:
+- If the project uses **Azure AI Search**, the Bicep search module MUST set
+  `authOptions: aadOrApiKey` (not the default `apiKeyOnly`) so that ACA managed
+  identity can authenticate via RBAC.
+- If the project uses **Azure AI Search or Azure OpenAI**, ACA managed identity
+  needs RBAC role assignments. These are post-deployment (same circular
+  dependency as AcrPull). The `main.bicep` must include inline role assignments:
+  - **AI Search (if used):** `Search Index Data Reader` + `Search Index Data Contributor`
+  - **Azure OpenAI (if used):** `Cognitive Services OpenAI User`
+- If the project has database dependencies (SQLAlchemy + Alembic), CI/CD deploy
   ```yaml
   - name: Run database migrations
     run: |

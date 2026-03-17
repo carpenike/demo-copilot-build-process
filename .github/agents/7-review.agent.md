@@ -95,11 +95,11 @@ Then present your review plan:
 - [ ] Production deployment requires manual approval
 - [ ] `PREREQUISITES.md` or bootstrap doc exists listing Azure prerequisites
 - [ ] If Azure AI Search is used: Bicep sets `authOptions: aadOrApiKey` (not apiKeyOnly)
-- [ ] Role assignments exist for ACA managed identity → AI Search (Reader + Contributor)
-- [ ] Role assignments exist for ACA managed identity → Azure OpenAI (Cognitive Services OpenAI User)
-- [ ] Database migration step exists in CI/CD deploy jobs (alembic upgrade head)
-- [ ] Alembic migration files exist if SQLAlchemy models are defined
-- [ ] FastAPI app uses lifespan to initialize external resources (e.g., search index creation)
+- [ ] If Azure AI Search is used: role assignments for ACA managed identity (Reader + Contributor)
+- [ ] If Azure OpenAI is used: role assignment for ACA managed identity (Cognitive Services OpenAI User)
+- [ ] If project has database: migration step exists in CI/CD deploy jobs (alembic upgrade head)
+- [ ] If SQLAlchemy models are defined: Alembic migration files exist
+- [ ] If project uses external resources needing init: FastAPI lifespan handles it
 
 ### 5. Cross-Artifact Consistency
 - [ ] Every FR in requirements.md maps to at least one test

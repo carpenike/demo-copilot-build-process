@@ -103,11 +103,10 @@ resource kvSecretsRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-0
 
 Without this, containers will crash with: `secret "capp-<app-name>" not found`.
 
-### Azure AI Search RBAC Authentication
+### Azure AI Search RBAC Authentication (if project uses AI Search)
 
-Azure AI Search defaults to `apiKeyOnly` which blocks managed identity auth.
-The search module MUST set `aadOrApiKey` auth and the ACA identity needs reader
-roles:
+If the project uses Azure AI Search, the search module MUST set `aadOrApiKey`
+auth. Without this, managed identity auth from ACA fails with `403 Forbidden`.
 
 ```bicep
 // In the search module (search.bicep):
@@ -161,9 +160,9 @@ resource searchContributorRole 'Microsoft.Authorization/roleAssignments@2022-04-
 Without this, the app gets `403 Forbidden` when calling AI Search from the
 container app's managed identity.
 
-### Azure OpenAI Managed Identity Access
+### Azure OpenAI Managed Identity Access (if project uses Azure OpenAI)
 
-When the app uses `DefaultAzureCredential` to call Azure OpenAI, two things
+If the app uses `DefaultAzureCredential` to call Azure OpenAI, two things
 are required:
 
 1. **Custom subdomain** — the OpenAI resource MUST be created with
@@ -192,7 +191,7 @@ resource openAiRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
 }
 ```
 
-### Common Pitfalls
+### Common Pitfalls (apply only to projects using these services)
 
 - **Never use placeholder values** for secrets like Redis access keys in CI
   deploy steps. Use GitHub secrets populated from the bootstrap script or manual
@@ -201,22 +200,21 @@ resource openAiRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
 - **All required Settings fields must have env vars** in the container app Bicep.
   Missing env vars cause pydantic `ValidationError` on startup — the app
   crash-loops with no clear error in multi-worker mode.
-- **asyncpg uses `ssl=require`** not `sslmode=require` in connection strings.
+- **asyncpg uses `ssl=require`** not `sslmode=require` in connection strings
+  (applies only if project uses PostgreSQL with asyncpg).
 - **Azure OpenAI `models.list()` doesn't work** — use a minimal
-  `embeddings.create()` call for health checks instead.
-- **Azure AI Search defaults to `apiKeyOnly`** — you MUST set `authOptions` to
-  `aadOrApiKey` in the Bicep module, otherwise managed identity auth fails with
-  `403 Forbidden`.
-- **Database tables don't exist on first deploy.** The app will crash-loop with
-  `UndefinedTableError` unless you run Alembic migrations. Always include a
-  migration step in CI/CD deploy jobs.
-- **FastAPI lifespan for resource init.** Use a lifespan context manager to
-  call `ensure_index()` or similar initialization on startup. Without this,
-  the first user request that hits an uninitialized resource (e.g., missing
-  search index) returns a 500 error.
-- **Entra ID token version.** App registrations default to v1.0 tokens. Set
-  `requestedAccessTokenVersion: 2` in the app manifest. v1.0 tokens have
-  different audience and issuer formats that cause JWT validation failures.
+  `embeddings.create()` call for health checks instead (applies only if project
+  uses Azure OpenAI).
+- **Azure AI Search defaults to `apiKeyOnly`** — if the project uses AI Search,
+  you MUST set `authOptions` to `aadOrApiKey`.
+- **Database tables don't exist on first deploy.** If the project uses
+  SQLAlchemy + Alembic, the app will crash-loop with `UndefinedTableError`
+  unless you run migrations. Include a migration step in deploy jobs.
+- **FastAPI lifespan for resource init.** If the project initializes external
+  resources (e.g., search indexes), use a lifespan context manager.
+- **Entra ID token version.** If the project uses Entra ID authentication, set
+  `requestedAccessTokenVersion: 2`. v1.0 tokens have different audience and
+  issuer formats that cause JWT validation failures.
 
 ---
 

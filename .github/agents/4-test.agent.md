@@ -134,8 +134,8 @@ all items pass.
 9. Tests are independent (no test depends on another test's state)
 10. **Tests pass locally** — set placeholder env vars and run from `projects/<project>/src/`:
     ```bash
-    export POLICYCHAT_DATABASE_URL="postgresql+asyncpg://test:test@localhost/testdb"
-    # ... set all required Settings env vars with placeholders
+    export [PROJECT_PREFIX]_DATABASE_URL="postgresql+asyncpg://test:test@localhost/testdb"
+    # ... set all required Settings env vars with placeholders (see app/config.py)
     cd projects/<project>/src
     python -m pytest ../tests/ -x -q
     ```

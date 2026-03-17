@@ -33,15 +33,15 @@ you produce must be consistent with `governance/enterprise-standards.md`.
   dependency injection so clients are created per-request and can be mocked in
   tests without import-time failures.
 - CI test steps MUST set placeholder environment variables for all required
-  `Settings` fields (e.g., `POLICYCHAT_DATABASE_URL`, `POLICYCHAT_REDIS_URL`)
+  `Settings` fields (e.g., `[PROJECT]_DATABASE_URL`, `[PROJECT]_REDIS_URL`)
   so that tests which import the app can construct `Settings` without real
   credentials.
-- FastAPI apps that depend on external resources (e.g., Azure AI Search indexes,
-  database schemas) MUST use a **lifespan context manager** to initialize those
-  resources on startup. For example, call `search_service.ensure_index()` in the
-  lifespan so the search index is created automatically on first deploy — do NOT
-  rely on manual steps or separate migration jobs for index creation.
-- When SQLAlchemy ORM models are defined, you MUST also produce **Alembic
+- If the FastAPI app depends on external resources that require initialization
+  (e.g., Azure AI Search indexes, database schemas), use a **lifespan context
+  manager** to initialize those resources on startup. For example, call
+  `search_service.ensure_index()` in the lifespan so the search index is created
+  automatically on first deploy — do NOT rely on manual steps.
+- If SQLAlchemy ORM models are defined, you MUST also produce **Alembic
   migration files** (not just models). The deployment pipeline needs a migration
   step to create/update tables. Produce:
   - `alembic.ini` — configured with `sqlalchemy.url` placeholder

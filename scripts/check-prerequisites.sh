@@ -6,11 +6,18 @@
 #   ./scripts/check-prerequisites.sh <project-name> <environment> [options]
 #
 # Examples:
-#   ./scripts/check-prerequisites.sh policy-chatbot dev
-#   ./scripts/check-prerequisites.sh policy-chatbot dev --location westus2
-#   ./scripts/check-prerequisites.sh policy-chatbot dev --tenant <tenant-id> -s "My Sub"
-#   ./scripts/check-prerequisites.sh policy-chatbot dev --login
-#   ./scripts/check-prerequisites.sh policy-chatbot dev -s 8cff5c8a-... -l westus2 --fix
+#   ./scripts/check-prerequisites.sh my-api dev --fix
+#   ./scripts/check-prerequisites.sh my-api dev --with-openai --with-search --fix
+#   ./scripts/check-prerequisites.sh my-api dev --with-entra-auth --fix
+#   ./scripts/check-prerequisites.sh my-api dev --tenant <tenant-id> -s "My Sub"
+#
+# Feature flags (enable checks for optional Azure services):
+#   --with-openai        Check/create Azure OpenAI resources + model deployments
+#   --with-search        Check/create Azure AI Search + RBAC auth mode
+#   --with-entra-auth    Check/create Entra ID app registration + OAuth2 scopes
+#   --app-roles <json>   Custom app roles JSON (requires --with-entra-auth)
+#
+# Without flags, only core infra is checked: RG, ACR, SP, GitHub, AcrPull.
 #
 # Requires: az CLI (logged in), gh CLI (authenticated), jq
 # ──────────────────────────────────────────────────────────────────────────────
@@ -39,6 +46,10 @@ TENANT=""
 LOCATION=""
 FIX_MODE=""
 DO_LOGIN=""
+WITH_OPENAI=""
+WITH_SEARCH=""
+WITH_ENTRA_AUTH=""
+APP_ROLES_JSON=""
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -47,6 +58,10 @@ while [[ $# -gt 0 ]]; do
         --tenant|-t)          TENANT="$2"; shift 2 ;;
         --location|-l)        LOCATION="$2"; shift 2 ;;
         --login)              DO_LOGIN="true"; shift ;;
+        --with-openai)        WITH_OPENAI="true"; shift ;;
+        --with-search)        WITH_SEARCH="true"; shift ;;
+        --with-entra-auth)    WITH_ENTRA_AUTH="true"; shift ;;
+        --app-roles)          APP_ROLES_JSON="$2"; shift 2 ;;
         *)
             if [[ -z "$PROJECT" ]]; then PROJECT="$1"
             elif [[ -z "$ENVIRONMENT" ]]; then ENVIRONMENT="$1"
@@ -69,11 +84,10 @@ if [[ -z "$PROJECT" ]] || [[ -z "$ENVIRONMENT" ]]; then
     echo "  --fix                             Auto-create missing Azure resources"
     echo ""
     echo "Examples:"
-    echo "  $0 policy-chatbot dev"
-    echo "  $0 policy-chatbot dev --location westus2"
-    echo "  $0 policy-chatbot dev --subscription 'My Sub' --tenant 'my-tenant-id'"
-    echo "  $0 policy-chatbot dev --login"
-    echo "  $0 policy-chatbot dev -s 8cff5c8a-... -l westus2 --fix"
+    echo "  $0 my-api dev --fix"
+    echo "  $0 my-api dev --with-openai --with-search --fix"
+    echo "  $0 my-api dev --with-entra-auth --fix"
+    echo "  $0 my-api dev -s 8cff5c8a-... -l westus2 --fix"
     exit 1
 fi
 
@@ -236,14 +250,16 @@ else
     skip "ACR check (not logged in)"
 fi
 
-# ─── Section 4: Azure OpenAI Service ────────────────────────────────────────
+# ─── Section 4: Azure OpenAI Service (requires --with-openai) ───────────────
 
 echo ""
 echo -e "${BLUE}═══ Azure OpenAI Service ═══${NC}"
 
 OPENAI_ENDPOINT=""
 
-if [[ -n "$ACCOUNT_INFO" ]]; then
+if [[ -z "$WITH_OPENAI" ]]; then
+    skip "Azure OpenAI checks (use --with-openai to enable)"
+elif [[ -n "$ACCOUNT_INFO" ]]; then
     OPENAI_ACCOUNTS=$(az cognitiveservices account list \
         --query "[?kind=='OpenAI'].{name:name, rg:resourceGroup, endpoint:properties.endpoint}" \
         -o json 2>/dev/null)
@@ -346,7 +362,7 @@ else
     skip "Azure OpenAI check (not logged in)"
 fi
 
-# ─── Section 5: Entra ID App Registration ───────────────────────────────────
+# ─── Section 5: Entra ID App Registration (requires --with-entra-auth) ──────
 
 echo ""
 echo -e "${BLUE}═══ Entra ID App Registration ═══${NC}"
@@ -354,7 +370,9 @@ echo -e "${BLUE}═══ Entra ID App Registration ═══${NC}"
 APP_ID=""
 ENTRA_CLIENT_SECRET_VALUE=""
 
-if [[ -n "$ACCOUNT_INFO" ]]; then
+if [[ -z "$WITH_ENTRA_AUTH" ]]; then
+    skip "Entra ID checks (use --with-entra-auth to enable)"
+elif [[ -n "$ACCOUNT_INFO" ]]; then
     APP_REG=$(az ad app list --display-name "${PROJECT}" \
         --query "[].{appId:appId, displayName:displayName, id:id}" \
         -o json 2>/dev/null || echo "[]")
@@ -600,13 +618,11 @@ REQUIRED_SECRETS=(
     "ACR_LOGIN_SERVER"
     "ACR_NAME"
     "ACA_RESOURCE_GROUP_DEV"
-    "POSTGRES_ADMIN_PASSWORD"
-    "ENTRA_TENANT_ID"
-    "ENTRA_CLIENT_ID"
-    "ENTRA_CLIENT_SECRET"
-    "AZURE_OPENAI_ENDPOINT"
-    "SERVICENOW_INSTANCE_URL"
 )
+
+# Add secrets conditionally based on feature flags
+[[ -n "$WITH_ENTRA_AUTH" ]] && REQUIRED_SECRETS+=("ENTRA_TENANT_ID" "ENTRA_CLIENT_ID" "ENTRA_CLIENT_SECRET")
+[[ -n "$WITH_OPENAI" ]] && REQUIRED_SECRETS+=("AZURE_OPENAI_ENDPOINT")
 
 if command -v gh &>/dev/null; then
     GH_AUTH=$(gh auth status 2>&1 || true)
@@ -800,7 +816,9 @@ fi
 echo ""
 echo -e "${BLUE}═══ ACA → AI Search & OpenAI Permissions ═══${NC}"
 
-if [[ -n "$ACCOUNT_INFO" ]] && [[ -n "${ACA_PRINCIPAL:-}" ]]; then
+if [[ -z "$WITH_SEARCH" ]] && [[ -z "$WITH_OPENAI" ]]; then
+    skip "AI Search & OpenAI role checks (use --with-search / --with-openai to enable)"
+elif [[ -n "$ACCOUNT_INFO" ]] && [[ -n "${ACA_PRINCIPAL:-}" ]]; then
     # --- Azure AI Search ---
     SEARCH_NAME="${PROJECT}-${ENVIRONMENT}-search"
     SEARCH_EXISTS=$(az search service show --name "$SEARCH_NAME" --resource-group "$RG" --query "name" -o tsv 2>/dev/null || echo "")
