@@ -186,7 +186,14 @@ all items pass.
 9. **Ruff format passes** — run `uvx ruff format --check app/` from
    `projects/<project>/src/` and verify exit code 0. If files need reformatting,
    run `uvx ruff format app/` to auto-fix, then re-verify.
-10. Dockerfile builds successfully — run `make docker-build` and verify
+10. **Existing tests still pass** — if `projects/<project>/tests/` exists from a
+    prior pipeline run, set placeholder env vars and run:
+    ```bash
+    cd projects/<project>/src
+    python -m pytest ../tests/ -x -q
+    ```
+    If tests fail due to your code changes, fix the code (not the tests).
+11. Dockerfile builds successfully — run `make docker-build` and verify
 
 List each item with ✅ or ❌ status. If any item is ❌, fix it before continuing.
 
