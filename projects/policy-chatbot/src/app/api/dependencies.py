@@ -5,7 +5,6 @@ from collections.abc import AsyncGenerator
 from typing import Annotated
 
 import httpx
-import msal
 from fastapi import Depends, HTTPException, Security, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
@@ -37,7 +36,7 @@ _jwks_cache: dict | None = None  # type: ignore[type-arg]
 
 
 def _get_engine(settings: Settings) -> object:
-    global _engine  # noqa: PLW0603
+    global _engine
     if _engine is None:
         _engine = create_async_engine(
             settings.database_url,
@@ -49,7 +48,7 @@ def _get_engine(settings: Settings) -> object:
 
 
 def _get_session_factory(settings: Settings) -> async_sessionmaker[AsyncSession]:
-    global _session_factory  # noqa: PLW0603
+    global _session_factory
     if _session_factory is None:
         engine = _get_engine(settings)
         _session_factory = async_sessionmaker(
@@ -71,7 +70,7 @@ def get_redis(
     settings: Annotated[Settings, Depends(get_settings)],
 ) -> RedisService:
     """Return the singleton Redis service."""
-    global _redis_service  # noqa: PLW0603
+    global _redis_service
     if _redis_service is None:
         _redis_service = RedisService(settings)
     return _redis_service
@@ -81,7 +80,7 @@ def get_search_service(
     settings: Annotated[Settings, Depends(get_settings)],
 ) -> SearchService:
     """Return the singleton Azure AI Search service."""
-    global _search_service  # noqa: PLW0603
+    global _search_service
     if _search_service is None:
         _search_service = SearchService(settings)
     return _search_service
@@ -91,7 +90,7 @@ def get_openai_service(
     settings: Annotated[Settings, Depends(get_settings)],
 ) -> OpenAIService:
     """Return the singleton Azure OpenAI service."""
-    global _openai_service  # noqa: PLW0603
+    global _openai_service
     if _openai_service is None:
         _openai_service = OpenAIService(settings)
     return _openai_service
@@ -101,7 +100,7 @@ def get_blob_service(
     settings: Annotated[Settings, Depends(get_settings)],
 ) -> BlobService:
     """Return the singleton Blob Storage service."""
-    global _blob_service  # noqa: PLW0603
+    global _blob_service
     if _blob_service is None:
         _blob_service = BlobService(settings)
     return _blob_service
@@ -111,7 +110,7 @@ def get_servicenow_service(
     settings: Annotated[Settings, Depends(get_settings)],
 ) -> ServiceNowService:
     """Return the singleton ServiceNow service."""
-    global _servicenow_service  # noqa: PLW0603
+    global _servicenow_service
     if _servicenow_service is None:
         _servicenow_service = ServiceNowService(settings)
     return _servicenow_service
@@ -121,7 +120,7 @@ def get_graph_service(
     settings: Annotated[Settings, Depends(get_settings)],
 ) -> GraphService:
     """Return the singleton Graph API service."""
-    global _graph_service  # noqa: PLW0603
+    global _graph_service
     if _graph_service is None:
         _graph_service = GraphService(settings)
     return _graph_service
@@ -146,7 +145,7 @@ def get_rag_pipeline(
 
 async def _get_jwks(settings: Settings) -> dict:  # type: ignore[type-arg]
     """Fetch and cache JWKS keys from Entra ID for JWT validation."""
-    global _jwks_cache  # noqa: PLW0603
+    global _jwks_cache
     if _jwks_cache is None:
         async with httpx.AsyncClient(timeout=10.0) as client:
             openid_config_url = (
@@ -182,14 +181,7 @@ async def get_current_user(
     """Validate the Entra ID JWT and extract user claims (ADR-0011)."""
     token = credentials.credentials
 
-    confidential_client = msal.ConfidentialClientApplication(
-        client_id=settings.entra_client_id,
-        client_credential=settings.entra_client_secret,
-        authority=settings.entra_authority,
-    )
-
-    # Validate the token by attempting to acquire on behalf of
-    # In production, use JWKS-based validation; MSAL handles the crypto
+    # Fetch JWKS keys for JWT validation
     jwks = await _get_jwks(settings)
 
     # Decode and validate the JWT claims
