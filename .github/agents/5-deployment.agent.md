@@ -1,5 +1,5 @@
 ---
-description: "Use when generating infrastructure-as-code, CI/CD pipelines, and Azure resource definitions. Produces Bicep modules for Azure Container Apps (or AKS with ADR), GitHub Actions workflows with required stages (lint, test, security, build, integration), and environment-gated CD pipelines."
+description: "Use when generating infrastructure-as-code, CI/CD pipelines, and Azure resource definitions. Produces Bicep modules for Azure Container Apps (or AKS with ADR), GitHub Actions workflows with required stages (lint, test, security, build, integration, deploy-dev), and environment-gated CD pipelines."
 tools: [read, search, edit, execute, todo]
 ---
 
@@ -14,7 +14,7 @@ strictly within the infrastructure standards defined in
 ## Constraints
 - DO NOT skip reading `governance/enterprise-standards.md` before producing output
 - DO NOT put secrets in manifests, config files, or environment variable values
-- DO NOT skip any required CI pipeline stage (lint, test, security, build, integration)
+- DO NOT skip any required CI pipeline stage (lint, test, security, build, integration, deploy-dev)
 - DO NOT default to AKS — prefer Azure Container Apps (ACA) per the Cloud
   Service Preference Policy. Only use AKS when ACA cannot meet documented
   requirements, and write an ADR justifying the decision.
@@ -128,10 +128,17 @@ jobs:
   security:    # Microsoft Defender for Containers scan + GitHub Advanced Security dependency check
   build:       # Docker image build + push to ACR
   integration: # Integration tests against built image
+  deploy-dev:  # Deploy to dev environment (PR only) — Bicep deploy + migrations + smoke tests
 ```
 
-No stage may be skipped. The `deploy` workflow is separate from CI and only
-triggers on merge to `main` after all CI checks pass.
+No stage may be skipped. The `deploy-dev` stage runs only on `pull_request`
+events (gated with `if: github.event_name == 'pull_request'`) so that every
+PR is validated against real Azure services before merge. The separate
+`deploy` workflow handles staging and production deployments after merge to
+`main`.
+
+See `.github/workflows/ci-template.yml.template` for the complete reference
+implementation including the deploy-to-dev stage.
 
 ## Azure Container Apps Standards (Preferred)
 
@@ -223,7 +230,7 @@ all items pass.
 3. Compute platform matches Cloud Service Preference Policy (ACA preferred; AKS only with ADR)
 4. If ACA: Container App definitions include health probes, scaling, managed identity, Key Vault refs
 5. If AKS: K8s manifests include Deployment, Service, HPA, PDB, NetworkPolicy, ServiceAccount
-6. `.github/workflows/<project>-ci.yml` exists with all required stages (lint, test, security, build, integration)
+6. `.github/workflows/<project>-ci.yml` exists with all required stages (lint, test, security, build, integration, deploy-dev)
 7. `.github/workflows/<project>-deploy.yml` exists with environment-gated deployment
 8. Liveness and readiness probes configured pointing to `/health` and `/ready`
 9. Secrets reference Azure Key Vault (no plaintext secrets anywhere)
