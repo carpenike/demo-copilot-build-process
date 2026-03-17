@@ -65,7 +65,11 @@ jobs:
               echo "Container App provisioning succeeded"
               break
             fi
-            echo "Waiting for deployment... ($i/30)"
+            if [ "$STATUS" = "Failed" ]; then
+              echo "Container App provisioning failed!"
+              exit 1
+            fi
+            echo "Waiting for deployment... ($i/30) status=$STATUS"
             sleep 10
           done
 
@@ -134,7 +138,11 @@ jobs:
               echo "Container App provisioning succeeded"
               break
             fi
-            echo "Waiting for deployment... ($i/30)"
+            if [ "$STATUS" = "Failed" ]; then
+              echo "Container App provisioning failed!"
+              exit 1
+            fi
+            echo "Waiting for deployment... ($i/30) status=$STATUS"
             sleep 10
           done
 

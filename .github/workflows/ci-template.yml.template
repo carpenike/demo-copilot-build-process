@@ -8,12 +8,11 @@ on:
   pull_request:
     branches: [main]
     paths:
-      - 'projects/[project-name]/src/**'
-      - 'projects/[project-name]/tests/**'
+      - 'projects/[project-name]/**'
   push:
     branches: [main]
     paths:
-      - 'projects/[project-name]/src/**'
+      - 'projects/[project-name]/**'
 
 env:
   PROJECT: "[project-name]"
@@ -43,15 +42,18 @@ jobs:
         run: pip install uv
 
       - name: Install dependencies
-        run: uv sync --dev
+        # Option A: uv sync (if you have a uv.lock file)
+        # run: uv sync --dev
+        # Option B: uv pip install (works without lockfile)
+        run: uv pip install --system -e ".[dev]"
         working-directory: projects/${{ env.PROJECT }}/src
 
       - name: Run ruff (lint + format)
-        run: uv run ruff check . && uv run ruff format --check .
+        run: ruff check app/ && ruff format --check app/
         working-directory: projects/${{ env.PROJECT }}/src
 
       - name: Run mypy (type check)
-        run: uv run mypy .
+        run: mypy app/
         working-directory: projects/${{ env.PROJECT }}/src
 
   # ─── Stage 2: Test ────────────────────────────────────────────────────────────
@@ -71,7 +73,7 @@ jobs:
         run: pip install uv
 
       - name: Install dependencies
-        run: uv sync --dev
+        run: uv pip install --system -e ".[dev]"
         working-directory: projects/${{ env.PROJECT }}/src
 
       - name: Run tests with coverage
@@ -84,7 +86,7 @@ jobs:
           # Add all required Settings fields with test placeholder values here.
           # See projects/<project>/src/app/config.py for the full list.
           PLACEHOLDER: "true"
-        run: uv run pytest tests/ --cov=app --cov-report=xml --cov-fail-under=80
+        run: pytest ../tests/ --cov=app --cov-report=xml --cov-fail-under=80
         working-directory: projects/${{ env.PROJECT }}/src
 
       - name: Upload coverage report
@@ -196,13 +198,13 @@ jobs:
         run: pip install uv
 
       - name: Install dependencies
-        run: uv sync --dev
+        run: uv pip install --system -e ".[dev]"
         working-directory: projects/${{ env.PROJECT }}/src
 
       - name: Run integration tests
         env:
           DATABASE_URL: "postgresql://test:test@localhost:5432/testdb"
-        run: uv run pytest tests/integration/ -v
+        run: pytest ../tests/integration/ -v
         working-directory: projects/${{ env.PROJECT }}/src
 
   # ─── Stage 6: Deploy to Dev (on PRs) ────────────────────────────────────────
