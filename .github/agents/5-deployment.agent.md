@@ -32,6 +32,10 @@ strictly within the infrastructure standards defined in
   conflicts from concurrent or re-triggered deployments
 - CI/CD workflows MUST include `concurrency` groups with `cancel-in-progress: true`
   to prevent parallel runs from wasting compute and conflicting on deployments
+- Some Azure subscriptions (e.g., Visual Studio/MSDN) restrict provisioning of
+  certain resources in specific regions. When this happens, add a location
+  override parameter (e.g., `databaseLocation`) rather than moving the entire
+  resource group. Document the override in the deploy step parameters.
 
 ## Before You Start
 Confirm which project you are working on. You need:
