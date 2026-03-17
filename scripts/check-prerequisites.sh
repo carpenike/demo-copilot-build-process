@@ -472,6 +472,7 @@ if [[ -n "$ACCOUNT_INFO" ]]; then
                 echo "    Creating federated credentials for GitHub Actions..."
                 for FED in \
                     "github-main:repo:${REPO}:ref:refs/heads/main" \
+                    "github-pull-request:repo:${REPO}:pull_request" \
                     "github-env-dev:repo:${REPO}:environment:dev" \
                     "github-env-staging:repo:${REPO}:environment:staging" \
                     "github-env-production:repo:${REPO}:environment:production"
@@ -487,7 +488,7 @@ if [[ -n "$ACCOUNT_INFO" ]]; then
                             \"audiences\": [\"api://AzureADTokenExchange\"]
                         }" --output none 2>/dev/null || true
                 done
-                pass "Federated credentials created (4 entries)"
+                pass "Federated credentials created (5 entries)"
             else
                 echo "    Failed to create service principal"
             fi
@@ -500,10 +501,12 @@ if [[ -n "$ACCOUNT_INFO" ]]; then
             --query "[].name" -o json 2>/dev/null || echo "[]")
         FED_COUNT=$(echo "$FED_CREDS" | jq length)
 
-        if [[ "$FED_COUNT" -ge 2 ]]; then
+        if [[ "$FED_COUNT" -ge 5 ]]; then
             pass "Federated credentials configured (${FED_COUNT} found)"
+        elif [[ "$FED_COUNT" -ge 2 ]]; then
+            warn "Only ${FED_COUNT} federated credential(s) — expected 5 (main, pull_request, dev, staging, production)"
         else
-            warn "Only ${FED_COUNT} federated credential(s) — expected at least 2 (main + env)"
+            fail "Only ${FED_COUNT} federated credential(s) — need at least main + pull_request"
         fi
     fi
 else
