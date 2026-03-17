@@ -95,6 +95,7 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
             memory: memory
           }
           env: [
+            { name: 'POLICYCHAT_DEBUG', value: externalIngress ? 'true' : 'false' }
             { name: 'POLICYCHAT_DATABASE_URL', secretRef: 'db-connection-string' }
             { name: 'POLICYCHAT_REDIS_URL', secretRef: 'redis-connection-string' }
             { name: 'POLICYCHAT_ENTRA_TENANT_ID', value: entraTenantId }
