@@ -53,7 +53,7 @@ strictly within the infrastructure standards defined in
     run: |
       az containerapp exec \
         --name ${{ env.IMAGE_NAME }}-${{ env.ENV }}-api \
-        --resource-group ${{ secrets.ACA_RESOURCE_GROUP }} \
+        --resource-group ${{ secrets.ACA_RESOURCE_GROUP_DEV }} \
         --command "alembic upgrade head"
   ```
   Without this, the app will crash-loop with `UndefinedTableError` on first deploy.
@@ -103,6 +103,19 @@ Then present your plan before starting:
   checklist (resources, secrets, service principals that must exist before first deploy)
 
 Use the template at `templates/deployment/bicep-module-template.md` as reference.
+
+**IMPORTANT:** When producing CI/CD workflow files, copy the secret names and
+job structure directly from the CI/CD templates:
+- `.github/workflows/ci-template.yml.template` — CI pipeline (all 6 stages)
+- `.github/workflows/cd-template.yml.template` — CD pipeline (staging + production)
+
+GitHub secret names use environment suffixes:
+- Dev: `ACA_RESOURCE_GROUP_DEV`
+- Staging: `ACA_RESOURCE_GROUP_STAGING`
+- Production: `ACA_RESOURCE_GROUP_PROD`
+
+Do NOT invent new secret names — use the names from the templates and
+`scripts/check-prerequisites.sh`.
 
 ## Compute Platform Decision
 Before generating infrastructure, evaluate the workload against the Cloud Service
