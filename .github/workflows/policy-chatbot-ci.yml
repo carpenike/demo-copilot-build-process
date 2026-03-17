@@ -293,7 +293,7 @@ jobs:
             entraIdClientId=${{ secrets.ENTRA_CLIENT_ID }}
             entraIdClientSecret=${{ secrets.ENTRA_CLIENT_SECRET }}
           deploymentMode: Incremental
-          deploymentName: ${{ env.PROJECT }}-dev-${{ github.sha }}-retry
+          deploymentName: ${{ env.PROJECT }}-dev-${{ github.sha }}-r
 
       - name: Wait for revision to be ready
         run: |
