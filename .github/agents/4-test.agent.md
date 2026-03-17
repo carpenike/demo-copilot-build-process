@@ -20,6 +20,18 @@ catches nothing.
 - DO NOT write tests that depend on other tests' state
 - DO NOT begin producing output until the target project is confirmed
 - ONLY produce test artifacts — no production code changes
+- When mocking `db.execute`, remember that endpoints often make **multiple**
+  sequential database queries (e.g., find a record, then query a related table).
+  Use `mock_db.execute.side_effect = [result1, result2, ...]` to return
+  different results for each call, not `return_value` which returns the same
+  mock for every query.
+- FastAPI returns **422** (not 400) for request validation errors (invalid
+  enum values, missing required fields, pattern mismatches). Test assertions
+  for invalid input should expect `422`, not `400`. Only use `400` when the
+  application explicitly raises `HTTPException(status_code=400)`.
+- Integration tests that import `create_app()` will trigger `get_settings()`.
+  Ensure the test's `conftest.py` or CI workflow sets all required `Settings`
+  environment variables with placeholder values.
 
 ## Before You Start
 Confirm which project you are working on. You need:
