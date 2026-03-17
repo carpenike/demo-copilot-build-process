@@ -463,9 +463,9 @@ if [[ -n "$ACCOUNT_INFO" ]]; then
         if [[ "$FIX_MODE" == "--fix" ]]; then
             echo "    Creating service principal '${SP_NAME}'..."
             SP_RESULT=$(az ad sp create-for-rbac \
-                --name "$SP_NAME" \
-                --role Contributor \
-                --scopes "/subscriptions/${SUB_ID}" \
+                --name \"$SP_NAME\" \
+                --role Owner \
+                --scopes \"/subscriptions/${SUB_ID}/resourceGroups/${RG}\" \
                 -o json 2>/dev/null)
             if [[ -n "$SP_RESULT" ]]; then
                 SP_APP_ID=$(echo "$SP_RESULT" | jq -r '.appId')

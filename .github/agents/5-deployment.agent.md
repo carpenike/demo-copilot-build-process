@@ -20,6 +20,9 @@ strictly within the infrastructure standards defined in
   requirements, and write an ADR justifying the decision.
 - DO NOT begin producing output until the target project is confirmed
 - ONLY produce infrastructure and pipeline artifacts — no application code
+- The CI service principal MUST have **Owner** (not Contributor) on each
+  resource group so that Bicep can create role assignments (e.g., AcrPull
+  for ACA → ACR). Scope Owner to the resource group, not the subscription.
 - DO NOT rely on `readEnvironmentVariable()` in `.bicepparam` files for secrets
   that need to work in GitHub Actions. GitHub Actions secrets are only available
   via `${{ secrets.* }}` syntax, not as shell env vars on the runner. Instead:
