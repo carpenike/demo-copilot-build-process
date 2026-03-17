@@ -207,6 +207,11 @@ all items pass.
 10. Deploy pipeline has manual approval gate for production
 11. `projects/<project>/infrastructure/PREREQUISITES.md` exists listing all Azure prereqs
 12. No Terraform files (`.tf`) anywhere — Bicep only
+13. **Every field in `app/config.py` Settings class has a matching env var** in the
+    container app Bicep template. Open `config.py`, list every field with the
+    `env_prefix`, and verify each one appears in the `env:` block of
+    `container-app.bicep`. Missing env vars cause the app to crash-loop on startup
+    with a pydantic `ValidationError`.
 
 List each item with ✅ or ❌ status. If any item is ❌, fix it before continuing.
 
