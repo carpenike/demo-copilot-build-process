@@ -114,7 +114,7 @@ jobs:
       - name: Run Microsoft Security DevOps scan
         uses: microsoft/security-devops-action@v1
         with:
-          tools: container
+          tools: trivy
 
   # ─── Stage 4: Build & Push ────────────────────────────────────────────────────
   build:
