@@ -254,7 +254,7 @@ jobs:
             imageTag=${{ github.sha }}
             acrLoginServer=${{ env.ACR_REGISTRY }}
             postgresAdminPassword=${{ secrets.POSTGRES_ADMIN_PASSWORD }}
-            redisAccessKey=placeholder
+            redisAccessKey=${{ secrets.REDIS_ACCESS_KEY }}
             entraTenantId=${{ secrets.ENTRA_TENANT_ID }}
             entraClientId=${{ secrets.ENTRA_CLIENT_ID }}
             entraClientSecret=${{ secrets.ENTRA_CLIENT_SECRET }}
