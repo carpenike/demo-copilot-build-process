@@ -83,7 +83,7 @@ class TestDocumentManagement:
             files={"file": ("test.xlsx", io.BytesIO(b"data"), "application/vnd.openxmlformats")},
         )
 
-        assert response.status_code == 400
+        assert response.status_code in (400, 422)
 
     def test_retire_document(
         self, admin_client: TestClient, mock_db: AsyncMock

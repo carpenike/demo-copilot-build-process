@@ -62,9 +62,12 @@ class TestFeedback:
         mock_msg.id = msg_id
         mock_msg.metadata_ = {"intent": "bereavement_leave"}
 
-        mock_result = MagicMock()
-        mock_result.scalar_one_or_none.return_value = mock_msg
-        mock_db.execute.return_value = mock_result
+        # First execute returns the message, second returns no existing flag
+        mock_msg_result = MagicMock()
+        mock_msg_result.scalar_one_or_none.return_value = mock_msg
+        mock_flag_result = MagicMock()
+        mock_flag_result.scalar_one_or_none.return_value = None
+        mock_db.execute.side_effect = [mock_msg_result, mock_flag_result]
 
         mock_feedback = MagicMock()
         mock_feedback.id = uuid.uuid4()
