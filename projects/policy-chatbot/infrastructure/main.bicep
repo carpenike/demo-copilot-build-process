@@ -207,6 +207,7 @@ module containerApp 'modules/container-app.bicep' = {
 param acrName string = ''
 
 var acrPullRoleId = '7f951dda-4ed3-4680-a7ca-43fe172d538d'
+var kvSecretsUserRoleId = '4633458b-17de-408a-b874-0445c86b69e6'
 
 resource acr 'Microsoft.ContainerRegistry/registries@2023-07-01' existing = {
   name: acrName
@@ -217,6 +218,22 @@ resource acrPullRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-
   scope: acr
   properties: {
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', acrPullRoleId)
+    principalId: containerApp.outputs.containerAppIdentityPrincipalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
+// ─── Role Assignment: ACA → Key Vault Secrets User ──────────────────────────
+
+resource keyVaultResource 'Microsoft.KeyVault/vaults@2023-07-01' existing = {
+  name: keyVault.outputs.keyVaultName
+}
+
+resource kvSecretsRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(keyVaultResource.id, '${resourcePrefix}-api', kvSecretsUserRoleId)
+  scope: keyVaultResource
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', kvSecretsUserRoleId)
     principalId: containerApp.outputs.containerAppIdentityPrincipalId
     principalType: 'ServicePrincipal'
   }
