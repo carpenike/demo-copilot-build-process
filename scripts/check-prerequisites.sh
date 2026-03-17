@@ -124,6 +124,52 @@ REPO="carpenike/demo-copilot-build-process"
 RG="rg-${PROJECT}-${ENVIRONMENT}"
 LOCATION="${LOCATION:-centralus}"
 
+# Helper: check for soft-deleted Cognitive Services and auto-purge if --fix
+# Sets PURGED_DELETED=true if a soft-deleted resource was found and purged
+check_and_purge_deleted_cognitive() {
+    local name="$1"
+    local location="$2"
+    PURGED_DELETED=""
+
+    # First, list ALL soft-deleted OpenAI resources as a broad warning
+    ALL_DELETED=$(az cognitiveservices account list-deleted \
+        --query "[?kind=='OpenAI']" -o json 2>/dev/null || echo "[]")
+    ALL_DELETED_COUNT=$(echo "$ALL_DELETED" | jq length)
+    if [[ "$ALL_DELETED_COUNT" -gt 0 ]]; then
+        echo -e "    ${YELLOW}Found ${ALL_DELETED_COUNT} soft-deleted OpenAI resource(s) in this subscription:${NC}"
+        echo "$ALL_DELETED" | jq -r '.[] | "      - \(.name) (location: \(.location), RG: \(.properties.resourceGroup // "unknown"))"' 2>/dev/null
+    fi
+
+    # Then check for exact name match (the one that would block creation)
+    DELETED_LIST=$(az cognitiveservices account list-deleted \
+        --query "[?name=='${name}']" -o json 2>/dev/null || echo "[]")
+    DELETED_COUNT=$(echo "$DELETED_LIST" | jq length)
+
+    if [[ "$DELETED_COUNT" -gt 0 ]]; then
+        DELETED_RG=$(echo "$DELETED_LIST" | jq -r '.[0].properties.resourceGroup // empty')
+        DELETED_LOC=$(echo "$DELETED_LIST" | jq -r '.[0].location // empty')
+        warn "Soft-deleted Cognitive Services resource '${name}' found (location: ${DELETED_LOC}, original RG: ${DELETED_RG})"
+        if [[ "$FIX_MODE" == "--fix" ]]; then
+            echo "    Purging soft-deleted resource '${name}' in ${DELETED_LOC}..."
+            if az cognitiveservices account purge \
+                --name "$name" \
+                --resource-group "$DELETED_RG" \
+                --location "$DELETED_LOC" \
+                --output none 2>/dev/null; then
+                pass "Soft-deleted resource '${name}' purged"
+                PURGED_DELETED="true"
+            else
+                echo "    Failed to purge — you may need to purge manually:"
+                echo "      az cognitiveservices account purge --name ${name} --resource-group ${DELETED_RG} --location ${DELETED_LOC}"
+            fi
+        else
+            echo "    This will block creation of a new resource with the same name."
+            echo "    Run with --fix to auto-purge, or purge manually:"
+            echo "      az cognitiveservices account purge --name ${name} --resource-group ${DELETED_RG} --location ${DELETED_LOC}"
+        fi
+    fi
+}
+
 PASS_COUNT=0
 FAIL_COUNT=0
 WARN_COUNT=0
@@ -235,6 +281,28 @@ if [[ -n "$ACCOUNT_INFO" ]]; then
             ((FAIL_COUNT--))
         fi
     fi
+
+    # Also check staging and production RGs when running against dev
+    if [[ "$ENVIRONMENT" == "dev" ]]; then
+        for EXTRA_ENV in staging production; do
+            EXTRA_RG="rg-${PROJECT}-${EXTRA_ENV}"
+            EXTRA_RG_EXISTS=$(az group exists --name "$EXTRA_RG" 2>/dev/null)
+            if [[ "$EXTRA_RG_EXISTS" == "true" ]]; then
+                pass "Resource group '${EXTRA_RG}' exists"
+            else
+                warn "Resource group '${EXTRA_RG}' does not exist (needed for ${EXTRA_ENV} deployments)"
+                if [[ "$FIX_MODE" == "--fix" ]]; then
+                    echo "    Creating resource group '${EXTRA_RG}'..."
+                    if az group create --name "$EXTRA_RG" --location "$LOCATION" --output none 2>/dev/null; then
+                        pass "Resource group '${EXTRA_RG}' created"
+                        ((WARN_COUNT--))
+                    else
+                        echo "    Failed to create '${EXTRA_RG}'"
+                    fi
+                fi
+            fi
+        done
+    fi
 else
     skip "Resource group check (not logged in)"
 fi
@@ -261,12 +329,26 @@ if [[ -n "$ACCOUNT_INFO" ]]; then
             # Generate a unique ACR name (alphanumeric only, 5-50 chars)
             ACR_NAME="${PROJECT//[^a-zA-Z0-9]/}acr"
             echo "    Creating ACR '${ACR_NAME}' in resource group '${RG}'..."
-            if az acr create --name "$ACR_NAME" --resource-group "$RG" --sku Basic --admin-enabled false --output none 2>/dev/null; then
+            ACR_OUTPUT=$(az acr create --name "$ACR_NAME" --resource-group "$RG" --sku Basic --admin-enabled false -o json 2>&1)
+            ACR_EXIT=$?
+            if [[ "$ACR_EXIT" -eq 0 ]]; then
                 ACR_SERVER=$(az acr show --name "$ACR_NAME" --query "loginServer" -o tsv 2>/dev/null)
                 pass "ACR created: ${ACR_NAME} (${ACR_SERVER})"
                 ((FAIL_COUNT--))
             else
-                echo "    Failed to create ACR — ensure resource group exists first"
+                if echo "$ACR_OUTPUT" | grep -qi "AlreadyInUse\|already exists\|already taken"; then
+                    echo -e "    ${RED}Error: ACR name '${ACR_NAME}' is already taken (globally unique).${NC}"
+                    echo "    Try a different project name or manually create an ACR with a unique name."
+                elif echo "$ACR_OUTPUT" | grep -qi "ResourceGroupNotFound\|not found"; then
+                    echo -e "    ${RED}Error: Resource group '${RG}' does not exist.${NC}"
+                    echo "    Create it first: az group create --name ${RG} --location ${LOCATION}"
+                elif echo "$ACR_OUTPUT" | grep -qi "AuthorizationFailed\|authorization"; then
+                    echo -e "    ${RED}Error: Insufficient permissions to create ACR.${NC}"
+                    echo "    You need Contributor or Owner role on resource group '${RG}'."
+                else
+                    echo -e "    ${RED}Failed to create ACR. Error details:${NC}"
+                    echo "$ACR_OUTPUT" | head -5 | sed 's/^/      /'
+                fi
             fi
         fi
     fi
@@ -297,16 +379,24 @@ elif [[ -n "$ACCOUNT_INFO" ]]; then
     else
         fail "No Azure OpenAI resource found in this subscription"
         if [[ "$FIX_MODE" == "--fix" ]]; then
-            OPENAI_NAME="${PROJECT}-openai"
+            # Use environment-scoped name to avoid collisions across environments
+            OPENAI_NAME="${PROJECT}-${ENVIRONMENT}-openai"
+
+            # Check for soft-deleted resources with this name and auto-purge
+            check_and_purge_deleted_cognitive "$OPENAI_NAME" "$LOCATION"
+
             echo "    Creating Azure OpenAI resource '${OPENAI_NAME}'..."
-            if az cognitiveservices account create \
+            CREATE_OUTPUT=$(az cognitiveservices account create \
                 --name "$OPENAI_NAME" \
                 --resource-group "$RG" \
                 --kind OpenAI \
                 --sku S0 \
                 --location "$LOCATION" \
                 --custom-domain "$OPENAI_NAME" \
-                --output none 2>/dev/null; then
+                -o json 2>&1)
+            CREATE_EXIT=$?
+
+            if [[ "$CREATE_EXIT" -eq 0 ]]; then
                 OPENAI_ENDPOINT=$(az cognitiveservices account show \
                     --name "$OPENAI_NAME" --resource-group "$RG" \
                     --query "properties.endpoint" -o tsv 2>/dev/null)
@@ -314,7 +404,31 @@ elif [[ -n "$ACCOUNT_INFO" ]]; then
                 pass "Azure OpenAI created: ${OPENAI_NAME} (${OPENAI_ENDPOINT})"
                 ((FAIL_COUNT--))
             else
-                echo "    Failed to create Azure OpenAI — may need subscription approval"
+                # Categorize the failure for actionable guidance
+                if echo "$CREATE_OUTPUT" | grep -qi "CustomDomainInUse"; then
+                    echo -e "    ${RED}Error: Custom domain '${OPENAI_NAME}' is already in use.${NC}"
+                    echo "    This means another Cognitive Services resource (possibly in a"
+                    echo "    different subscription or soft-deleted) is using this subdomain."
+                    echo "    Options:"
+                    echo "      1. Purge the old resource: az cognitiveservices account list-deleted"
+                    echo "      2. Use a different name via: --location <other-region>"
+                elif echo "$CREATE_OUTPUT" | grep -qi "soft.delete\|softdelete\|FlagMustBeSetForRestore"; then
+                    echo -e "    ${RED}Error: A soft-deleted resource is blocking creation.${NC}"
+                    echo "    Run this script with --fix to auto-purge, or purge manually:"
+                    echo "      az cognitiveservices account list-deleted"
+                    echo "      az cognitiveservices account purge --name <name> --resource-group <rg> --location <loc>"
+                elif echo "$CREATE_OUTPUT" | grep -qi "QuotaExceeded\|InsufficientQuota\|capacity"; then
+                    echo -e "    ${RED}Error: Quota exceeded for Azure OpenAI in '${LOCATION}'.${NC}"
+                    echo "    Options:"
+                    echo "      1. Request a quota increase in the Azure Portal"
+                    echo "      2. Try a different region: --location <other-region>"
+                elif echo "$CREATE_OUTPUT" | grep -qi "not registered\|not allowed\|access denied\|authorization"; then
+                    echo -e "    ${RED}Error: Subscription may not be approved for Azure OpenAI.${NC}"
+                    echo "    Apply for access at: https://aka.ms/oai/access"
+                else
+                    echo -e "    ${RED}Failed to create Azure OpenAI. Error details:${NC}"
+                    echo "$CREATE_OUTPUT" | head -5 | sed 's/^/      /'
+                fi
             fi
         fi
     fi
@@ -340,7 +454,7 @@ elif [[ -n "$ACCOUNT_INFO" ]]; then
             fail "No GPT-4 chat model deployed — deploy GPT-4o in Azure Portal"
             if [[ "$FIX_MODE" == "--fix" ]]; then
                 echo "    Attempting to deploy gpt-4o model..."
-                if az cognitiveservices account deployment create \
+                CHAT_OUTPUT=$(az cognitiveservices account deployment create \
                     --name "$OPENAI_NAME" \
                     --resource-group "$OPENAI_RG" \
                     --deployment-name "gpt-4o" \
@@ -349,11 +463,20 @@ elif [[ -n "$ACCOUNT_INFO" ]]; then
                     --model-format "OpenAI" \
                     --sku-capacity 10 \
                     --sku-name "Standard" \
-                    --output none 2>/dev/null; then
+                    -o json 2>&1)
+                CHAT_EXIT=$?
+                if [[ "$CHAT_EXIT" -eq 0 ]]; then
                     pass "gpt-4o model deployed"
                     ((FAIL_COUNT--))
+                elif echo "$CHAT_OUTPUT" | grep -qi "QuotaExceeded\|InsufficientQuota\|capacity"; then
+                    echo -e "    ${RED}Error: Insufficient quota for gpt-4o in '${LOCATION}'.${NC}"
+                    echo "    Request a quota increase in the Azure Portal or try a different region."
+                elif echo "$CHAT_OUTPUT" | grep -qi "not found\|not available\|not supported"; then
+                    echo -e "    ${RED}Error: gpt-4o model not available in '${LOCATION}'.${NC}"
+                    echo "    Check model availability: https://learn.microsoft.com/azure/ai-services/openai/concepts/models"
                 else
-                    echo "    Failed — deploy manually in Azure Portal (may need quota approval)"
+                    echo -e "    ${RED}Failed to deploy gpt-4o. Error details:${NC}"
+                    echo "$CHAT_OUTPUT" | head -5 | sed 's/^/      /'
                 fi
             fi
         fi
@@ -364,7 +487,7 @@ elif [[ -n "$ACCOUNT_INFO" ]]; then
             fail "No embedding model deployed — deploy text-embedding-3-large in Azure Portal"
             if [[ "$FIX_MODE" == "--fix" ]]; then
                 echo "    Attempting to deploy text-embedding-3-large model..."
-                if az cognitiveservices account deployment create \
+                EMBED_OUTPUT=$(az cognitiveservices account deployment create \
                     --name "$OPENAI_NAME" \
                     --resource-group "$OPENAI_RG" \
                     --deployment-name "text-embedding-3-large" \
@@ -373,11 +496,20 @@ elif [[ -n "$ACCOUNT_INFO" ]]; then
                     --model-format "OpenAI" \
                     --sku-capacity 10 \
                     --sku-name "Standard" \
-                    --output none 2>/dev/null; then
+                    -o json 2>&1)
+                EMBED_EXIT=$?
+                if [[ "$EMBED_EXIT" -eq 0 ]]; then
                     pass "text-embedding-3-large model deployed"
                     ((FAIL_COUNT--))
+                elif echo "$EMBED_OUTPUT" | grep -qi "QuotaExceeded\|InsufficientQuota\|capacity"; then
+                    echo -e "    ${RED}Error: Insufficient quota for text-embedding-3-large in '${LOCATION}'.${NC}"
+                    echo "    Request a quota increase in the Azure Portal or try a different region."
+                elif echo "$EMBED_OUTPUT" | grep -qi "not found\|not available\|not supported"; then
+                    echo -e "    ${RED}Error: text-embedding-3-large model not available in '${LOCATION}'.${NC}"
+                    echo "    Check model availability: https://learn.microsoft.com/azure/ai-services/openai/concepts/models"
                 else
-                    echo "    Failed — deploy manually in Azure Portal (may need quota approval)"
+                    echo -e "    ${RED}Failed to deploy text-embedding-3-large. Error details:${NC}"
+                    echo "$EMBED_OUTPUT" | head -5 | sed 's/^/      /'
                 fi
             fi
         fi
@@ -410,7 +542,7 @@ elif [[ -n "$ACCOUNT_INFO" ]]; then
         fail "No Entra ID app registration found with name '${PROJECT}'"
         if [[ "$FIX_MODE" == "--fix" ]]; then
             echo "    Creating Entra ID app registration '${PROJECT}'..."
-            APP_CREATE_RESULT=$(az ad app create \
+            APP_CREATE_OUTPUT=$(az ad app create \
                 --display-name "$PROJECT" \
                 --sign-in-audience "AzureADMyOrg" \
                 --required-resource-accesses '[{
@@ -433,11 +565,12 @@ elif [[ -n "$ACCOUNT_INFO" ]]; then
                         "value": "Administrator"
                     }
                 ]' \
-                -o json 2>/dev/null)
+                -o json 2>&1)
+            APP_CREATE_EXIT=$?
 
-            if [[ -n "$APP_CREATE_RESULT" ]]; then
-                APP_ID=$(echo "$APP_CREATE_RESULT" | jq -r '.appId')
-                APP_OBJECT_ID=$(echo "$APP_CREATE_RESULT" | jq -r '.id')
+            if [[ "$APP_CREATE_EXIT" -eq 0 ]] && echo "$APP_CREATE_OUTPUT" | jq -e '.appId' &>/dev/null; then
+                APP_ID=$(echo "$APP_CREATE_OUTPUT" | jq -r '.appId')
+                APP_OBJECT_ID=$(echo "$APP_CREATE_OUTPUT" | jq -r '.id')
                 pass "Entra ID app created: ${APP_ID}"
                 ((FAIL_COUNT--))
 
@@ -456,7 +589,16 @@ elif [[ -n "$ACCOUNT_INFO" ]]; then
                     pass "Client secret generated (will be stored in GitHub secrets)"
                 fi
             else
-                echo "    Failed to create app registration"
+                if echo "$APP_CREATE_OUTPUT" | grep -qi "AuthorizationFailed\|Forbidden\|InsufficientPrivileges"; then
+                    echo -e "    ${RED}Error: Insufficient permissions to create Entra ID app registration.${NC}"
+                    echo "    You need Application Developer or Application Administrator role in Entra ID."
+                elif echo "$APP_CREATE_OUTPUT" | grep -qi "duplicate\|already exists"; then
+                    echo -e "    ${RED}Error: An app registration with this name may already exist in another tenant.${NC}"
+                    echo "    Check: az ad app list --display-name ${PROJECT}"
+                else
+                    echo -e "    ${RED}Failed to create app registration. Error details:${NC}"
+                    echo "$APP_CREATE_OUTPUT" | head -5 | sed 's/^/      /'
+                fi
             fi
         fi
     fi
@@ -575,18 +717,21 @@ if [[ -n "$ACCOUNT_INFO" ]]; then
         fail "Service principal '${SP_NAME}' not found"
         if [[ "$FIX_MODE" == "--fix" ]]; then
             echo "    Creating service principal '${SP_NAME}'..."
-            SP_RESULT=$(az ad sp create-for-rbac \
-                --name \"$SP_NAME\" \
+            SP_OUTPUT=$(az ad sp create-for-rbac \
+                --name "$SP_NAME" \
                 --role Owner \
-                --scopes \"/subscriptions/${SUB_ID}/resourceGroups/${RG}\" \
-                -o json 2>/dev/null)
-            if [[ -n "$SP_RESULT" ]]; then
-                SP_APP_ID=$(echo "$SP_RESULT" | jq -r '.appId')
+                --scopes "/subscriptions/${SUB_ID}/resourceGroups/${RG}" \
+                -o json 2>&1)
+            SP_EXIT=$?
+
+            if [[ "$SP_EXIT" -eq 0 ]] && echo "$SP_OUTPUT" | jq -e '.appId' &>/dev/null; then
+                SP_APP_ID=$(echo "$SP_OUTPUT" | jq -r '.appId')
                 pass "Service principal created: ${SP_NAME} (${SP_APP_ID})"
                 ((FAIL_COUNT--))
 
                 # Create federated credentials for GitHub Actions OIDC
                 echo "    Creating federated credentials for GitHub Actions..."
+                FED_FAILURES=0
                 for FED in \
                     "github-main:repo:${REPO}:ref:refs/heads/main" \
                     "github-pull-request:repo:${REPO}:pull_request" \
@@ -596,18 +741,41 @@ if [[ -n "$ACCOUNT_INFO" ]]; then
                 do
                     FED_NAME="${FED%%:*}"
                     FED_SUBJECT="${FED#*:}"
-                    az ad app federated-credential create \
+                    FED_OUTPUT=$(az ad app federated-credential create \
                         --id "$SP_APP_ID" \
                         --parameters "{
                             \"name\": \"${FED_NAME}\",
                             \"issuer\": \"https://token.actions.githubusercontent.com\",
                             \"subject\": \"${FED_SUBJECT}\",
                             \"audiences\": [\"api://AzureADTokenExchange\"]
-                        }" --output none 2>/dev/null || true
+                        }" -o json 2>&1) || {
+                        if echo "$FED_OUTPUT" | grep -qi "already exist"; then
+                            : # Credential already exists — not an error
+                        else
+                            echo "    Warning: Failed to create federated credential '${FED_NAME}'"
+                            ((FED_FAILURES++))
+                        fi
+                    }
                 done
-                pass "Federated credentials created (5 entries)"
+                if [[ "$FED_FAILURES" -eq 0 ]]; then
+                    pass "Federated credentials created (5 entries)"
+                else
+                    warn "Federated credentials: ${FED_FAILURES} of 5 failed — verify in Azure Portal"
+                fi
             else
-                echo "    Failed to create service principal"
+                if echo "$SP_OUTPUT" | grep -qi "AuthorizationFailed\|Forbidden\|authorization"; then
+                    echo -e "    ${RED}Error: Insufficient permissions to create service principal.${NC}"
+                    echo "    You need Owner or User Access Administrator role on '${RG}'."
+                elif echo "$SP_OUTPUT" | grep -qi "ResourceGroupNotFound\|not found"; then
+                    echo -e "    ${RED}Error: Resource group '${RG}' does not exist.${NC}"
+                    echo "    Create it first or re-run with --fix."
+                elif echo "$SP_OUTPUT" | grep -qi "already exists\|duplicate"; then
+                    echo -e "    ${RED}Error: Service principal '${SP_NAME}' already exists in another context.${NC}"
+                    echo "    Check: az ad sp list --display-name ${SP_NAME}"
+                else
+                    echo -e "    ${RED}Failed to create service principal. Error details:${NC}"
+                    echo "$SP_OUTPUT" | head -5 | sed 's/^/      /'
+                fi
             fi
         fi
     fi
@@ -642,6 +810,8 @@ REQUIRED_SECRETS=(
     "ACR_LOGIN_SERVER"
     "ACR_NAME"
     "ACA_RESOURCE_GROUP_DEV"
+    "ACA_RESOURCE_GROUP_STAGING"
+    "ACA_RESOURCE_GROUP_PROD"
 )
 
 # Add secrets conditionally based on feature flags
@@ -676,6 +846,8 @@ if command -v gh &>/dev/null; then
                         ACR_LOGIN_SERVER)      [[ -n "${ACR_SERVER:-}" ]] && SECRET_VALUE="$ACR_SERVER" ;;
                         ACR_NAME)              [[ -n "${ACR_NAME:-}" ]] && SECRET_VALUE="$ACR_NAME" ;;
                         ACA_RESOURCE_GROUP_DEV) SECRET_VALUE="rg-${PROJECT}-dev" ;;
+                        ACA_RESOURCE_GROUP_STAGING) SECRET_VALUE="rg-${PROJECT}-staging" ;;
+                        ACA_RESOURCE_GROUP_PROD) SECRET_VALUE="rg-${PROJECT}-production" ;;
                         ENTRA_TENANT_ID)       [[ -n "${TENANT_ID:-}" ]] && SECRET_VALUE="$TENANT_ID" ;;
                         ENTRA_CLIENT_ID)       [[ -n "${APP_ID:-}" ]] && SECRET_VALUE="$APP_ID" ;;
                         ENTRA_CLIENT_SECRET)   [[ -n "${ENTRA_CLIENT_SECRET_VALUE:-}" ]] && SECRET_VALUE="$ENTRA_CLIENT_SECRET_VALUE" ;;
@@ -775,7 +947,7 @@ check_file "${PROJECT_DIR}/infrastructure/main.bicep" "Bicep main.bicep exists"
 check_file "${PROJECT_DIR}/infrastructure/main.${ENVIRONMENT}.bicepparam" "Parameter file for '${ENVIRONMENT}' exists"
 
 # Check for CI/CD workflows
-if ls .github/workflows/${PROJECT}-ci.yml .github/workflows/${PROJECT}-ci.yml 2>/dev/null | head -1 | grep -q .; then
+if ls .github/workflows/${PROJECT}-ci.yml 2>/dev/null | head -1 | grep -q .; then
     pass "CI workflow exists"
 else
     # Check on current branch
