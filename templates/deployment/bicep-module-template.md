@@ -25,6 +25,22 @@ infrastructure/
 > Manager is the source of truth. Deployments use `az deployment group create`
 > or the `azure/arm-deploy` GitHub Action.
 
+### Key Vault Connection Strings
+
+DO NOT hardcode hostnames, usernames, or database names in Key Vault secret
+templates. Instead, derive them from the outputs of the modules that create
+those resources:
+
+```bicep
+// WRONG — hardcoded values will drift
+value: 'postgresql+asyncpg://myadmin:${password}@myserver-pg.postgres.database.azure.com:5432/mydb'
+
+// RIGHT — derived from module outputs
+value: 'postgresql+asyncpg://${database.outputs.adminLogin}:${password}@${database.outputs.serverFqdn}:5432/${database.outputs.databaseName}?sslmode=require'
+```
+
+The Key Vault module must `dependsOn` any module whose outputs it references.
+
 ---
 
 ## Azure Container Apps (Preferred Compute)
