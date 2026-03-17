@@ -104,6 +104,8 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
             { name: 'POLICYCHAT_AZURE_SEARCH_ENDPOINT', value: searchEndpoint }
             { name: 'POLICYCHAT_BLOB_ACCOUNT_URL', value: blobAccountUrl }
             { name: 'POLICYCHAT_SERVICENOW_INSTANCE_URL', value: servicenowInstanceUrl }
+            { name: 'POLICYCHAT_SERVICENOW_API_USER', value: 'placeholder' }
+            { name: 'POLICYCHAT_SERVICENOW_API_PASSWORD', value: 'placeholder' }
             { name: 'APPLICATIONINSIGHTS_CONNECTION_STRING', value: appInsightsConnectionString }
           ]
           probes: [
