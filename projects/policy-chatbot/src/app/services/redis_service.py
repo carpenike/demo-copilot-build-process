@@ -2,8 +2,9 @@
 
 import json
 import logging
+from typing import Any
 
-import redis.asyncio as redis
+import redis.asyncio as aioredis  # type: ignore[import-untyped]
 
 from app.config import Settings
 
@@ -14,7 +15,7 @@ class RedisService:
     """Wraps Azure Cache for Redis for session/cache/rate-limit operations."""
 
     def __init__(self, settings: Settings) -> None:
-        self._redis: redis.Redis[str] = redis.from_url(  # type: ignore[assignment]
+        self._redis: Any = aioredis.from_url(
             settings.redis_url,
             decode_responses=True,
         )
@@ -34,7 +35,7 @@ class RedisService:
     async def get_user_session(self, user_id: str) -> dict[str, str] | None:
         """Retrieve cached user profile."""
         key = f"session:{user_id}"
-        data = await self._redis.hgetall(key)
+        data: dict[str, str] = await self._redis.hgetall(key)
         return data if data else None
 
     async def add_conversation_message(
@@ -56,7 +57,7 @@ class RedisService:
     ) -> list[dict[str, str]]:
         """Retrieve the most recent messages for conversation context."""
         key = f"conv:{conversation_id}"
-        raw_messages = await self._redis.lrange(key, -max_messages, -1)
+        raw_messages: list[str] = await self._redis.lrange(key, -max_messages, -1)
         return [json.loads(m) for m in raw_messages]
 
     async def set_conversation_meta(
@@ -72,7 +73,7 @@ class RedisService:
     async def get_cached_response(self, query_hash: str) -> str | None:
         """Check for a cached response for an identical query."""
         key = f"cache:query:{query_hash}"
-        result: str | None = await self._redis.get(key)  # type: ignore[assignment]
+        result: str | None = await self._redis.get(key)
         return result
 
     async def set_cached_response(
@@ -93,7 +94,7 @@ class RedisService:
     ) -> bool:
         """Token bucket rate limiter — returns True if request is allowed."""
         key = f"rate:{user_id}"
-        current = await self._redis.incr(key)
+        current: int = await self._redis.incr(key)
         if current == 1:
             await self._redis.expire(key, window_seconds)
         return current <= max_requests
@@ -101,7 +102,7 @@ class RedisService:
     async def is_available(self) -> bool:
         """Check if Redis is reachable."""
         try:
-            await self._redis.ping()  # type: ignore[misc]
+            await self._redis.ping()
         except Exception:
             logger.warning("Redis is unavailable")
             return False
