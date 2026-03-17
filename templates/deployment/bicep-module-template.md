@@ -103,6 +103,22 @@ resource kvSecretsRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-0
 
 Without this, containers will crash with: `secret "capp-<app-name>" not found`.
 
+### Azure OpenAI Managed Identity Access
+
+When the app uses `DefaultAzureCredential` to call Azure OpenAI, the ACA
+managed identity needs the `Cognitive Services OpenAI User` role on the OpenAI
+resource. Handle via bootstrap script (same circular dependency as AcrPull).
+
+### Common Pitfalls
+
+- **Never use placeholder values** for secrets like Redis access keys in CI
+  deploy steps. Use GitHub secrets populated from the bootstrap script or manual
+  `az` commands. Placeholder values propagate to Key Vault connection strings
+  and cause silent connectivity failures at runtime.
+- **All required Settings fields must have env vars** in the container app Bicep.
+  Missing env vars cause pydantic `ValidationError` on startup — the app
+  crash-loops with no clear error in multi-worker mode.
+
 ---
 
 ## Azure Container Apps (Preferred Compute)
