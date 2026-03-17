@@ -186,9 +186,10 @@ When ACA is selected as the compute platform, the Bicep modules must configure:
   - Secrets referencing Azure Key Vault
   - Managed identity for Azure service authentication
 - Key Vault configuration:
-  - For **dev** environments: `enablePurgeProtection: false`,
-    `softDeleteRetentionInDays: 7` — allows cleanup and name reuse
-  - For **production** environments: `enablePurgeProtection: true`,
+  - For **dev** environments: omit `enablePurgeProtection` (defaults to disabled),
+    `softDeleteRetentionInDays: 7` — allows cleanup and name reuse.
+    Do NOT set `enablePurgeProtection: false` — Azure rejects explicit false.
+  - For **production** environments: `enablePurgeProtection: true` (irreversible),
     `softDeleteRetentionInDays: 90` — prevents accidental secret deletion
   - Key Vault names are **globally unique** — if a name is blocked by a
     soft-deleted vault with purge protection, use a different name

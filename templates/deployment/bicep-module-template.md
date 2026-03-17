@@ -199,8 +199,10 @@ resource openAiRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   disable purge protection and use short retention:
   ```bicep
   enableSoftDelete: true
-  softDeleteRetentionInDays: 7       // 7 for dev, 30+ for prod
-  enablePurgeProtection: false       // false for dev, true for prod
+  softDeleteRetentionInDays: 7       // 7 for dev, 90 for prod
+  // Do NOT set enablePurgeProtection: false — Azure rejects it.
+  // Omit the property entirely to leave purge protection disabled.
+  // For prod, set enablePurgeProtection: true (irreversible).
   ```
   If a vault name is blocked by a soft-deleted vault with purge protection,
   you must either wait for the retention period to expire or use a different
