@@ -16,6 +16,10 @@ env:
   IMAGE_NAME: "expense-portal"
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   # Only run if CI succeeded on a push to main (not PRs)
   gate:
