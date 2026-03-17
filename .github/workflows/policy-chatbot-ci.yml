@@ -73,6 +73,18 @@ jobs:
         working-directory: projects/${{ env.PROJECT }}/src
 
       - name: Run tests with coverage
+        env:
+          POLICYCHAT_DATABASE_URL: "postgresql+asyncpg://test:test@localhost:5432/testdb"
+          POLICYCHAT_REDIS_URL: "redis://localhost:6379/0"
+          POLICYCHAT_ENTRA_TENANT_ID: "test-tenant"
+          POLICYCHAT_ENTRA_CLIENT_ID: "test-client"
+          POLICYCHAT_ENTRA_CLIENT_SECRET: "test-secret"
+          POLICYCHAT_AZURE_OPENAI_ENDPOINT: "https://test.openai.azure.com"
+          POLICYCHAT_AZURE_SEARCH_ENDPOINT: "https://test.search.windows.net"
+          POLICYCHAT_BLOB_ACCOUNT_URL: "https://test.blob.core.windows.net"
+          POLICYCHAT_SERVICENOW_INSTANCE_URL: "https://test.service-now.com"
+          POLICYCHAT_SERVICENOW_API_USER: "test"
+          POLICYCHAT_SERVICENOW_API_PASSWORD: "test"
         run: pytest ../tests/ -v --cov=app --cov-report=xml --cov-fail-under=80
         working-directory: projects/${{ env.PROJECT }}/src
 

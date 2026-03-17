@@ -10,23 +10,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.admin import router as admin_router
 from app.api.chat import router as chat_router
 from app.api.health import router as health_router
-from app.config import get_settings
-
-settings = get_settings()
-
-# Configure Azure Monitor OpenTelemetry (ADR-0010, enterprise standards)
-# Guarded: only initialize when APPLICATIONINSIGHTS_CONNECTION_STRING is set
-# and we're not in debug/test mode. This avoids import failures in test environments
-# where azure-monitor-opentelemetry has SDK version conflicts.
-if not settings.debug and os.environ.get("APPLICATIONINSIGHTS_CONNECTION_STRING"):
-    try:
-        from azure.monitor.opentelemetry import configure_azure_monitor
-
-        configure_azure_monitor()
-    except ImportError:
-        logging.getLogger(__name__).warning(
-            "azure-monitor-opentelemetry not available — telemetry disabled"
-        )
 
 # Configure structured logging — JSON to stdout for Azure Monitor ingestion
 structlog.configure(
@@ -47,6 +30,21 @@ structlog.configure(
 
 def create_app() -> FastAPI:
     """Build and configure the FastAPI application."""
+    from app.config import get_settings
+
+    settings = get_settings()
+
+    # Configure Azure Monitor OpenTelemetry (ADR-0010, enterprise standards)
+    if not settings.debug and os.environ.get("APPLICATIONINSIGHTS_CONNECTION_STRING"):
+        try:
+            from azure.monitor.opentelemetry import configure_azure_monitor
+
+            configure_azure_monitor()
+        except ImportError:
+            logging.getLogger(__name__).warning(
+                "azure-monitor-opentelemetry not available — telemetry disabled"
+            )
+
     app = FastAPI(
         title="Corporate Policy Assistant Chatbot",
         description=(
