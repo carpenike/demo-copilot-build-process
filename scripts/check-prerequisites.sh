@@ -265,6 +265,7 @@ if [[ -n "$ACCOUNT_INFO" ]]; then
                 --kind OpenAI \
                 --sku S0 \
                 --location "$LOCATION" \
+                --custom-domain "$OPENAI_NAME" \
                 --output none 2>/dev/null; then
                 OPENAI_ENDPOINT=$(az cognitiveservices account show \
                     --name "$OPENAI_NAME" --resource-group "$RG" \
