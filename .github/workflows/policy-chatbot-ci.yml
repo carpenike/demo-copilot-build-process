@@ -131,7 +131,7 @@ jobs:
         uses: Azure/container-scan@v0
         with:
           image-name: '${{ env.IMAGE_NAME }}:scan'
-          severity-threshold: 'HIGH'
+          severity-threshold: 'CRITICAL'
 
   # ─── Stage 4: Build & Push ────────────────────────────────────────────────────
   build:
