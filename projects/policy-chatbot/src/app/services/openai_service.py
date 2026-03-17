@@ -189,8 +189,8 @@ class OpenAIService:
                 model=self._embedding_deployment,
                 dimensions=self._embedding_dimensions,
             )
-        except Exception:
-            logger.warning("Azure OpenAI Service is unavailable")
+        except Exception as exc:
+            logger.warning("Azure OpenAI Service is unavailable: %s", exc)
             return False
         else:
             return True
