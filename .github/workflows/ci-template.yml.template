@@ -70,6 +70,15 @@ jobs:
         working-directory: projects/${{ env.PROJECT }}/src
 
       - name: Run tests with coverage
+        # IMPORTANT: Set placeholder env vars for all Settings fields so that
+        # tests can import the app without real credentials. Replace the prefix
+        # and values below with your project's Settings env_prefix and fields.
+        env:
+          # [PROJECT]_DATABASE_URL: "postgresql+asyncpg://test:test@localhost:5432/testdb"
+          # [PROJECT]_REDIS_URL: "redis://localhost:6379/0"
+          # Add all required Settings fields with test placeholder values here.
+          # See projects/<project>/src/app/config.py for the full list.
+          PLACEHOLDER: "true"
         run: uv run pytest tests/ --cov=app --cov-report=xml --cov-fail-under=80
         working-directory: projects/${{ env.PROJECT }}/src
 
