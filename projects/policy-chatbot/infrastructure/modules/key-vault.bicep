@@ -40,7 +40,7 @@ param appInsightsConnectionString string
 @description('Entra ID client secret')
 param entraIdClientSecret string = ''
 
-var keyVaultName = '${take(resourcePrefix, 20)}-kv'
+var keyVaultName = '${take(resourcePrefix, 19)}-kv2'
 
 resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
   name: keyVaultName
@@ -53,7 +53,8 @@ resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
     tenantId: tenantId
     enableRbacAuthorization: true
     enableSoftDelete: true
-    softDeleteRetentionInDays: 30
+    softDeleteRetentionInDays: 7
+    enablePurgeProtection: false
   }
 }
 

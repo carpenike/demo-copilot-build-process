@@ -254,7 +254,7 @@ resource acrPullWorker 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
 
 // --- Key Vault Secrets User (API + Worker → Key Vault) ---
 
-var keyVaultNameComputed = '${take(resourcePrefix, 20)}-kv'
+var keyVaultNameComputed = '${take(resourcePrefix, 19)}-kv2'
 
 resource keyVaultResource 'Microsoft.KeyVault/vaults@2023-07-01' existing = {
   name: keyVaultNameComputed
