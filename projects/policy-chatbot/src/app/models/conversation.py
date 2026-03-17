@@ -24,7 +24,10 @@ class Conversation(Base):
         nullable=False,
     )
     status: Mapped[str] = mapped_column(
-        Enum("active", "escalated", "closed", name="conversation_status_enum", create_constraint=True),
+        Enum(
+            "active", "escalated", "closed",
+            name="conversation_status_enum", create_constraint=True,
+        ),
         default="active",
         server_default="active",
     )

@@ -34,7 +34,10 @@ this schema:
       "action": {"kind": "form_link|contact|scheduling|wayfinding", ...} // only for assisted
     }
   ],
-  "citations": [{"document_title": "...", "section": "...", "effective_date": "...", "source_url": "..."}]
+  "citations": [
+    {"document_title": "...", "section": "...",
+     "effective_date": "...", "source_url": "..."}
+  ]
 }
 4. If the question is factual (what/who/when), respond with plain text and \
 citations at the end.

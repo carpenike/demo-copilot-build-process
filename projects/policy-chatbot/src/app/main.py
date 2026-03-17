@@ -37,7 +37,10 @@ def create_app() -> FastAPI:
     """Build and configure the FastAPI application."""
     app = FastAPI(
         title="Corporate Policy Assistant Chatbot",
-        description="Conversational AI that answers policy questions with citations and actionable checklists",
+        description=(
+            "Conversational AI that answers policy questions"
+            " with citations and actionable checklists"
+        ),
         version="0.1.0",
         docs_url="/docs" if settings.debug else None,
         redoc_url="/redoc" if settings.debug else None,

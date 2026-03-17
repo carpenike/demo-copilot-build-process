@@ -2,10 +2,10 @@
 
 import re
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 
 
-class QueryType(str, Enum):
+class QueryType(StrEnum):
     """The type of information the employee is seeking."""
 
     PROCEDURAL = "procedural"
@@ -13,7 +13,7 @@ class QueryType(str, Enum):
     UNKNOWN = "unknown"
 
 
-class IntentResult(str, Enum):
+class IntentResult(StrEnum):
     """High-level classification of a user query."""
 
     POLICY_QUESTION = "policy_question"

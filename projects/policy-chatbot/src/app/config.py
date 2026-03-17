@@ -48,7 +48,9 @@ class Settings(BaseSettings):
     # --- ServiceNow ---
     servicenow_instance_url: str = Field(description="ServiceNow instance URL")
     servicenow_api_user: str = Field(description="ServiceNow integration user from Key Vault")
-    servicenow_api_password: str = Field(description="ServiceNow integration password from Key Vault")
+    servicenow_api_password: str = Field(
+        description="ServiceNow integration password from Key Vault",
+    )
 
     # --- Microsoft Graph API ---
     graph_api_base_url: str = "https://graph.microsoft.com/v1.0"

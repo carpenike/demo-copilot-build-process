@@ -12,7 +12,7 @@ from app.core.intent_classifier import (
 )
 from app.services.openai_service import DISCLAIMER, ChatResponse, OpenAIService
 from app.services.redis_service import RedisService
-from app.services.search_service import SearchResult, SearchService
+from app.services.search_service import SearchService
 
 logger = logging.getLogger(__name__)
 
@@ -71,7 +71,7 @@ class RAGPipeline:
             logger.info("Cache hit for query", extra={"query_hash": query_hash})
             return json.loads(cached)
 
-        # Step 3–7: Check LLM availability and branch accordingly
+        # Step 3-7: Check LLM availability and branch accordingly
         llm_available = await self._openai.is_available()
 
         if llm_available:
