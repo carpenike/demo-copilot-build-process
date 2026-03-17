@@ -33,23 +33,8 @@ param redisPrimaryKey string
 @description('Redis SSL port')
 param redisPort int = 6380
 
-@description('Storage account name')
-param storageAccountName string
-
-@description('Azure OpenAI endpoint')
-param openAiEndpoint string
-
-@description('Azure AI Search endpoint')
-param searchEndpoint string
-
 @description('Application Insights connection string')
 param appInsightsConnectionString string
-
-@description('Entra ID tenant ID')
-param entraIdTenantId string
-
-@description('Entra ID client ID for the app registration')
-param entraIdClientId string
 
 @secure()
 @description('Entra ID client secret')

@@ -148,7 +148,6 @@ module openAi 'modules/openai.bicep' = {
 
 module keyVault 'modules/key-vault.bicep' = {
   name: '${resourcePrefix}-keyvault'
-  dependsOn: [database, cache, monitoring]
   params: {
     resourcePrefix: resourcePrefix
     location: location
@@ -160,12 +159,7 @@ module keyVault 'modules/key-vault.bicep' = {
     redisHostname: cache.outputs.hostname
     redisPrimaryKey: cache.outputs.primaryKey
     redisPort: cache.outputs.sslPort
-    storageAccountName: storage.outputs.accountName
-    openAiEndpoint: openAi.outputs.openAiEndpoint
-    searchEndpoint: search.outputs.searchEndpoint
     appInsightsConnectionString: monitoring.outputs.appInsightsConnectionString
-    entraIdTenantId: tenantId
-    entraIdClientId: entraIdClientId
     entraIdClientSecret: entraIdClientSecret
   }
 }
@@ -184,7 +178,6 @@ module containerAppApi 'modules/container-app.bicep' = {
     isApi: true
     minReplicas: apiMinReplicas
     maxReplicas: apiMaxReplicas
-    keyVaultUri: keyVault.outputs.keyVaultUri
     databaseUrlSecretUri: keyVault.outputs.databaseUrlSecretUri
     redisUrlSecretUri: keyVault.outputs.redisUrlSecretUri
     appInsightsSecretUri: keyVault.outputs.appInsightsSecretUri
@@ -209,7 +202,6 @@ module containerAppWorker 'modules/container-app.bicep' = {
     isApi: false
     minReplicas: workerMinReplicas
     maxReplicas: workerMaxReplicas
-    keyVaultUri: keyVault.outputs.keyVaultUri
     databaseUrlSecretUri: keyVault.outputs.databaseUrlSecretUri
     redisUrlSecretUri: keyVault.outputs.redisUrlSecretUri
     appInsightsSecretUri: keyVault.outputs.appInsightsSecretUri
@@ -378,12 +370,17 @@ resource openAiRoleWorker 'Microsoft.Authorization/roleAssignments@2022-04-01' =
 
 // --- Azure Blob Storage (API + Worker → Storage) ---
 
+// Compute storage name with same formula as the module — NOT from module output.
+// Module outputs are runtime values and cannot be used in name/scope of
+// role assignments (BCP120).
+var storageAccountNameComputed = take(replace(toLower(resourcePrefix), '-', ''), 24)
+
 resource storageResource 'Microsoft.Storage/storageAccounts@2023-05-01' existing = {
-  name: storage.outputs.accountName
+  name: storageAccountNameComputed
 }
 
 resource storageBlobApi 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(storageResource.id, '${resourcePrefix}-api', storageBlobDataContributorRoleId)
+  name: guid(storageAccountNameComputed, '${resourcePrefix}-api', storageBlobDataContributorRoleId)
   scope: storageResource
   properties: {
     roleDefinitionId: subscriptionResourceId(
@@ -396,7 +393,7 @@ resource storageBlobApi 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
 }
 
 resource storageBlobWorker 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(storageResource.id, '${resourcePrefix}-worker', storageBlobDataContributorRoleId)
+  name: guid(storageAccountNameComputed, '${resourcePrefix}-worker', storageBlobDataContributorRoleId)
   scope: storageResource
   properties: {
     roleDefinitionId: subscriptionResourceId(

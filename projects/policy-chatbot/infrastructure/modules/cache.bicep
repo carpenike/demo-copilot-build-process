@@ -33,5 +33,6 @@ resource redisCache 'Microsoft.Cache/redis@2024-03-01' = {
 
 output hostname string = redisCache.properties.hostName
 output sslPort int = redisCache.properties.sslPort
+#disable-next-line outputs-should-not-contain-secrets
 output primaryKey string = redisCache.listKeys().primaryKey
 output name string = redisCache.name

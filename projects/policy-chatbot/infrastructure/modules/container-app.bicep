@@ -33,9 +33,6 @@ param memory string = '1Gi'
 @description('Whether this is the API (true) or worker (false)')
 param isApi bool = true
 
-@description('Key Vault URI for secret references')
-param keyVaultUri string
-
 @description('Database URL Key Vault secret URI')
 param databaseUrlSecretUri string
 
