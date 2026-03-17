@@ -49,7 +49,7 @@ resource dbConnectionStringSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01'
   name: 'db-connection-string'
   parent: keyVault
   properties: {
-    value: 'postgresql+asyncpg://${databaseAdminLogin}:${postgresAdminPassword}@${databaseFqdn}:5432/${databaseName}?sslmode=require'
+    value: 'postgresql+asyncpg://${databaseAdminLogin}:${postgresAdminPassword}@${databaseFqdn}:5432/${databaseName}?ssl=require'
   }
 }
 

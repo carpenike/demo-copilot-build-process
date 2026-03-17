@@ -182,7 +182,13 @@ class OpenAIService:
     async def is_available(self) -> bool:
         """Check if the Azure OpenAI endpoint is reachable."""
         try:
-            await self._client.models.list()
+            # Use a minimal embeddings call to verify connectivity.
+            # models.list() is not available on Azure OpenAI.
+            await self._client.embeddings.create(
+                input="health check",
+                model=self._embedding_deployment,
+                dimensions=self._embedding_dimensions,
+            )
         except Exception:
             logger.warning("Azure OpenAI Service is unavailable")
             return False
