@@ -185,6 +185,13 @@ When ACA is selected as the compute platform, the Bicep modules must configure:
   - Ingress configuration (internal or external via Azure API Management)
   - Secrets referencing Azure Key Vault
   - Managed identity for Azure service authentication
+- Key Vault configuration:
+  - For **dev** environments: `enablePurgeProtection: false`,
+    `softDeleteRetentionInDays: 7` — allows cleanup and name reuse
+  - For **production** environments: `enablePurgeProtection: true`,
+    `softDeleteRetentionInDays: 90` — prevents accidental secret deletion
+  - Key Vault names are **globally unique** — if a name is blocked by a
+    soft-deleted vault with purge protection, use a different name
 - Dapr sidecar (optional — only if service mesh features needed)
 
 ## Kubernetes Manifest Standards (AKS Fallback Only)

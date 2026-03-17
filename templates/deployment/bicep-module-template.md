@@ -194,6 +194,18 @@ resource openAiRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
 
 ### Common Pitfalls (apply only to projects using these services)
 
+- **Key Vault soft-delete and purge protection.** Key Vault names are globally
+  unique and soft-deleted vaults block re-creation. For dev environments,
+  disable purge protection and use short retention:
+  ```bicep
+  enableSoftDelete: true
+  softDeleteRetentionInDays: 7       // 7 for dev, 30+ for prod
+  enablePurgeProtection: false       // false for dev, true for prod
+  ```
+  If a vault name is blocked by a soft-deleted vault with purge protection,
+  you must either wait for the retention period to expire or use a different
+  name. The bootstrap script should check `az keyvault list-deleted` before
+  creating vaults.
 - **Never use placeholder values** for secrets like Redis access keys in CI
   deploy steps. Use GitHub secrets populated from the bootstrap script or manual
   `az` commands. Placeholder values propagate to Key Vault connection strings
