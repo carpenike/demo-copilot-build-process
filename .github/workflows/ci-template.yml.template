@@ -274,18 +274,22 @@ jobs:
           echo "Waiting 30s for RBAC propagation..."
           sleep 30
 
-      - name: Retry deploy if first attempt failed
+      - name: Restart container apps if first deploy failed (RBAC propagation)
         if: steps.deploy.outcome == 'failure'
-        uses: azure/arm-deploy@v2
-        with:
-          resourceGroupName: ${{ secrets.ACA_RESOURCE_GROUP_DEV }}
-          template: projects/${{ env.PROJECT }}/infrastructure/main.bicep
-          parameters: >-
-            projects/${{ env.PROJECT }}/infrastructure/main.dev.bicepparam
-            imageTag=${{ github.sha }}
-            acrLoginServer=${{ env.ACR_REGISTRY }}
-          deploymentMode: Incremental
-          deploymentName: ${{ env.PROJECT }}-dev-${{ github.sha }}-r
+        run: |
+          # First deploy may fail because ACA tried to pull the image before
+          # AcrPull RBAC propagated. Now that roles are assigned, create a new
+          # revision to retry the image pull. Do NOT retry az arm-deploy —
+          # it fails with RoleAssignmentExists on duplicate role assignments.
+          for APP_SUFFIX in api worker; do
+            APP_NAME="${{ env.IMAGE_NAME }}-dev-${APP_SUFFIX}"
+            echo "Updating ${APP_NAME} to trigger new revision..."
+            az containerapp update \
+              --name "${APP_NAME}" \
+              --resource-group ${{ secrets.ACA_RESOURCE_GROUP_DEV }} \
+              --set-env-vars "DEPLOY_RETRY=$(date +%s)" \
+              --output none 2>/dev/null || echo "${APP_NAME} not found — skipping"
+          done
 
       - name: Wait for revision to be ready
         run: |
