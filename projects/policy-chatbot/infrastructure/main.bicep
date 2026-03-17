@@ -112,7 +112,6 @@ module monitoring 'modules/monitoring.bicep' = {
 
 module keyVault 'modules/key-vault.bicep' = {
   name: '${resourcePrefix}-keyvault'
-  dependsOn: [database, cache]
   params: {
     location: location
     resourcePrefix: resourcePrefix

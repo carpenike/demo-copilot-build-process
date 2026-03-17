@@ -10,6 +10,5 @@ param entraTenantId = readEnvironmentVariable('ENTRA_TENANT_ID', '')
 param entraClientId = readEnvironmentVariable('ENTRA_CLIENT_ID', '')
 param entraClientSecret = readEnvironmentVariable('ENTRA_CLIENT_SECRET', '')
 param azureOpenAIEndpoint = readEnvironmentVariable('AZURE_OPENAI_ENDPOINT', '')
-param azureSearchEndpoint = readEnvironmentVariable('AZURE_SEARCH_ENDPOINT', '')
 param servicenowInstanceUrl = readEnvironmentVariable('SERVICENOW_INSTANCE_URL', '')
 param corsAllowedOrigins = ['https://intranet-staging.acme.com']
