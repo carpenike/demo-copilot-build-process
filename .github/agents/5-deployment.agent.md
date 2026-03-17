@@ -20,6 +20,18 @@ strictly within the infrastructure standards defined in
   requirements, and write an ADR justifying the decision.
 - DO NOT begin producing output until the target project is confirmed
 - ONLY produce infrastructure and pipeline artifacts — no application code
+- DO NOT rely on `readEnvironmentVariable()` in `.bicepparam` files for secrets
+  that need to work in GitHub Actions. GitHub Actions secrets are only available
+  via `${{ secrets.* }}` syntax, not as shell env vars on the runner. Instead:
+  - Use `readEnvironmentVariable()` with empty-string defaults in `.bicepparam`
+    for local development
+  - Pass all `@secure()` parameters explicitly in the CI/CD workflow deploy step
+    using `parameters: ... paramName=${{ secrets.SECRET_NAME }}`
+- CI/CD deploy steps MUST include a unique `deploymentName` (e.g.,
+  `${{ env.PROJECT }}-dev-${{ github.sha }}`) to prevent `DeploymentActive`
+  conflicts from concurrent or re-triggered deployments
+- CI/CD workflows MUST include `concurrency` groups with `cancel-in-progress: true`
+  to prevent parallel runs from wasting compute and conflicting on deployments
 
 ## Before You Start
 Confirm which project you are working on. You need:
