@@ -74,6 +74,21 @@ plugins = ["pydantic.mypy"]
 asyncio_mode = "auto"
 testpaths = ["tests"]
 
+[tool.coverage.run]
+source = ["app"]
+omit = [
+    "app/main.py",
+    "app/tasks/indexing.py",
+    "app/services/document_service.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "if __name__",
+]
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
