@@ -102,6 +102,7 @@ jobs:
     permissions:
       security-events: write
       contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@v4
 
@@ -130,7 +131,7 @@ jobs:
       - name: Run Microsoft Security DevOps scan
         uses: microsoft/security-devops-action@v1
         with:
-          tools: container
+          tools: trivy
 
   # ─── Stage 4: Build & Push ────────────────────────────────────────────────────
   build:
