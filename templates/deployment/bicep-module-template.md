@@ -41,6 +41,31 @@ value: 'postgresql+asyncpg://${database.outputs.adminLogin}:${password}@${databa
 
 The Key Vault module must `dependsOn` any module whose outputs it references.
 
+### ACR Pull Permission
+
+When using ACA with managed identity to pull images from ACR, you MUST assign
+the `AcrPull` role to the Container App's system-assigned identity:
+
+```bicep
+var acrPullRoleId = '7f951dda-4ed3-4680-a7ca-43fe172d538d'
+
+resource acr 'Microsoft.ContainerRegistry/registries@2023-07-01' existing = {
+  name: acrName
+}
+
+resource acrPullRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(acr.id, containerApp.outputs.principalId, acrPullRoleId)
+  scope: acr
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', acrPullRoleId)
+    principalId: containerApp.outputs.principalId
+    principalType: 'ServicePrincipal'
+  }
+}
+```
+
+Without this, ACA will fail with: `unable to pull image using Managed identity`.
+
 ---
 
 ## Azure Container Apps (Preferred Compute)
