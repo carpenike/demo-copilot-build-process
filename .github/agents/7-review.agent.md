@@ -161,6 +161,21 @@ to regenerate Bicep for ACA instead of AKS"]
 4. Auto-fixed issues are documented with before/after
 5. If overall status is FAIL, the report clearly states what must be fixed
    before the PR can be opened
+6. **Ruff lint passes** — run `uvx ruff check app/` from `projects/<project>/src/`
+   and verify exit code 0. If errors exist, auto-fix them and document in the
+   review report.
+7. **Ruff format passes** — run `uvx ruff format --check app/` from
+   `projects/<project>/src/`. If files need reformatting, run
+   `uvx ruff format app/` and document the fix.
+8. **Unit tests pass** — set placeholder env vars and run from
+   `projects/<project>/src/`:
+   ```bash
+   cd projects/<project>/src
+   python -m pytest ../tests/ -x -q
+   ```
+   If tests fail, investigate and fix if the issue is minor (wrong assertion,
+   mock setup). If the fix requires significant code changes, flag it in the
+   review report as requiring re-routing to the appropriate agent.
 
 List each item with ✅ or ❌ status.
 
