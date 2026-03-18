@@ -157,6 +157,18 @@ any standalone Prometheus client library.
 Python: `azure-monitor-opentelemetry` + `opentelemetry-instrumentation-fastapi`
 Go: `azure-sdk-for-go` OTEL bridge
 
+**IMPORTANT:** `azure-monitor-opentelemetry` frequently has version conflicts
+with `opentelemetry-sdk` (e.g., `ImportError: cannot import name 'LogData'`).
+Always wrap the `configure_azure_monitor()` call in a try/except so the app
+starts without telemetry rather than crash-looping:
+```python
+try:
+    from azure.monitor.opentelemetry import configure_azure_monitor
+    configure_azure_monitor(connection_string=...)
+except Exception:
+    logger.warning("azure_monitor_init_failed_non_fatal")
+```
+
 ### Dockerfile Standards
 ```dockerfile
 # Multi-stage build required
