@@ -50,11 +50,14 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
     # Configure OpenTelemetry with Azure Monitor
     if settings.applicationinsights_connection_string:
-        from azure.monitor.opentelemetry import configure_azure_monitor
+        try:
+            from azure.monitor.opentelemetry import configure_azure_monitor
 
-        configure_azure_monitor(
-            connection_string=settings.applicationinsights_connection_string,
-        )
+            configure_azure_monitor(
+                connection_string=settings.applicationinsights_connection_string,
+            )
+        except Exception:
+            logger.warning("azure_monitor_init_failed_non_fatal")
 
     # Database engine
     engine = create_async_engine(settings.database_url, echo=settings.debug)
