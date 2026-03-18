@@ -46,6 +46,7 @@ strictly within the infrastructure standards defined in
   needs RBAC role assignments. These are post-deployment (same circular
   dependency as AcrPull). The `main.bicep` must include inline role assignments:
   - **AI Search (if used):** `Search Index Data Reader` + `Search Index Data Contributor`
+    + `Search Service Contributor` (needed by `ensure_index()` to create indexes on startup)
   - **Azure OpenAI (if used):** `Cognitive Services OpenAI User`
 - **First-deploy RBAC timing:** On first deploy, Bicep creates ACA + role
   assignments simultaneously, but Azure RBAC takes 1–5 minutes to propagate.

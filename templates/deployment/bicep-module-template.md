@@ -132,6 +132,7 @@ resource searchService 'Microsoft.Search/searchServices@2024-03-01-preview' = {
 // In main.bicep — role assignments for ACA → AI Search:
 var searchIndexDataReaderRoleId = '1407120a-92aa-4202-b7e9-c0e197c71c8f'
 var searchIndexDataContributorRoleId = '8ebe5a00-799e-43f5-93ac-243d3dce84a7'
+var searchServiceContributorRoleId = '7ca78c08-252a-4471-8644-bb5ff32d4ba0'
 
 resource searchResource 'Microsoft.Search/searchServices@2024-03-01-preview' existing = {
   name: '${resourcePrefix}-search'
@@ -156,10 +157,22 @@ resource searchContributorRole 'Microsoft.Authorization/roleAssignments@2022-04-
     principalType: 'ServicePrincipal'
   }
 }
+
+// Search Service Contributor — needed to create/manage indexes (e.g., ensure_index() on startup)
+resource searchServiceContributorRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(searchResource.id, '${resourcePrefix}-api', searchServiceContributorRoleId)
+  scope: searchResource
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', searchServiceContributorRoleId)
+    principalId: containerApp.outputs.principalId
+    principalType: 'ServicePrincipal'
+  }
+}
 ```
 
-Without this, the app gets `403 Forbidden` when calling AI Search from the
-container app's managed identity.
+Without these roles, the app gets `403 Forbidden` when calling AI Search.
+Note: `Search Index Data *` roles only cover data operations (search, upload).
+To create or delete indexes, `Search Service Contributor` is also required.
 
 ### Azure OpenAI Managed Identity Access (if project uses Azure OpenAI)
 
