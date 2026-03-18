@@ -194,7 +194,11 @@ When ACA is selected as the compute platform, the Bicep modules must configure:
   }
   ```
 - `Microsoft.App/containerApps` per service (API, worker, etc.) with:
-  - Health probes pointing to `/health` (liveness) and `/ready` (readiness)
+  - Health probes: **both liveness and readiness** should point to `/health`.
+    Do NOT use `/ready` for the readiness probe — if `/ready` checks non-critical
+    dependencies (AI Search, OpenAI), a single dependency failure will cause ACA
+    to stop routing ALL external traffic to the container. Use `/health` for both
+    probes. The `/ready` endpoint is for manual debugging, not traffic gating.
   - Min/max replicas (min 2 for production API, scaling on HTTP concurrency)
   - CPU/memory resource allocation
   - Ingress configuration (internal or external via Azure API Management)
@@ -289,7 +293,7 @@ all items pass.
 5. If AKS: K8s manifests include Deployment, Service, HPA, PDB, NetworkPolicy, ServiceAccount
 6. `.github/workflows/<project>-ci.yml` exists with all required stages (lint, test, security, build, integration, deploy-dev)
 7. `.github/workflows/<project>-deploy.yml` exists with environment-gated deployment
-8. Liveness and readiness probes configured pointing to `/health` and `/ready`
+8. Liveness and readiness probes configured pointing to `/health`
 9. Secrets reference Azure Key Vault (no plaintext secrets anywhere)
 10. Deploy pipeline has manual approval gate for production
 11. `projects/<project>/infrastructure/PREREQUISITES.md` exists listing all Azure prereqs
