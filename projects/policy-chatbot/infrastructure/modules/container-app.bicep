@@ -61,9 +61,10 @@ param tenantId string
 param clientId string
 
 var appName = isApi ? '${resourcePrefix}-api' : '${resourcePrefix}-worker'
-var command = isApi
-  ? ['uvicorn', 'app.main:app', '--host', '0.0.0.0', '--port', '8000', '--workers', '4']
-  : ['celery', '-A', 'app.tasks.indexing:get_celery_app', 'worker', '--loglevel=info']
+// API: no command override — uses Docker ENTRYPOINT (entrypoint.sh) + CMD (uvicorn).
+// Worker: must override command since Docker CMD defaults to uvicorn.
+// entrypoint.sh still runs first (migrations), then exec passes to celery.
+var workerCommand = ['celery', '-A', 'app.tasks.indexing:get_celery_app', 'worker', '--loglevel=info']
 
 resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
   name: appName
@@ -117,7 +118,9 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
         {
           name: imageName
           image: '${acrLoginServer}/${imageName}:${imageTag}'
-          command: command
+          // API: uses Docker ENTRYPOINT (entrypoint.sh runs migrations + uvicorn)
+          // Worker: override to run celery via entrypoint (migrations run first)
+          command: isApi ? [] : ['/app/entrypoint.sh', 'celery', '-A', 'app.tasks.indexing:get_celery_app', 'worker', '--loglevel=info']
           resources: {
             cpu: json(cpu)
             memory: memory
