@@ -76,6 +76,7 @@ var acrPullRoleId = '7f951dda-4ed3-4680-a7ca-43fe172d538d'
 var kvSecretsUserRoleId = '4633458b-17de-408a-b874-0445c86b69e6'
 var searchIndexDataReaderRoleId = '1407120a-92aa-4202-b7e9-c0e197c71c8f'
 var searchIndexDataContributorRoleId = '8ebe5a00-799e-43f5-93ac-243d3dce84a7'
+var searchServiceContributorRoleId = '7ca78c08-252a-4471-8644-bb5ff32d4ba0'
 var cognitiveServicesOpenAIUserRoleId = '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd'
 var storageBlobDataContributorRoleId = 'ba92f5b4-2d11-453d-a403-e96b0029c9fe'
 
@@ -327,6 +328,20 @@ resource searchContributorWorker 'Microsoft.Authorization/roleAssignments@2022-0
       searchIndexDataContributorRoleId
     )
     principalId: containerAppWorker.outputs.principalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
+// Search Service Contributor — needed by ensure_index() to create/manage indexes
+resource searchServiceContributorApi 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(searchResource.id, '${resourcePrefix}-api', searchServiceContributorRoleId)
+  scope: searchResource
+  properties: {
+    roleDefinitionId: subscriptionResourceId(
+      'Microsoft.Authorization/roleDefinitions',
+      searchServiceContributorRoleId
+    )
+    principalId: containerAppApi.outputs.principalId
     principalType: 'ServicePrincipal'
   }
 }
