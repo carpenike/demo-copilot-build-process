@@ -313,21 +313,8 @@ jobs:
             sleep 10
           done
 
-      - name: Run database migrations
-        run: |
-          # az containerapp exec requires a TTY, which GitHub Actions doesn't have.
-          # Use az containerapp job or a direct psql connection instead.
-          # For now, run via az rest to execute a command in the container.
-          echo "Running alembic migrations..."
-          az containerapp exec \
-            --name ${{ env.IMAGE_NAME }}-dev-api \
-            --resource-group ${{ secrets.ACA_RESOURCE_GROUP_DEV }} \
-            --command "alembic upgrade head" 2>&1 || {
-            echo "WARNING: az containerapp exec failed (may need TTY)."
-            echo "Migrations may need to be run manually:"
-            echo "  az containerapp exec --name ${{ env.IMAGE_NAME }}-dev-api --resource-group ${{ secrets.ACA_RESOURCE_GROUP_DEV }} --command 'alembic upgrade head'"
-            echo "Continuing with deployment..."
-          }
+      # Database migrations run automatically on container startup via entrypoint.sh.
+      # No separate migration step needed — alembic upgrade head runs before uvicorn.
 
       - name: Run smoke tests
         run: |
