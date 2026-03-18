@@ -309,18 +309,16 @@ jobs:
             sleep 10
           done
 
-      # NOTE: az containerapp exec requires a TTY. In GitHub Actions (no TTY),
-      # this step may fail with 'Inappropriate ioctl for device'. Make it
-      # non-fatal so the pipeline continues. Run migrations manually if needed.
-      - name: Run database migrations
-        run: |
-          az containerapp exec \
-            --name ${{ env.IMAGE_NAME }}-dev-api \
-            --resource-group ${{ secrets.ACA_RESOURCE_GROUP_DEV }} \
-            --command "alembic upgrade head" 2>&1 || {
-            echo "WARNING: Migration failed (az containerapp exec may need TTY)."
-            echo "Run manually: az containerapp exec --name ${{ env.IMAGE_NAME }}-dev-api --resource-group ${{ secrets.ACA_RESOURCE_GROUP_DEV }} --command 'alembic upgrade head'"
-          }
+      # NOTE: Database migrations should run automatically on container startup
+      # via an entrypoint.sh script (alembic upgrade head before uvicorn).
+      # Do NOT use az containerapp exec for migrations — it requires a TTY
+      # which GitHub Actions runners don't have. Instead, add an entrypoint.sh:
+      #   #!/bin/sh
+      #   alembic upgrade head 2>&1 || echo "Migration failed"
+      #   exec \"$@\"
+      # And in Dockerfile:
+      #   ENTRYPOINT [\"/app/entrypoint.sh\"]
+      #   CMD [\"uvicorn\", \"app.main:app\", ...]
 
       - name: Run smoke tests
         run: |

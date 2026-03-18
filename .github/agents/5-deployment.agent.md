@@ -55,15 +55,17 @@ strictly within the infrastructure standards defined in
      managed identity + 30s sleep for propagation
   3. If first deploy failed, retry `azure/arm-deploy`
   See `.github/workflows/ci-template.yml.template` Stage 6 for the full pattern.
-- If the project has database dependencies (SQLAlchemy + Alembic), CI/CD deploy
-  ```yaml
-  - name: Run database migrations
-    run: |
-      az containerapp exec \
-        --name ${{ env.IMAGE_NAME }}-${{ env.ENV }}-api \
-        --resource-group ${{ secrets.ACA_RESOURCE_GROUP_DEV }} \
-        --command "alembic upgrade head"
+- If the project has database dependencies (SQLAlchemy + Alembic), database
+  migrations MUST run on container startup via an `entrypoint.sh` script —
+  NOT via `az containerapp exec` (which requires a TTY that CI runners lack).
+  The Dockerfile should use:
+  ```dockerfile
+  COPY entrypoint.sh /app/entrypoint.sh
+  RUN chmod +x /app/entrypoint.sh
+  ENTRYPOINT ["/app/entrypoint.sh"]
+  CMD ["uvicorn", "app.main:app", ...]
   ```
+  Where `entrypoint.sh` runs `alembic upgrade head` before `exec "$@"`.
   Without this, the app will crash-loop with `UndefinedTableError` on first deploy.
 
 ## Before You Start

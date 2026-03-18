@@ -77,12 +77,8 @@ jobs:
       # Remove this step for projects without database migrations.
       # NOTE: Only include this step if the project uses a database with Alembic.
       # Remove this step for projects without database migrations.
-      - name: Run database migrations
-        run: |
-          az containerapp exec \
-            --name ${{ env.IMAGE_NAME }}-staging-api \
-            --resource-group ${{ secrets.ACA_RESOURCE_GROUP_STAGING }} \
-            --command "alembic upgrade head" || echo "Migration skipped"
+      # Database migrations run automatically on container startup via entrypoint.sh.
+      # No separate migration step needed.
 
       - name: Run smoke tests
         run: |
@@ -148,12 +144,8 @@ jobs:
 
       # NOTE: Only include this step if the project uses a database with Alembic.
       # Remove this step for projects without database migrations.
-      - name: Run database migrations
-        run: |
-          az containerapp exec \
-            --name ${{ env.IMAGE_NAME }}-production-api \
-            --resource-group ${{ secrets.ACA_RESOURCE_GROUP_PROD }} \
-            --command "alembic upgrade head" || echo "Migration skipped"
+      # Database migrations run automatically on container startup via entrypoint.sh.
+      # No separate migration step needed.
 
       - name: Run smoke tests
         run: |
