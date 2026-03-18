@@ -226,11 +226,11 @@ class TestSearchService:
         assert results[0]["chunk_id"] == "c1"
 
     async def test_check_health_returns_true(self) -> None:
-        """Health check returns True when index list succeeds."""
+        """Health check returns True when search succeeds."""
         service = self._make_service()
         mock_client = MagicMock()
-        mock_client.list_indexes.return_value = []
-        service._index_client = mock_client
+        mock_client.search.return_value = []
+        service._search_client = mock_client
 
         result = await service.check_health()
         assert result is True
@@ -239,8 +239,8 @@ class TestSearchService:
         """Health check returns False on error."""
         service = self._make_service()
         mock_client = MagicMock()
-        mock_client.list_indexes.side_effect = Exception("down")
-        service._index_client = mock_client
+        mock_client.search.side_effect = Exception("down")
+        service._search_client = mock_client
 
         result = await service.check_health()
         assert result is False
