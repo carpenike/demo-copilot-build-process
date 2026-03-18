@@ -266,8 +266,12 @@ class SearchService:
     async def check_health(self) -> bool:
         """Check if Azure AI Search is reachable."""
         try:
-            client = self._get_index_client()
-            list(client.list_indexes())
+            client = self._get_search_client()
+            # Use a simple search query instead of list_indexes()
+            # list_indexes() requires Search Service Contributor role
+            # but search only needs Search Index Data Reader
+            results = client.search(search_text="*", top=1)
+            list(results)  # consume the iterator to trigger the request
         except Exception:
             logger.warning("ai_search_health_check_failed")
             return False
