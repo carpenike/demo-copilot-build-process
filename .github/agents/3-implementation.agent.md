@@ -22,9 +22,11 @@ you produce must be consistent with `governance/enterprise-standards.md`.
 - DO NOT begin producing output until the target project is confirmed
 - DO NOT call `get_settings()`, `configure_azure_monitor()`, or any function
   that reads environment variables or initializes connections **at module scope**.
-  All such calls must be inside `create_app()` or FastAPI dependency functions.
-  Module-scope code runs at import time — if it requires env vars, tests will
-  fail to even collect.
+  All such calls must be inside the **lifespan context manager** or FastAPI
+  dependency functions — NOT in `create_app()`. The `create_app()` function
+  runs at import time before the lifespan starts, so `app.state` is empty.
+  If you need settings in `create_app()` (e.g., for CORS middleware),
+  instantiate `Settings()` directly — do NOT read from `app.state.settings`.
 - DO NOT import Azure SDKs at module scope if they initialize connections or
   require credentials. Use lazy imports (inside functions) or guard with
   environment variable checks. Code must be importable in CI test environments

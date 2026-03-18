@@ -212,6 +212,11 @@ resource openAiRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   deploy steps. Use GitHub secrets populated from the bootstrap script or manual
   `az` commands. Placeholder values propagate to Key Vault connection strings
   and cause silent connectivity failures at runtime.
+- **ACA `command` overrides Docker ENTRYPOINT + CMD.** If the Dockerfile uses an
+  `ENTRYPOINT` script (e.g., for database migrations), do NOT set `command` in
+  the container-app Bicep for the API container. Set `command: []` (empty) to let
+  Docker's ENTRYPOINT + CMD work. For non-API containers (workers), pass the
+  entrypoint explicitly: `command: ['/app/entrypoint.sh', 'celery', ...]`.
 - **All required Settings fields must have env vars** in the container app Bicep.
   Missing env vars cause pydantic `ValidationError` on startup — the app
   crash-loops with no clear error in multi-worker mode.
