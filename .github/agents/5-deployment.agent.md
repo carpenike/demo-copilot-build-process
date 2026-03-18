@@ -67,6 +67,11 @@ strictly within the infrastructure standards defined in
   ```
   Where `entrypoint.sh` runs `alembic upgrade head` before `exec "$@"`.
   Without this, the app will crash-loop with `UndefinedTableError` on first deploy.
+  **CRITICAL:** Do NOT set `command` in the ACA container-app.bicep for the API
+  container — ACA's `command` property overrides BOTH Docker `ENTRYPOINT` and
+  `CMD`, which would skip `entrypoint.sh` entirely. For non-API containers
+  (e.g., Celery workers), pass the entrypoint explicitly:
+  `command: ['/app/entrypoint.sh', 'celery', '-A', '...', 'worker']`
 
 ## Before You Start
 Confirm which project you are working on. You need:
