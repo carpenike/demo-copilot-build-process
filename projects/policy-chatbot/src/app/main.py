@@ -119,7 +119,9 @@ def create_app() -> FastAPI:
 
 def _configure_cors(app: FastAPI) -> None:
     """Add CORS middleware with explicit origins — never use wildcard."""
-    settings = app.state.settings
+    from app.config import Settings
+
+    settings = Settings()
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.allowed_origins,
