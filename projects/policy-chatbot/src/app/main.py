@@ -36,7 +36,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     app.state.settings = settings
 
     # Configure structured logging
-    log_level: int = structlog.get_level_from_name(settings.log_level)  # type: ignore[operator]
+    import logging
+
+    log_level = getattr(logging, settings.log_level.upper(), logging.INFO)
     structlog.configure(
         processors=[
             structlog.processors.TimeStamper(fmt="iso"),
