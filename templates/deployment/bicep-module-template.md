@@ -227,6 +227,10 @@ resource openAiRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   uses Azure OpenAI).
 - **Azure AI Search defaults to `apiKeyOnly`** — if the project uses AI Search,
   you MUST set `authOptions` to `aadOrApiKey`.
+- **AI Search health checks need the right role.** `list_indexes()` requires
+  `Search Service Contributor` role. For health checks using only `Search Index
+  Data Reader`/`Contributor` roles, use a search query (`search(search_text="*",
+  top=1)`) instead of `list_indexes()`.
 - **Database tables don't exist on first deploy.** If the project uses
   SQLAlchemy + Alembic, the app will crash-loop with `UndefinedTableError`
   unless you run migrations. Include a migration step in deploy jobs.
