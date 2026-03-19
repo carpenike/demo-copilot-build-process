@@ -542,6 +542,11 @@ elif [[ -n "$ACCOUNT_INFO" ]]; then
         fail "No Entra ID app registration found with name '${PROJECT}'"
         if [[ "$FIX_MODE" == "--fix" ]]; then
             echo "    Creating Entra ID app registration '${PROJECT}'..."
+            # Use APP_ROLES from bootstrap.conf if available, otherwise use defaults
+            APP_ROLES_FOR_CREATE="${APP_ROLES_JSON:-'[
+                    {\"allowedMemberTypes\":[\"User\"],\"description\":\"Default role for all employees\",\"displayName\":\"Employee\",\"isEnabled\":true,\"value\":\"Employee\"},
+                    {\"allowedMemberTypes\":[\"User\"],\"description\":\"Administrators who can manage content and view analytics\",\"displayName\":\"PolicyAdmin\",\"isEnabled\":true,\"value\":\"PolicyAdmin\"}
+                ]'}"
             APP_CREATE_OUTPUT=$(az ad app create \
                 --display-name "$PROJECT" \
                 --sign-in-audience "AzureADMyOrg" \
@@ -549,22 +554,7 @@ elif [[ -n "$ACCOUNT_INFO" ]]; then
                     "resourceAppId": "00000003-0000-0000-c000-000000000000",
                     "resourceAccess": [{"id": "e1fe6dd8-ba31-4d61-89e7-88639da4683d", "type": "Scope"}]
                 }]' \
-                --app-roles '[
-                    {
-                        "allowedMemberTypes": ["User"],
-                        "description": "Default role for all employees",
-                        "displayName": "Employee",
-                        "isEnabled": true,
-                        "value": "Employee"
-                    },
-                    {
-                        "allowedMemberTypes": ["User"],
-                        "description": "Policy administrators who can manage documents and view analytics",
-                        "displayName": "Administrator",
-                        "isEnabled": true,
-                        "value": "Administrator"
-                    }
-                ]' \
+                --app-roles "$APP_ROLES_FOR_CREATE" \
                 -o json 2>&1)
             APP_CREATE_EXIT=$?
 
@@ -604,11 +594,18 @@ elif [[ -n "$ACCOUNT_INFO" ]]; then
     fi
 
     if [[ -n "$APP_ID" ]]; then
-        # Check for App Roles
-        APP_ROLES=$(az ad app show --id "$APP_ID" \
-            --query "appRoles[].displayName" -o json 2>/dev/null || echo "[]")
-        HAS_EMPLOYEE=$(echo "$APP_ROLES" | jq 'any(. == "Employee")')
-        HAS_ADMIN=$(echo "$APP_ROLES" | jq 'any(. == "Administrator")')
+        # Check for App Roles — verify roles from bootstrap.conf or defaults
+        CONFIGURED_APP_ROLES=$(az ad app show --id "$APP_ID" \
+            --query "appRoles[].value" -o json 2>/dev/null || echo "[]")
+        HAS_EMPLOYEE=$(echo "$CONFIGURED_APP_ROLES" | jq 'any(. == "Employee")')
+
+        # Determine expected admin role name from APP_ROLES config or default
+        EXPECTED_ADMIN_ROLE="PolicyAdmin"
+        if [[ -n "${APP_ROLES_JSON:-}" ]]; then
+            # Extract admin role value from config (first non-Employee role)
+            EXPECTED_ADMIN_ROLE=$(echo "$APP_ROLES_JSON" | jq -r '[.[].value | select(. != "Employee")][0] // "PolicyAdmin"' 2>/dev/null || echo "PolicyAdmin")
+        fi
+        HAS_ADMIN=$(echo "$CONFIGURED_APP_ROLES" | jq "any(. == \"$EXPECTED_ADMIN_ROLE\")")
 
         if [[ "$HAS_EMPLOYEE" == "true" ]]; then
             pass "App Role 'Employee' exists"
@@ -617,9 +614,9 @@ elif [[ -n "$ACCOUNT_INFO" ]]; then
         fi
 
         if [[ "$HAS_ADMIN" == "true" ]]; then
-            pass "App Role 'Administrator' exists"
+            pass "App Role '${EXPECTED_ADMIN_ROLE}' exists"
         else
-            fail "App Role 'Administrator' not configured"
+            fail "App Role '${EXPECTED_ADMIN_ROLE}' not configured"
         fi
 
         # Check Application ID URI
