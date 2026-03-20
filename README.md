@@ -59,6 +59,7 @@ referenced by agents when relevant:
 | [`brainstorming`](.github/skills/brainstorming/) | @2 | Explore 2-3 design alternatives with trade-offs before producing ADRs |
 | [`writing-plans`](.github/skills/writing-plans/) | @3 | Break implementation into bite-sized tasks with verification steps before coding |
 | [`requesting-code-review`](.github/skills/requesting-code-review/) | @3, @4 | Structured mid-pipeline review to catch issues before they cascade |
+| [`eliciting-requirements`](.github/skills/eliciting-requirements/) | @1 | Guide structured conversation to capture problem, users, and constraints when no input document exists |
 
 > [!NOTE]
 > Skills are inspired by the composable methodology approach from

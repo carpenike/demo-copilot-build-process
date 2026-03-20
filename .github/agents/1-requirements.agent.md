@@ -20,6 +20,17 @@ the system must do, not *how* it does it.
 - DO NOT begin producing output until the target project is confirmed (see Step 0)
 - ONLY produce requirements and user stories — nothing else
 
+## Required Skills
+
+This agent MUST follow these skills:
+
+- **eliciting-requirements** (`.github/skills/eliciting-requirements/`) — When no
+  input file exists in `projects/<project>/input/`, use this skill to guide a
+  structured conversation with the user to capture the problem, users, success
+  criteria, and constraints. Produce the input file before proceeding.
+- **verification-before-completion** (`.github/skills/verification-before-completion/`) —
+  Before claiming any verification gate item passes, cite evidence.
+
 ## Inputs
 - `projects/<project>/input/` — raw stakeholder input (any format: informal notes,
   meeting transcripts, formal BRDs, Slack threads, etc.)
