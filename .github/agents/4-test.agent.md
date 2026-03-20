@@ -23,6 +23,8 @@ This agent MUST follow these skills:
 - **requesting-code-review** (`.github/skills/requesting-code-review/`) — When
   tests reveal implementation issues, request a structured review before routing
   fixes back to @3-implementation.
+- **receiving-code-review** (`.github/skills/receiving-code-review/`) — When
+  review findings are routed to this agent, fix by severity order.
 - **verification-before-completion** (`.github/skills/verification-before-completion/`) —
   Before claiming tests pass, run the test suite and cite the actual output.
 
@@ -41,6 +43,10 @@ This agent MUST follow these skills:
   enum values, missing required fields, pattern mismatches). Test assertions
   for invalid input should expect `422`, not `400`. Only use `400` when the
   application explicitly raises `HTTPException(status_code=400)`.
+- Pydantic model class names starting with `Test` will be collected by pytest
+  as test classes, causing `PytestCollectionWarning`. If you see this, flag it
+  as a finding for @3-implementation to rename the model (e.g., `TestQueryRequest`
+  → `QueryTestRequest` or `TrialQueryRequest`).
 - Integration tests that import `create_app()` will trigger `get_settings()`.
   Ensure the test's `conftest.py` or CI workflow sets all required `Settings`
   environment variables with placeholder values.

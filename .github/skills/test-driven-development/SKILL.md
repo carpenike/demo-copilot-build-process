@@ -182,3 +182,19 @@ Before marking implementation work complete:
 - [ ] No warnings in test output
 
 Can't check all boxes? You skipped TDD. Start over on the missed items.
+
+## Subagent Mode
+
+When running non-interactively (as a subagent via `runSubagent`), the
+interactive RED-GREEN-REFACTOR loop can't be demonstrated step-by-step.
+Adapt as follows:
+
+- **Produce test files alongside implementation files.** For each API route
+  file (`app/api/expenses.py`), produce its test file
+  (`tests/test_expenses.py`) in the same task.
+- **Order by dependency:** models → tests for models → services → tests
+  for services → routes → tests for routes.
+- **Include a test for every new endpoint** — at minimum a happy-path test
+  and one error-path test per route.
+- The principle still applies: the test must be written to match the
+  wireframe-spec contract, not reverse-engineered from the implementation.

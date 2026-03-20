@@ -45,6 +45,7 @@ agents that need them.
 | brainstorming | `.github/skills/brainstorming/` | @2 | Explore 2-3 design alternatives with trade-offs before producing ADRs |
 | writing-plans | `.github/skills/writing-plans/` | @3 | Break implementation into bite-sized tasks with verification steps before coding |
 | requesting-code-review | `.github/skills/requesting-code-review/` | @3, @4 | Structured mid-pipeline review to catch issues before they cascade |
+| receiving-code-review | `.github/skills/receiving-code-review/` | @3, @4 | Handle review findings: prioritize by severity, fix without refactoring |
 | eliciting-requirements | `.github/skills/eliciting-requirements/` | @1 | Guide structured conversation to capture problem, users, and constraints when no input document exists |
 
 **How skills work:** Each agent's `.agent.md` file references the skills it
@@ -114,6 +115,7 @@ ownership matrix.
 │   │   ├── brainstorming/
 │   │   ├── writing-plans/
 │   │   ├── requesting-code-review/
+│   │   ├── receiving-code-review/
 │   │   └── eliciting-requirements/
 │   ├── PULL_REQUEST_TEMPLATE.md
 │   ├── branch-protection.md

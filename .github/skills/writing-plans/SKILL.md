@@ -16,16 +16,15 @@ touch, exact code, how to test it.
 
 ## When to Use
 
-**During @3-implementation** when:
-- Implementing more than 2-3 files
-- Building a new service from scratch
-- The wireframe-spec defines multiple endpoints
-- The feature touches multiple layers (API, models, services, config)
+**ALWAYS during @3-implementation.** This is not optional. Before writing any
+source code, present a plan that maps every wireframe-spec endpoint to a file.
 
-**Not needed for:**
-- Single-file scaffolding (config.py, pyproject.toml)
-- Dockerfile or Makefile generation
-- Minor tweaks to existing code
+The plan is the contract. If it's not in the plan, it won't get built.
+
+**Exceptions (plan not required):**
+- Fixing a single lint/mypy error
+- Updating a config value
+- Responding to a review finding with a targeted fix
 
 ## Plan Before You Build
 
@@ -126,3 +125,23 @@ Execute tasks in order. For each task:
 - The plan structure ensures TDD is applied per-task
 - Verification at each step feeds into verification-before-completion
 - If the plan needs revision after starting, pause and get user approval
+
+## Subagent Mode
+
+When running non-interactively (as a subagent via `runSubagent`), the plan
+cannot be presented for user approval. Adapt as follows:
+
+- **Still produce the plan internally** — enumerate every file that needs to
+  be created by cross-referencing wireframe-spec endpoints against `app/api/`.
+- **Execute the plan in order** — don't skip ahead or combine tasks.
+- **Map wireframe-spec endpoints to files** before writing any code:
+  ```
+  POST /v1/chat/sessions → app/api/chat.py
+  GET /v1/admin/documents → app/api/admin.py
+  POST /v1/chat/messages/{id}/feedback → app/api/feedback.py
+  GET /v1/admin/analytics/summary → app/api/analytics.py
+  ```
+- **Every endpoint in the wireframe-spec must appear in the plan.** If an
+  endpoint doesn't map to a file, that's a planning error — fix the plan.
+- After completing all tasks, run the Implementation Completeness Checklist
+  from @3-implementation before claiming completion.

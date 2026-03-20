@@ -107,6 +107,7 @@ discipline, debugging), while agent files define **what** agents produce.
 | `brainstorming` | @2 | Explore alternatives before committing to design |
 | `writing-plans` | @3 | Break implementation into bite-sized tasks before coding |
 | `requesting-code-review` | @3, @4 | Structured mid-pipeline review |
+| `receiving-code-review` | @3, @4 | Handle review findings by severity |
 | `eliciting-requirements` | @1 | Capture problem and constraints when no input exists |
 
 ---

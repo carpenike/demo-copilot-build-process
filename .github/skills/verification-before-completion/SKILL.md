@@ -106,3 +106,16 @@ If you catch yourself thinking any of these, STOP and run verification:
 Run the command. Read the output. THEN claim the result.
 
 This is non-negotiable.
+
+## Subagent Mode
+
+When running non-interactively (as a subagent via `runSubagent`), you still
+MUST run verification commands. The only adaptation is reporting:
+
+- **Run all verification commands** (ruff, mypy, pytest) and include the
+  exit codes and summary output in your response.
+- **If a command fails**, follow systematic-debugging before retrying.
+- **Do not return "Agent completed" without citing verification evidence.**
+  Your final message must include the verification output.
+- The subagent response IS the evidence — if it doesn't contain command
+  output, the orchestrator should treat the gate as failed.

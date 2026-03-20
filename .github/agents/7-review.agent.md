@@ -199,6 +199,21 @@ This ensures the next project using this service gets automated setup.
 ## Requires Re-routing
 [Issues that need another agent to fix — e.g., "Route back to @5-deployment
 to regenerate Bicep for ACA instead of AKS"]
+
+## Re-routing Instructions
+<!-- Machine-readable section for orchestration -->
+| Finding | Target Agent | Action | Files to Modify |
+|---------|-------------|--------|----------------|
+| FAIL-001 | @3-implementation | [specific action] | [file paths] |
+| WARN-002 | @5-deployment | [specific action] | [file paths] |
+
+## Skill Compliance
+| Agent | Skill | Evidence | Status |
+|-------|-------|----------|--------|
+| @3-implementation | writing-plans | Plan file or plan in commit? | ✅/❌ |
+| @3-implementation | test-driven-development | Tests committed alongside code? | ✅/❌ |
+| @3-implementation | verification-before-completion | Ruff/mypy output cited? | ✅/❌ |
+| @2-design | brainstorming | ADRs contain alternatives considered? | ✅/❌ |
 ```
 
 ## After Completion — Verify Before Handoff

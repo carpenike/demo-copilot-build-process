@@ -124,3 +124,16 @@ becomes the "Decision" in each ADR, and the alternatives become the
 - The output of brainstorming feeds directly into ADR writing
 - Approved alternatives become the "Options Considered" in ADRs
 - If @3-implementation finds a design flaw, route back here before redesigning
+
+## Subagent Mode
+
+When running non-interactively (as a subagent via `runSubagent`), the Socratic
+questioning loop cannot happen. Adapt as follows:
+
+- If the prompt pre-approves design directions (e.g., "use PostgreSQL"), skip
+  questioning and proceed directly. The approved direction becomes the "Decision"
+  in each ADR; the alternatives still appear in "Options Considered."
+- If no direction is pre-approved, pick the option that best fits governance
+  constraints and document why in the ADR.
+- Always produce 2-3 alternatives in each ADR regardless — the exploration
+  still has value even if the user pre-selected.

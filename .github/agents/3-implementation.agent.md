@@ -29,6 +29,8 @@ This agent MUST follow these skills during implementation:
   Do NOT guess at fixes.
 - **requesting-code-review** (`.github/skills/requesting-code-review/`) — After
   completing all endpoints, request a structured review before handoff to @4-test.
+- **receiving-code-review** (`.github/skills/receiving-code-review/`) — When
+  @7-review routes findings back, fix by severity order without refactoring.
 - **verification-before-completion** (`.github/skills/verification-before-completion/`) —
   Before claiming any verification gate passes, run the command and cite the output.
 
@@ -237,9 +239,23 @@ all items pass.
 2. `projects/<project>/src/Dockerfile` exists with multi-stage build
 3. `projects/<project>/src/Makefile` exists with run, test, lint, build targets
 4. `projects/<project>/src/openapi.yaml` exists (for REST APIs)
-5. `/health`, `/ready`, `/metrics` endpoints are implemented
+5. `/health`, `/ready` endpoints are implemented
 6. No secrets or credentials in any file
 7. No TODO comments left in new code
+
+**Implementation Completeness Checklist (MANDATORY — run before verification gate):**
+
+Before proceeding to the verification gate, confirm ALL of these:
+- [ ] Every router imported in `main.py` has a corresponding `.py` source file
+- [ ] Every endpoint in the wireframe-spec has a route handler in `app/api/`
+- [ ] If SQLAlchemy models exist → `alembic/` directory with `env.py` and initial migration exists
+- [ ] If SQLAlchemy models exist → `alembic.ini` exists
+- [ ] If Dockerfile references `alembic` or `entrypoint.sh` → those files exist
+- [ ] All Pydantic model class names avoid the `Test` prefix (pytest will try to collect them)
+
+Run `git ls-files app/api/` to verify all router files are tracked. If any
+imported module is missing its `.py` source file, CREATE IT before proceeding.
+Do NOT rely on `__pycache__` bytecode — source files must be committed.
 8. **Ruff lint passes** — run `uvx ruff check app/` from `projects/<project>/src/`
    and verify exit code 0. If errors are found, fix them and re-run until clean.
 9. **Ruff format passes** — run `uvx ruff format --check app/` from
