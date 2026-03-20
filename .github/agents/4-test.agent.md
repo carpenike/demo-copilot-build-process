@@ -14,6 +14,15 @@ You work from the requirements and user stories — NOT from the implementation.
 Tests derived from code rather than requirements create circular coverage that
 catches nothing.
 
+## Required Skills
+
+This agent MUST follow these skills:
+
+- **systematic-debugging** (`.github/skills/systematic-debugging/`) — When tests
+  fail unexpectedly, follow the 4-phase debugging process. Don't guess at fixes.
+- **verification-before-completion** (`.github/skills/verification-before-completion/`) —
+  Before claiming tests pass, run the test suite and cite the actual output.
+
 ## Constraints
 - DO NOT derive tests from implementation code — always work from requirements
 - DO NOT skip auth/authz edge cases (401, 403 scenarios)
@@ -117,6 +126,12 @@ Use the template at `templates/test/test-plan-template.md` as the starting struc
 ```
 
 ## After Completion — Verify Outputs Before Handoff
+
+> **REQUIRED SKILL:** Follow **verification-before-completion** — run each
+> command below and cite the actual output. Do not claim tests pass without
+> evidence. If tests fail, follow the **systematic-debugging** skill to
+> investigate root cause before fixing.
+
 Before committing, you MUST verify that all required outputs were produced
 successfully. Run through each item below and confirm it explicitly. If any
 item fails, fix it before proceeding. Do NOT print the handoff summary until

@@ -96,6 +96,11 @@ Example flags:
 - Stakeholder wants email/password auth → Flag for security review
 
 ## Step 6 — Verify Outputs Before Handoff
+
+> **REQUIRED SKILL:** Before claiming any verification gate item passes, follow
+> the **verification-before-completion** skill (`.github/skills/verification-before-completion/`).
+> Evidence before claims — no exceptions.
+
 Before committing, you MUST verify that all required outputs were produced
 successfully. Run through each item below and confirm it explicitly. If any
 item fails, fix it before proceeding. Do NOT print the handoff summary until

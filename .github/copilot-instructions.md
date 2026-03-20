@@ -28,6 +28,29 @@ agent picker:
 
 ---
 
+## Skills — Cross-Cutting Methodology
+
+Skills are reusable behavioral patterns shared across multiple agents. They
+define **how** agents work (methodology, discipline, debugging), while agent
+files define **what** agents produce (artifacts, outputs).
+
+Skills live in `.github/skills/<skill-name>/SKILL.md` and are referenced by
+agents that need them.
+
+| Skill | File | Used By | Purpose |
+|-------|------|---------|---------|
+| verification-before-completion | `.github/skills/verification-before-completion/` | All agents | Evidence before claims — run verification commands and cite output before marking gates as passed |
+| systematic-debugging | `.github/skills/systematic-debugging/` | @3, @4, @5, @7 | 4-phase root cause investigation when lint, tests, or builds fail |
+| test-driven-development | `.github/skills/test-driven-development/` | @3 | RED-GREEN-REFACTOR — write failing test before implementation code |
+| brainstorming | `.github/skills/brainstorming/` | @2 | Explore 2-3 design alternatives with trade-offs before producing ADRs |
+
+**How skills work:** Each agent's `.agent.md` file references the skills it
+must follow with a `## Required Skills` section. When an agent encounters a
+situation covered by a skill (e.g., a test failure triggers systematic-debugging),
+it reads and follows the skill's instructions.
+
+---
+
 ## Critical Constraints — Read Before Writing Anything
 
 The file `governance/enterprise-standards.md` defines the non-negotiable rules
@@ -81,6 +104,11 @@ ownership matrix.
 │   │   ├── 5-deployment.agent.md
 │   │   ├── 6-monitor.agent.md
 │   │   └── 7-review.agent.md
+│   ├── skills/                        ← Cross-cutting methodology skills
+│   │   ├── verification-before-completion/
+│   │   ├── systematic-debugging/
+│   │   ├── test-driven-development/
+│   │   └── brainstorming/
 │   ├── PULL_REQUEST_TEMPLATE.md
 │   ├── branch-protection.md
 │   ├── copilot-instructions.md        ← You are here (workspace instructions)

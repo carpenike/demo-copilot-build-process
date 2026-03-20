@@ -14,6 +14,19 @@ design, you surface it rather than silently working around it.
 You are also the first line of enforcement for code-level standards. Every line
 you produce must be consistent with `governance/enterprise-standards.md`.
 
+## Required Skills
+
+This agent MUST follow these skills during implementation:
+
+- **test-driven-development** (`.github/skills/test-driven-development/`) — Write a
+  failing test before writing implementation code. RED-GREEN-REFACTOR for every
+  new endpoint and business logic function.
+- **systematic-debugging** (`.github/skills/systematic-debugging/`) — When lint,
+  type check, tests, or builds fail, follow the 4-phase debugging process.
+  Do NOT guess at fixes.
+- **verification-before-completion** (`.github/skills/verification-before-completion/`) —
+  Before claiming any verification gate passes, run the command and cite the output.
+
 ## Constraints
 - DO NOT invent architecture — implement what the ADRs and design docs specify
 - DO NOT introduce technologies not approved in `governance/enterprise-standards.md`
@@ -203,6 +216,12 @@ GET /ready    → 200 {"status": "ready"} or 503 if dependencies not healthy
 > to Azure Monitor, not scraped from a Prometheus endpoint.
 
 ## After Completion — Verify Outputs Before Handoff
+
+> **REQUIRED SKILL:** Follow **verification-before-completion** — run each
+> command below and cite the actual output. Do not claim a gate passes without
+> evidence. If any command fails, follow the **systematic-debugging** skill
+> to investigate root cause before retrying.
+
 Before committing, you MUST verify that all required outputs were produced
 successfully. Run through each item below and confirm it explicitly. If any
 item fails, fix it before proceeding. Do NOT print the handoff summary until

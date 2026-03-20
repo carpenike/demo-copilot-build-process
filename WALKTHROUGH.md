@@ -44,7 +44,13 @@ Copilot custom agents. Each has restricted tools — @1-requirements, @2-design,
 @5-deployment, and @6-monitor can read, search, and write files but can't run terminal
 commands. Only @3-implementation and @4-test have terminal access, because they need
 to run builds and tests. This is role-based access control for AI."*
-
+**Show the skills directory:** Open `.github/skills/` and briefly explain:
+*"Skills are cross-cutting methodology patterns shared across agents. For example,
+every agent uses the verification-before-completion skill — it requires the AI
+to actually run verification commands and cite the output before claiming a gate
+passes. No 'should work' or 'looks correct' — evidence only. The @3-implementation
+agent also uses test-driven-development, requiring a failing test before any
+production code."*
 **Show the end state first:** Open `projects/expense-portal/` and briefly walk
 through the completed pipeline output — requirements, ADRs, wireframe spec, data
 model, architecture overview, source code, and tests. *"This is what the pipeline
