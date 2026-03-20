@@ -1,0 +1,893 @@
+openapi: "3.1.0"
+info:
+  title: Policy Chatbot API
+  version: "0.1.0"
+  description: >
+    Corporate Policy Assistant Chatbot — RAG-powered conversational AI that
+    answers policy questions with citations and next-step checklists.
+
+servers:
+  - url: https://policy-chatbot.acme.com
+    description: Production
+  - url: http://localhost:8000
+    description: Local development
+
+paths:
+  /health:
+    get:
+      operationId: health
+      summary: Liveness probe
+      tags: [health]
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+
+  /ready:
+    get:
+      operationId: ready
+      summary: Readiness probe
+      tags: [health]
+      responses:
+        "200":
+          description: Ready
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadyResponse"
+        "503":
+          description: Not ready
+
+  /v1/chat:
+    post:
+      operationId: chat
+      summary: Send a message and receive a policy-grounded response
+      tags: [chat]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChatRequest"
+      responses:
+        "200":
+          description: Chat response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatResponse"
+        "400":
+          description: Validation error
+        "401":
+          description: Unauthenticated
+        "404":
+          description: Conversation not found
+
+  /v1/chat/escalate:
+    post:
+      operationId: escalate
+      summary: Initiate escalation to live agent
+      tags: [chat]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EscalateRequest"
+      responses:
+        "200":
+          description: Escalation initiated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EscalateResponse"
+        "404":
+          description: Conversation not found
+
+  /v1/conversations:
+    get:
+      operationId: listConversations
+      summary: List current user's recent conversations
+      tags: [chat]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: cursor
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Conversation list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConversationListResponse"
+
+  /v1/conversations/{conversation_id}:
+    get:
+      operationId: getConversation
+      summary: Retrieve full conversation history
+      tags: [chat]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: conversation_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Conversation detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConversationDetailResponse"
+        "403":
+          description: Access denied
+        "404":
+          description: Not found
+
+  /v1/feedback:
+    post:
+      operationId: submitFeedback
+      summary: Submit feedback on a chatbot response
+      tags: [feedback]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FeedbackRequest"
+      responses:
+        "201":
+          description: Feedback submitted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FeedbackResponse"
+        "404":
+          description: Message not found
+        "409":
+          description: Duplicate feedback
+
+  /v1/me:
+    get:
+      operationId: getProfile
+      summary: Get authenticated user profile
+      tags: [chat]
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfileResponse"
+
+  /v1/admin/documents:
+    get:
+      operationId: listDocuments
+      summary: List all policy documents
+      tags: [admin]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: cursor
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Document list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentListResponse"
+    post:
+      operationId: createDocument
+      summary: Upload a new policy document
+      tags: [admin]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file, title, category, effective_date, owner]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                title:
+                  type: string
+                category:
+                  type: string
+                effective_date:
+                  type: string
+                  format: date
+                review_date:
+                  type: string
+                  format: date
+                owner:
+                  type: string
+                source_url:
+                  type: string
+      responses:
+        "201":
+          description: Document created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentCreateResponse"
+        "409":
+          description: Duplicate title
+
+  /v1/admin/documents/{document_id}:
+    get:
+      operationId: getDocument
+      summary: Get document detail with version history
+      tags: [admin]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: document_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Document detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentDetailResponse"
+        "404":
+          description: Not found
+    put:
+      operationId: updateDocument
+      summary: Upload a new version of an existing document
+      tags: [admin]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: document_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                effective_date:
+                  type: string
+                  format: date
+                review_date:
+                  type: string
+                  format: date
+                owner:
+                  type: string
+                source_url:
+                  type: string
+      responses:
+        "200":
+          description: Document updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentUpdateResponse"
+        "404":
+          description: Not found
+    patch:
+      operationId: patchDocument
+      summary: Update document metadata or retire
+      tags: [admin]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: document_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DocumentPatchRequest"
+      responses:
+        "200":
+          description: Document patched
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentPatchResponse"
+        "404":
+          description: Not found
+
+  /v1/admin/documents/{document_id}/reindex:
+    post:
+      operationId: reindexDocument
+      summary: Trigger re-indexing of a single document
+      tags: [admin]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: document_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "202":
+          description: Reindex started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReindexDocumentResponse"
+
+  /v1/admin/reindex:
+    post:
+      operationId: reindexCorpus
+      summary: Trigger full corpus re-indexing
+      tags: [admin]
+      security:
+        - bearerAuth: []
+      responses:
+        "202":
+          description: Reindex started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReindexCorpusResponse"
+
+  /v1/admin/test-query:
+    post:
+      operationId: testQuery
+      summary: Preview chatbot answer
+      tags: [admin]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QueryPreviewRequest"
+      responses:
+        "200":
+          description: Query preview
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QueryPreviewResponse"
+
+  /v1/admin/analytics/summary:
+    get:
+      operationId: analyticsSummary
+      summary: Dashboard summary metrics
+      tags: [analytics]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            default: "7d"
+      responses:
+        "200":
+          description: Summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnalyticsSummaryResponse"
+
+  /v1/admin/analytics/top-intents:
+    get:
+      operationId: topIntents
+      summary: Top 20 most frequent intents
+      tags: [analytics]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            default: "7d"
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Top intents
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TopIntentsResponse"
+
+  /v1/admin/analytics/unanswered:
+    get:
+      operationId: unansweredQueries
+      summary: Log of unmatched queries
+      tags: [analytics]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: cursor
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: period
+          in: query
+          schema:
+            type: string
+            default: "7d"
+      responses:
+        "200":
+          description: Unanswered queries
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnansweredResponse"
+
+  /v1/admin/analytics/flagged-topics:
+    get:
+      operationId: flaggedTopics
+      summary: Topics flagged for repeated negative feedback
+      tags: [analytics]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: cursor
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Flagged topics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FlaggedTopicsResponse"
+
+  /v1/admin/coverage:
+    get:
+      operationId: getCoverage
+      summary: Policy coverage by domain
+      tags: [admin]
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Coverage report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CoverageResponse"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+      required: [status]
+
+    ReadyResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        checks:
+          type: object
+          properties:
+            database:
+              type: string
+            redis:
+              type: string
+            search:
+              type: string
+            openai:
+              type: string
+      required: [status, checks]
+
+    ChatRequest:
+      type: object
+      properties:
+        conversation_id:
+          type: string
+          format: uuid
+        message:
+          type: string
+          maxLength: 2000
+      required: [message]
+
+    ChatResponse:
+      type: object
+      properties:
+        conversation_id:
+          type: string
+          format: uuid
+        message_id:
+          type: string
+          format: uuid
+        response:
+          type: object
+      required: [conversation_id, message_id, response]
+
+    EscalateRequest:
+      type: object
+      properties:
+        conversation_id:
+          type: string
+          format: uuid
+      required: [conversation_id]
+
+    EscalateResponse:
+      type: object
+      properties:
+        conversation_id:
+          type: string
+          format: uuid
+        escalation:
+          type: object
+
+    ConversationListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+        next_cursor:
+          type: string
+
+    ConversationDetailResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        started_at:
+          type: string
+          format: date-time
+        messages:
+          type: array
+          items:
+            type: object
+
+    FeedbackRequest:
+      type: object
+      properties:
+        message_id:
+          type: string
+          format: uuid
+        rating:
+          type: string
+          enum: [positive, negative]
+        comment:
+          type: string
+          maxLength: 500
+      required: [message_id, rating]
+
+    FeedbackResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        message_id:
+          type: string
+          format: uuid
+        rating:
+          type: string
+        comment:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    UserProfileResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+        first_name:
+          type: string
+        last_name:
+          type: string
+        department:
+          type: string
+        location:
+          type: string
+        role:
+          type: string
+        manager:
+          type: string
+
+    DocumentListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/DocumentResponse"
+        next_cursor:
+          type: string
+
+    DocumentResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        category:
+          type: string
+        status:
+          type: string
+        effective_date:
+          type: string
+          format: date
+        owner:
+          type: string
+        current_version:
+          type: integer
+        page_count:
+          type: integer
+
+    DocumentDetailResponse:
+      allOf:
+        - $ref: "#/components/schemas/DocumentResponse"
+        - type: object
+          properties:
+            versions:
+              type: array
+              items:
+                type: object
+
+    DocumentCreateResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        category:
+          type: string
+        status:
+          type: string
+        effective_date:
+          type: string
+          format: date
+        owner:
+          type: string
+        version:
+          type: integer
+        indexing_status:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    DocumentUpdateResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        version:
+          type: integer
+        indexing_status:
+          type: string
+        updated_at:
+          type: string
+          format: date-time
+
+    DocumentPatchRequest:
+      type: object
+      properties:
+        status:
+          type: string
+        title:
+          type: string
+        category:
+          type: string
+        effective_date:
+          type: string
+          format: date
+        review_date:
+          type: string
+          format: date
+        owner:
+          type: string
+        source_url:
+          type: string
+
+    DocumentPatchResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        status:
+          type: string
+        updated_at:
+          type: string
+          format: date-time
+
+    ReindexDocumentResponse:
+      type: object
+      properties:
+        document_id:
+          type: string
+          format: uuid
+        indexing_status:
+          type: string
+
+    ReindexCorpusResponse:
+      type: object
+      properties:
+        indexing_status:
+          type: string
+        document_count:
+          type: integer
+
+    QueryPreviewRequest:
+      type: object
+      properties:
+        query:
+          type: string
+          maxLength: 2000
+        draft_document_id:
+          type: string
+          format: uuid
+      required: [query]
+
+    QueryPreviewResponse:
+      type: object
+      properties:
+        live_answer:
+          type: object
+        preview_answer:
+          type: object
+
+    AnalyticsSummaryResponse:
+      type: object
+      properties:
+        period:
+          type: string
+        total_queries:
+          type: integer
+        resolution_rate:
+          type: number
+        escalation_rate:
+          type: number
+        average_satisfaction:
+          type: number
+        no_match_rate:
+          type: number
+        daily_volumes:
+          type: array
+          items:
+            type: object
+
+    TopIntentsResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+
+    UnansweredResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+        next_cursor:
+          type: string
+
+    FlaggedTopicsResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+        next_cursor:
+          type: string
+
+    CoverageResponse:
+      type: object
+      properties:
+        categories:
+          type: array
+          items:
+            type: object
+        total_documents:
+          type: integer
+        total_pages:
+          type: integer
+        categories_with_gaps:
+          type: array
+          items:
+            type: string
