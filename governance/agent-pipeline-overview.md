@@ -105,6 +105,8 @@ discipline, debugging), while agent files define **what** agents produce.
 | `systematic-debugging` | @3, @4, @5, @7 | 4-phase root cause investigation |
 | `test-driven-development` | @3 | RED-GREEN-REFACTOR cycle |
 | `brainstorming` | @2 | Explore alternatives before committing to design |
+| `writing-plans` | @3 | Break implementation into bite-sized tasks before coding |
+| `requesting-code-review` | @3, @4 | Structured mid-pipeline review |
 
 ---
 

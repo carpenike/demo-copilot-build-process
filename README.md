@@ -57,6 +57,8 @@ referenced by agents when relevant:
 | [`systematic-debugging`](.github/skills/systematic-debugging/) | @3, @4, @5, @7 | 4-phase root cause investigation when lint, tests, or builds fail |
 | [`test-driven-development`](.github/skills/test-driven-development/) | @3 | RED-GREEN-REFACTOR — write failing test before implementation code |
 | [`brainstorming`](.github/skills/brainstorming/) | @2 | Explore 2-3 design alternatives with trade-offs before producing ADRs |
+| [`writing-plans`](.github/skills/writing-plans/) | @3 | Break implementation into bite-sized tasks with verification steps before coding |
+| [`requesting-code-review`](.github/skills/requesting-code-review/) | @3, @4 | Structured mid-pipeline review to catch issues before they cascade |
 
 > [!NOTE]
 > Skills are inspired by the composable methodology approach from

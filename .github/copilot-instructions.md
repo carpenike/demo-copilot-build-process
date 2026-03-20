@@ -43,6 +43,8 @@ agents that need them.
 | systematic-debugging | `.github/skills/systematic-debugging/` | @3, @4, @5, @7 | 4-phase root cause investigation when lint, tests, or builds fail |
 | test-driven-development | `.github/skills/test-driven-development/` | @3 | RED-GREEN-REFACTOR — write failing test before implementation code |
 | brainstorming | `.github/skills/brainstorming/` | @2 | Explore 2-3 design alternatives with trade-offs before producing ADRs |
+| writing-plans | `.github/skills/writing-plans/` | @3 | Break implementation into bite-sized tasks with verification steps before coding |
+| requesting-code-review | `.github/skills/requesting-code-review/` | @3, @4 | Structured mid-pipeline review to catch issues before they cascade |
 
 **How skills work:** Each agent's `.agent.md` file references the skills it
 must follow with a `## Required Skills` section. When an agent encounters a
@@ -108,7 +110,9 @@ ownership matrix.
 │   │   ├── verification-before-completion/
 │   │   ├── systematic-debugging/
 │   │   ├── test-driven-development/
-│   │   └── brainstorming/
+│   │   ├── brainstorming/
+│   │   ├── writing-plans/
+│   │   └── requesting-code-review/
 │   ├── PULL_REQUEST_TEMPLATE.md
 │   ├── branch-protection.md
 │   ├── copilot-instructions.md        ← You are here (workspace instructions)

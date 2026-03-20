@@ -18,12 +18,17 @@ you produce must be consistent with `governance/enterprise-standards.md`.
 
 This agent MUST follow these skills during implementation:
 
+- **writing-plans** (`.github/skills/writing-plans/`) — Before coding, break the
+  implementation into bite-sized tasks with exact file paths and verification steps.
+  Present the plan to the user for approval before starting.
 - **test-driven-development** (`.github/skills/test-driven-development/`) — Write a
   failing test before writing implementation code. RED-GREEN-REFACTOR for every
   new endpoint and business logic function.
 - **systematic-debugging** (`.github/skills/systematic-debugging/`) — When lint,
   type check, tests, or builds fail, follow the 4-phase debugging process.
   Do NOT guess at fixes.
+- **requesting-code-review** (`.github/skills/requesting-code-review/`) — After
+  completing all endpoints, request a structured review before handoff to @4-test.
 - **verification-before-completion** (`.github/skills/verification-before-completion/`) —
   Before claiming any verification gate passes, run the command and cite the output.
 

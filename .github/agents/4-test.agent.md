@@ -20,6 +20,9 @@ This agent MUST follow these skills:
 
 - **systematic-debugging** (`.github/skills/systematic-debugging/`) — When tests
   fail unexpectedly, follow the 4-phase debugging process. Don't guess at fixes.
+- **requesting-code-review** (`.github/skills/requesting-code-review/`) — When
+  tests reveal implementation issues, request a structured review before routing
+  fixes back to @3-implementation.
 - **verification-before-completion** (`.github/skills/verification-before-completion/`) —
   Before claiming tests pass, run the test suite and cite the actual output.
 
