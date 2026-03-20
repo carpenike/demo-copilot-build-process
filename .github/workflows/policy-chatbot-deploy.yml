@@ -1,0 +1,156 @@
+# Deploy — Policy Chatbot
+# Staging → Production deployment. Triggers on push to main (after PR merge).
+# Dev deployments happen in the CI workflow on PRs.
+# Production requires manual approval via GitHub environment protection rules.
+
+name: Deploy — Policy Chatbot
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'projects/policy-chatbot/**'
+
+env:
+  PROJECT: "policy-chatbot"
+  ACR_REGISTRY: "${{ secrets.ACR_LOGIN_SERVER }}"
+  IMAGE_NAME: "policy-chatbot"
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ─── Deploy to Staging ────────────────────────────────────────────────────────
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy Bicep (staging)
+        uses: azure/arm-deploy@v2
+        with:
+          resourceGroupName: ${{ secrets.ACA_RESOURCE_GROUP_STAGING }}
+          template: projects/${{ env.PROJECT }}/infrastructure/main.bicep
+          parameters: >-
+            projects/${{ env.PROJECT }}/infrastructure/main.staging.bicepparam
+            imageTag=${{ github.sha }}
+            acrLoginServer=${{ env.ACR_REGISTRY }}
+            acrName=${{ secrets.ACR_NAME }}
+            postgresAdminPassword=${{ secrets.POSTGRES_ADMIN_PASSWORD }}
+            entraTenantId=${{ secrets.ENTRA_TENANT_ID }}
+            entraClientId=${{ secrets.ENTRA_CLIENT_ID }}
+            entraAuthority=${{ secrets.ENTRA_AUTHORITY }}
+          deploymentMode: Incremental
+          deploymentName: ${{ env.PROJECT }}-staging-${{ github.sha }}
+
+      - name: Wait for revision to be ready
+        run: |
+          for i in $(seq 1 30); do
+            STATUS=$(az containerapp show \
+              --name ${{ env.IMAGE_NAME }}-staging-api \
+              --resource-group ${{ secrets.ACA_RESOURCE_GROUP_STAGING }} \
+              --query "properties.provisioningState" -o tsv 2>/dev/null || echo "Pending")
+            if [ "$STATUS" = "Succeeded" ]; then
+              echo "Container App provisioning succeeded"
+              break
+            fi
+            if [ "$STATUS" = "Failed" ]; then
+              echo "Container App provisioning failed!"
+              exit 1
+            fi
+            echo "Waiting for deployment... ($i/30) status=$STATUS"
+            sleep 10
+          done
+
+      - name: Run smoke tests
+        run: |
+          FQDN=$(az containerapp show \
+            --name ${{ env.IMAGE_NAME }}-staging-api \
+            --resource-group ${{ secrets.ACA_RESOURCE_GROUP_STAGING }} \
+            --query "properties.configuration.ingress.fqdn" -o tsv)
+
+          curl -sf "https://${FQDN}/health" || exit 1
+          curl -sf "https://${FQDN}/ready" || exit 1
+          echo "Staging smoke tests passed"
+
+  # ─── Deploy to Production (manual approval gate) ──────────────────────────────
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: deploy-staging
+    environment:
+      name: production
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy Bicep (production)
+        uses: azure/arm-deploy@v2
+        with:
+          resourceGroupName: ${{ secrets.ACA_RESOURCE_GROUP_PROD }}
+          template: projects/${{ env.PROJECT }}/infrastructure/main.bicep
+          parameters: >-
+            projects/${{ env.PROJECT }}/infrastructure/main.prod.bicepparam
+            imageTag=${{ github.sha }}
+            acrLoginServer=${{ env.ACR_REGISTRY }}
+            acrName=${{ secrets.ACR_NAME }}
+            postgresAdminPassword=${{ secrets.POSTGRES_ADMIN_PASSWORD }}
+            entraTenantId=${{ secrets.ENTRA_TENANT_ID }}
+            entraClientId=${{ secrets.ENTRA_CLIENT_ID }}
+            entraAuthority=${{ secrets.ENTRA_AUTHORITY }}
+          deploymentMode: Incremental
+          deploymentName: ${{ env.PROJECT }}-prod-${{ github.sha }}
+
+      - name: Wait for revision to be ready
+        run: |
+          for i in $(seq 1 30); do
+            STATUS=$(az containerapp show \
+              --name ${{ env.IMAGE_NAME }}-prod-api \
+              --resource-group ${{ secrets.ACA_RESOURCE_GROUP_PROD }} \
+              --query "properties.provisioningState" -o tsv 2>/dev/null || echo "Pending")
+            if [ "$STATUS" = "Succeeded" ]; then
+              echo "Container App provisioning succeeded"
+              break
+            fi
+            if [ "$STATUS" = "Failed" ]; then
+              echo "Container App provisioning failed!"
+              exit 1
+            fi
+            echo "Waiting for deployment... ($i/30) status=$STATUS"
+            sleep 10
+          done
+
+      - name: Run smoke tests
+        run: |
+          FQDN=$(az containerapp show \
+            --name ${{ env.IMAGE_NAME }}-prod-api \
+            --resource-group ${{ secrets.ACA_RESOURCE_GROUP_PROD }} \
+            --query "properties.configuration.ingress.fqdn" -o tsv)
+
+          curl -sf "https://${FQDN}/health" || exit 1
+          curl -sf "https://${FQDN}/ready" || exit 1
+          echo "Production smoke tests passed"
