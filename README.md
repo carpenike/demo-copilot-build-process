@@ -111,7 +111,7 @@ referenced by agents when relevant:
 | Project | Status | Purpose |
 |---------|--------|---------|
 | [`projects/expense-portal/`](projects/expense-portal/) | Requirements → Design → Implementation → Tests | **Golden path reference** — includes both an informal [`request.md`](projects/expense-portal/input/request.md) and a formal [`business-requirements.md`](projects/expense-portal/input/business-requirements.md) to demonstrate flexible input, plus full pipeline output through stage 4 |
-| [`projects/policy-chatbot/`](projects/policy-chatbot/) | Input only | **Clean starting point** — raw BRD input only, ready to run the full pipeline from scratch |
+| [`projects/policy-chatbot/`](projects/policy-chatbot/) | Full pipeline (7 stages) | **Skills showcase** — full pipeline run demonstrating all 8 skills in action, from BRD input through review. PASS on first @7-review with 0 critical findings |
 
 ## Enterprise Standards Summary
 
