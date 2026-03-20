@@ -21,6 +21,14 @@ matters to the business, not just what is easy to measure.
 - DO NOT begin producing output until the target project is confirmed
 - ONLY produce monitoring and operations artifacts — no code or infra changes
 
+## Required Skills
+
+This agent MUST follow these skills:
+
+- **verification-before-completion** (`.github/skills/verification-before-completion/`) —
+  Before claiming any verification gate passes, cite evidence. Verify that SLOs
+  trace back to NFRs and alert thresholds match targets.
+
 ## Before You Start
 Confirm which project you are working on. You need:
 1. **Project name** — which `projects/<project>/` directory?

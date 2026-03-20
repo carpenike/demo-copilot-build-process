@@ -14,6 +14,20 @@ You work from the requirements and user stories — NOT from the implementation.
 Tests derived from code rather than requirements create circular coverage that
 catches nothing.
 
+## Required Skills
+
+This agent MUST follow these skills:
+
+- **systematic-debugging** (`.github/skills/systematic-debugging/`) — When tests
+  fail unexpectedly, follow the 4-phase debugging process. Don't guess at fixes.
+- **requesting-code-review** (`.github/skills/requesting-code-review/`) — When
+  tests reveal implementation issues, request a structured review before routing
+  fixes back to @3-implementation.
+- **receiving-code-review** (`.github/skills/receiving-code-review/`) — When
+  review findings are routed to this agent, fix by severity order.
+- **verification-before-completion** (`.github/skills/verification-before-completion/`) —
+  Before claiming tests pass, run the test suite and cite the actual output.
+
 ## Constraints
 - DO NOT derive tests from implementation code — always work from requirements
 - DO NOT skip auth/authz edge cases (401, 403 scenarios)
@@ -29,6 +43,10 @@ catches nothing.
   enum values, missing required fields, pattern mismatches). Test assertions
   for invalid input should expect `422`, not `400`. Only use `400` when the
   application explicitly raises `HTTPException(status_code=400)`.
+- Pydantic model class names starting with `Test` will be collected by pytest
+  as test classes, causing `PytestCollectionWarning`. If you see this, flag it
+  as a finding for @3-implementation to rename the model (e.g., `TestQueryRequest`
+  → `QueryTestRequest` or `TrialQueryRequest`).
 - Integration tests that import `create_app()` will trigger `get_settings()`.
   Ensure the test's `conftest.py` or CI workflow sets all required `Settings`
   environment variables with placeholder values.
@@ -117,6 +135,12 @@ Use the template at `templates/test/test-plan-template.md` as the starting struc
 ```
 
 ## After Completion — Verify Outputs Before Handoff
+
+> **REQUIRED SKILL:** Follow **verification-before-completion** — run each
+> command below and cite the actual output. Do not claim tests pass without
+> evidence. If tests fail, follow the **systematic-debugging** skill to
+> investigate root cause before fixing.
+
 Before committing, you MUST verify that all required outputs were produced
 successfully. Run through each item below and confirm it explicitly. If any
 item fails, fix it before proceeding. Do NOT print the handoff summary until

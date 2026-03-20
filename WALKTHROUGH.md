@@ -44,7 +44,13 @@ Copilot custom agents. Each has restricted tools — @1-requirements, @2-design,
 @5-deployment, and @6-monitor can read, search, and write files but can't run terminal
 commands. Only @3-implementation and @4-test have terminal access, because they need
 to run builds and tests. This is role-based access control for AI."*
-
+**Show the skills directory:** Open `.github/skills/` and briefly explain:
+*"Skills are cross-cutting methodology patterns shared across agents. For example,
+every agent uses the verification-before-completion skill — it requires the AI
+to actually run verification commands and cite the output before claiming a gate
+passes. No 'should work' or 'looks correct' — evidence only. The @3-implementation
+agent also uses test-driven-development, requiring a failing test before any
+production code."*
 **Show the end state first:** Open `projects/expense-portal/` and briefly walk
 through the completed pipeline output — requirements, ADRs, wireframe spec, data
 model, architecture overview, source code, and tests. *"This is what the pipeline
@@ -109,17 +115,23 @@ Produce ADRs in docs/adr/ and design documents in projects/expense-portal/design
 ```
 
 **What to highlight:**
+- The agent uses the **brainstorming skill** — it explores 2-3 architectural
+  alternatives for each decision point (data storage, compute, auth) with
+  trade-offs before producing ADRs
 - ADRs include a **Governance Compliance** table — each technology choice is
   checked against standards
+- Alternatives considered are documented even when the direction is obvious —
+  the exploration has value for the audit trail
 - The wireframe spec defines exact API contracts (request/response schemas,
   error codes, auth requirements)
 - Data model uses mermaid ER diagrams
 - Architecture overview shows component diagram with security boundaries
 
-**Pause point:** *"Every ADR proves the technology choice is compliant. If a
-stakeholder asked for MongoDB, the agent would either reject it or document
-the exception process. The design is a contract — detailed enough that a
-developer (human or AI) can implement without ambiguity."*
+**Pause point:** *"Notice the agent didn't just pick the first viable option.
+The brainstorming skill forced it to explore alternatives for every decision
+point — PostgreSQL vs Cosmos DB, ACA vs AKS, AI Search vs pgvector. Even
+when the answer is obvious, the exploration is documented in the ADR so
+future teams understand WHY this choice was made."*
 
 **Review gate:** Before moving to Implementation, verify:
 - Every ADR has a Governance Compliance table with all ✅

@@ -74,6 +74,16 @@ strictly within the infrastructure standards defined in
   (e.g., Celery workers), pass the entrypoint explicitly:
   `command: ['/app/entrypoint.sh', 'celery', '-A', '...', 'worker']`
 
+## Required Skills
+
+This agent MUST follow these skills:
+
+- **systematic-debugging** (`.github/skills/systematic-debugging/`) — When Bicep
+  validation, workflow syntax, or bootstrap script issues arise, follow the
+  4-phase debugging process.
+- **verification-before-completion** (`.github/skills/verification-before-completion/`) —
+  Before claiming any verification gate passes, cite evidence.
+
 ## Before You Start
 Confirm which project you are working on. You need:
 1. **Project name** — which `projects/<project>/` directory?

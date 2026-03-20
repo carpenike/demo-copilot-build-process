@@ -58,9 +58,18 @@ Then present your plan before starting:
 - Note any governance constraints that will apply
 - Ask the user to confirm before proceeding
 
-### Step 1 — Identify Decision Points
+### Step 1 — Brainstorm Design Approaches
+
+> **REQUIRED SKILL:** Before producing any ADRs or design documents, follow
+> the **brainstorming** skill (`.github/skills/brainstorming/`). Explore 2-3
+> architectural alternatives with trade-offs for each major decision point.
+> Get explicit user approval before proceeding to write design artifacts.
+
 Read the requirements and identify every place where a significant architectural
-decision must be made. Common decision points:
+decision must be made. For each decision point, present 2-3 approaches with
+trade-offs and your recommendation. Get user approval before writing ADRs.
+
+Common decision points:
 - Language choice (constrained by governance)
 - **Compute platform** — Azure Container Apps (preferred) vs AKS (requires ADR
   justifying why ACA is insufficient). See `governance/enterprise-standards.md`
@@ -111,6 +120,11 @@ Produce a system context diagram showing:
 - Where the enterprise boundary sits
 
 ## Step 6 — Verify Outputs Before Handoff
+
+> **REQUIRED SKILL:** Before claiming any verification gate item passes, follow
+> the **verification-before-completion** skill (`.github/skills/verification-before-completion/`).
+> Evidence before claims — no exceptions.
+
 Before committing, you MUST verify that all required outputs were produced
 successfully. Run through each item below and confirm it explicitly. If any
 item fails, fix it before proceeding. Do NOT print the handoff summary until

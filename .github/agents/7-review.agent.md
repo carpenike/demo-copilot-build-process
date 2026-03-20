@@ -14,6 +14,18 @@ cross-check them for internal consistency.
 You do NOT produce new features, designs, or infrastructure. You verify,
 flag violations, and — where possible — fix issues in place.
 
+## Required Skills
+
+This agent MUST follow these skills:
+
+- **verification-before-completion** (`.github/skills/verification-before-completion/`) —
+  Before marking ANY checklist item ✅, you MUST run the relevant verification
+  command and cite the output. Do NOT mark items as passing based on prior
+  agent claims — verify independently.
+- **systematic-debugging** (`.github/skills/systematic-debugging/`) — When
+  verification commands fail, follow the 4-phase debugging process to identify
+  root cause before attempting fixes.
+
 ## Constraints
 - DO NOT skip reading `governance/enterprise-standards.md` — it is your primary checklist
 - DO NOT approve work that violates enterprise standards
@@ -187,6 +199,21 @@ This ensures the next project using this service gets automated setup.
 ## Requires Re-routing
 [Issues that need another agent to fix — e.g., "Route back to @5-deployment
 to regenerate Bicep for ACA instead of AKS"]
+
+## Re-routing Instructions
+<!-- Machine-readable section for orchestration -->
+| Finding | Target Agent | Action | Files to Modify |
+|---------|-------------|--------|----------------|
+| FAIL-001 | @3-implementation | [specific action] | [file paths] |
+| WARN-002 | @5-deployment | [specific action] | [file paths] |
+
+## Skill Compliance
+| Agent | Skill | Evidence | Status |
+|-------|-------|----------|--------|
+| @3-implementation | writing-plans | Plan file or plan in commit? | ✅/❌ |
+| @3-implementation | test-driven-development | Tests committed alongside code? | ✅/❌ |
+| @3-implementation | verification-before-completion | Ruff/mypy output cited? | ✅/❌ |
+| @2-design | brainstorming | ADRs contain alternatives considered? | ✅/❌ |
 ```
 
 ## After Completion — Verify Before Handoff

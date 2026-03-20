@@ -45,6 +45,29 @@ flowchart TD
 
 > **Legend:** Each purple node is an independently defined [Copilot agent](.github/agents/) with its own role instructions, allowed tools, and validation gates. Arrows show the artifacts that flow between stages. See [`governance/agent-pipeline-overview.md`](governance/agent-pipeline-overview.md) for the full diagram.
 
+## Skills — Cross-Cutting Methodology
+
+Agents define **what** to produce. Skills define **how** to work. Skills are
+reusable behavioral patterns in [`.github/skills/`](.github/skills/) that are
+referenced by agents when relevant:
+
+| Skill | Used By | Purpose |
+|-------|---------|---------|
+| [`verification-before-completion`](.github/skills/verification-before-completion/) | All agents | Evidence before claims — run verification commands and cite output before marking gates as passed |
+| [`systematic-debugging`](.github/skills/systematic-debugging/) | @3, @4, @5, @7 | 4-phase root cause investigation when lint, tests, or builds fail |
+| [`test-driven-development`](.github/skills/test-driven-development/) | @3 | RED-GREEN-REFACTOR — write failing test before implementation code |
+| [`brainstorming`](.github/skills/brainstorming/) | @2 | Explore 2-3 design alternatives with trade-offs before producing ADRs |
+| [`writing-plans`](.github/skills/writing-plans/) | @3 | Break implementation into bite-sized tasks with verification steps before coding |
+| [`requesting-code-review`](.github/skills/requesting-code-review/) | @3, @4 | Structured mid-pipeline review to catch issues before they cascade |
+| [`receiving-code-review`](.github/skills/receiving-code-review/) | @3, @4 | Handle review findings: prioritize by severity, fix without refactoring |
+| [`eliciting-requirements`](.github/skills/eliciting-requirements/) | @1 | Guide structured conversation to capture problem, users, and constraints when no input document exists |
+
+> [!NOTE]
+> Skills are inspired by the composable methodology approach from
+> [obra/superpowers](https://github.com/obra/superpowers). They're adapted here
+> to work with GitHub Copilot's native skills system and integrate into the
+> enterprise pipeline workflow.
+
 ## Prerequisites
 
 > [!IMPORTANT]
@@ -74,6 +97,7 @@ flowchart TD
 | [`.github/copilot-instructions.md`](.github/copilot-instructions.md) | Workspace instructions (auto-loaded by Copilot) |
 | [`governance/enterprise-standards.md`](governance/enterprise-standards.md) | Non-negotiable constraints for all agents |
 | [`.github/agents/*.agent.md`](.github/agents/) | Copilot custom agent definitions (appear in agent picker) |
+| [`.github/skills/`](.github/skills/) | Cross-cutting methodology skills (shared across agents) |
 | [`templates/`](templates/) | Reusable output templates (all 6 stages) |
 | [`.github/PULL_REQUEST_TEMPLATE.md`](.github/PULL_REQUEST_TEMPLATE.md) | PR checklist enforcing standards |
 | [`.github/workflows/ci-template.yml.template`](.github/workflows/ci-template.yml.template) | Python CI pipeline template |
@@ -87,7 +111,7 @@ flowchart TD
 | Project | Status | Purpose |
 |---------|--------|---------|
 | [`projects/expense-portal/`](projects/expense-portal/) | Requirements → Design → Implementation → Tests | **Golden path reference** — includes both an informal [`request.md`](projects/expense-portal/input/request.md) and a formal [`business-requirements.md`](projects/expense-portal/input/business-requirements.md) to demonstrate flexible input, plus full pipeline output through stage 4 |
-| [`projects/policy-chatbot/`](projects/policy-chatbot/) | Input only | **Clean starting point** — raw BRD input only, ready to run the full pipeline from scratch |
+| [`projects/policy-chatbot/`](projects/policy-chatbot/) | Full pipeline (7 stages) | **Skills showcase** — full pipeline run demonstrating all 8 skills in action, from BRD input through review. PASS on first @7-review with 0 critical findings |
 
 ## Enterprise Standards Summary
 

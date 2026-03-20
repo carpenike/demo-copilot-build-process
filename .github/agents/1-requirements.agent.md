@@ -20,6 +20,17 @@ the system must do, not *how* it does it.
 - DO NOT begin producing output until the target project is confirmed (see Step 0)
 - ONLY produce requirements and user stories — nothing else
 
+## Required Skills
+
+This agent MUST follow these skills:
+
+- **eliciting-requirements** (`.github/skills/eliciting-requirements/`) — When no
+  input file exists in `projects/<project>/input/`, use this skill to guide a
+  structured conversation with the user to capture the problem, users, success
+  criteria, and constraints. Produce the input file before proceeding.
+- **verification-before-completion** (`.github/skills/verification-before-completion/`) —
+  Before claiming any verification gate item passes, cite evidence.
+
 ## Inputs
 - `projects/<project>/input/` — raw stakeholder input (any format: informal notes,
   meeting transcripts, formal BRDs, Slack threads, etc.)
@@ -96,6 +107,11 @@ Example flags:
 - Stakeholder wants email/password auth → Flag for security review
 
 ## Step 6 — Verify Outputs Before Handoff
+
+> **REQUIRED SKILL:** Before claiming any verification gate item passes, follow
+> the **verification-before-completion** skill (`.github/skills/verification-before-completion/`).
+> Evidence before claims — no exceptions.
+
 Before committing, you MUST verify that all required outputs were produced
 successfully. Run through each item below and confirm it explicitly. If any
 item fails, fix it before proceeding. Do NOT print the handoff summary until
